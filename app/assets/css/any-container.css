@@ -1,0 +1,30 @@
+.any-white-container{
+    background: white;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+    border-radius: 10px;
+}
+.any-green-container{
+    background: #e6faee;
+    border-color: #b8f0ce;
+    border-width: 1.5px;
+    border-radius: 10px;
+}
+.any-red-container{
+    background: #fee9ea;
+    border-color: #fdc3c6;
+    border-width: 1.5px;
+    border-radius: 10px;
+}
+.any-gray-container{
+    background: #f7fafc;
+    border-color: #d6dde098;
+    border-width: 1.5px;
+    border-radius: 10px;
+}
+.green-container-item{
+    color: #2ca93e
+}
+.red-container-item{
+    color: #e7000b;
+}

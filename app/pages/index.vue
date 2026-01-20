@@ -1,39 +1,104 @@
 <script setup lang="ts">
-import type { ICompnany } from '@models'
+import type { ICompnany } from '~/services/models'
 import { Bitrix } from '~/services/bitrix'
+import ArrowLeftSIcon from '@bitrix24/b24icons-vue/outline/ArrowLeftSIcon'
+import Plus30Icon from '@bitrix24/b24icons-vue/actions/Plus30Icon'
+import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
+import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
+import BoxIcon from '@bitrix24/b24icons-vue/outline/BoxIcon'
+import KeyIcon from '@bitrix24/b24icons-vue/outline/KeyIcon'
+import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
+import MainPage from '~/components/pages/MainPage.vue'
+import ProfilePage from '~/components/pages/ProfilePage.vue'
+import UsersPage from '~/components/pages/UsersPage.vue'
+import BillingPage from '~/components/pages/billingPage.vue'
+import EventsPage from '~/components/pages/eventsPage.vue'
+import FieldsPage from '~/components/pages/FieldsPage.vue'
+import { bilingPagesEnum } from '~/services/models'
+import useMenuStore from '~/services/stores/menuStores'
+
+const menuStore = useMenuStore()
+
+const pages = {
+    [bilingPagesEnum.Main] : MainPage,
+    [bilingPagesEnum.Profile] : ProfilePage,
+    [bilingPagesEnum.Users] : UsersPage,
+    [bilingPagesEnum.Billing] : BillingPage,
+    [bilingPagesEnum.Events] : EventsPage
+};
+
+const selectPage = ref<string>(bilingPagesEnum.Main);
 
 
-const {data, pending, error} = await useAsyncData('bitrix', async () => {
-    const frame = await useNuxtApp().$initializeB24Frame()
-    const bitrix = new Bitrix(frame)
-    const Company = await bitrix.companyInfo()
-    debugger
-    return {bitrix, Company}
-})
+// const {data, pending, error} = await useAsyncData('bitrix', async () => {
+//     const frame = await useNuxtApp().$initializeB24Frame()
+//     const bitrix = new Bitrix(frame)
+//     const Company = await bitrix.companyInfo()
+//     debugger
+//     return {bitrix, Company}
+// })
 
-const bitrix = computed(() => data.value?.bitrix)
-const Company = computed(() => data.value?.Company)
+// const bitrix = computed(() => data.value?.bitrix)
+// const Company = computed(() => data.value?.Company)
 
 
+function switchPage(page : string){
+    selectPage.value = page;
+};
 
 </script>
 <template>
-    <div class="app-container">
-        <div class=title-container>
-            <p style="font-size: 1.2em;">{{ Company?.TITLE }}</p>
-            <p style="font-size: 0.9em; color: gray;">{{ Company?.TITLE }}</p>
-        </div>
+    <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
-                <div style="display: flex; flex-direction: column; gap:10px">
-                    <DataInput :default="Company?.TITLE" title="Название"></DataInput>
-                    <DataInput :default="Company?.REVENUE?.toString()" title="Оборот"></DataInput>
-                    <DataInput :default="Company?.ADDRESS"  title="Адрес"></DataInput>
+            <div class="title-container">
+                <div class="back-arrow-box">
+                    <ArrowLeftSIcon class="w-6 h-6 back-arrow-svg" />
                 </div>
-                <!-- <div style="display: flex; flex-direction: column; gap:10px">
-                    <DataInput :title="company.title"></DataInput>
-                    <DataInput :title="company.revenue"></DataInput>
-                    <DataInput :title="company.adres"></DataInput>
-                </div> -->
+                <div class="any-contaier-column" style="gap: 15px;">
+                    <div class="any-contaier-row" style="gap: 10px">
+                        <p class="company-title">ООО "Техносфера"</p>
+                        <div class="status-box">
+                            <SuccessIcon class="w-4 h-4" style="color: white;" />
+                            <p class="status-title select-none">Активна</p>
+                        </div>
+                    </div>
+                    <div class="any-contaier-row" style="gap: 15px">
+                        <div class="tag-box">
+                            <span style="font-size: 0.7em;" class="cursor-default font-semibold">VIP</span>
+                        </div>
+                        <div class="tag-box">
+                            <span style="font-size: 0.7em; "class="cursor-default font-semibold">Приоритет</span>
+                        </div>
+                        <div class="add-tag-box">
+                            <Plus30Icon class="w-4 h-4 changeable-icon" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="any-contaier-row" style="width: 100%; gap: 12px;">
+                <div class="transparent-box">
+                    <OpenIn40Icon class="w-6 h-6 changeable-icon"/>
+                    <p class="transparent-box-title font-semibold">Открыть в контексте</p>
+                </div> 
+                <div class="transparent-box">
+                    <BoxIcon class="w-6 h-6 changeable-icon"/>
+                    <p class="transparent-box-title font-semibold">Модули</p>
+                </div> 
+                <div class="transparent-box">
+                    <KeyIcon class="w-6 h-6 changeable-icon"/>
+                    <p class="transparent-box-title font-semibold">API</p>
+                </div>
+                <div class="transparent-box">
+                    <EditPencilIcon class="w-6 h-6 changeable-icon"/>
+                    <p class="transparent-box-title font-semibold">Редактирование</p>
+                </div>         
+            </div>
+            <div class="page-selector-grid">
+                <div class="page-item" v-for="page in Object.keys(pages)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
+                    <span class="select-none font-semibold" >{{ page }}</span>
+                </div>
+            </div>
+            <component :is="pages[selectPage]"/>
         </div>
     </div>
 </template>
@@ -41,27 +106,136 @@ const Company = computed(() => data.value?.Company)
 .app-container{
     height: 100vh;
     width: 100%;
+    overflow-y:scroll;
     display: flex;
     flex-direction: column;
-    padding: 3%;
+    padding: 50px 100px;
+    background-color: #f8fbfc;
 }
+
 .billing-container{
-    border-radius: 50px;
-    padding: 20px 10px 20px 10px;
     display: flex;
-    flex: 1;
+    flex-direction: column;
     gap: 10px;
 }
 .title-container{
-    border-bottom: 1px solid rgba(0,0,0, 0.16);
-    height: fit-content;
+    display: flex;
+    flex-direction: row;
     width: 100%;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+.any-contaier-row{
+    display: flex;
+    flex-direction: row;
+}
+.any-contaier-column{
     display: flex;
     flex-direction: column;
-    }
-.main-field-container{
-    display: grid;
-    grid-template-columns: repeat(2, 0.5fr);
-    gap: 10px;
 }
+.back-arrow-box{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 36px;
+    width: 36px;
+    border-radius: 6px;
+
+}
+.status-box{
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+    background-color: #3989d1;
+    padding: 2px 8px;
+    height: 22px;
+    gap: 3px;
+    border-radius: 5px;
+    width: fit-content;
+}
+.status-title{  
+    font-size: 0.75em;
+    font-weight: 500;
+    color: white;
+}
+.back-arrow-svg{
+    color : black;
+}
+
+.company-title{
+    font-size: 1.5em;
+}
+.tag-box{
+    padding: 3px 8px;
+    display: flex;
+    height: fit-content;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+
+}   
+.add-tag-box{
+
+    display: flex;
+    align-items: center;
+    height: 25px;
+    width: 25px;
+    justify-content: center;
+    border-radius: 6px;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+}
+.changeable-icon{
+    color: rgb(94, 94, 94);
+}
+.transparent-box{
+    padding: 5px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+}
+.transparent-box-title{
+    font-size: 1em;
+    cursor: default;
+    user-select: none;
+    
+}
+.page-selector-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    width: 100%;
+    height: 36px;
+    background-color: #edf2f7;
+    border-radius: 10px;
+    margin-top: 20px;
+    padding: 4px;
+    gap: 5px;
+}
+.page-item{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+}
+.page-item-selected{
+    background-color: white;
+}
+.back-arrow-box:hover, .add-tag-box:hover, .transparent-box:hover{
+    background-color: #ebf8ff;
+    transition: background-color 0.15s ease;
+}
+.back-arrow-box:hover .back-arrow-svg, .add-tag-box:hover .changeable-icon, .transparent-box:hover .changeable-icon, .transparent-box:hover .transparent-box-title{
+    color: #437db4;
+    transition: color 0.15s ease;
+}
+
 </style>

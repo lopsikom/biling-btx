@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@bitrix24/b24ui-nuxt', '@bitrix24/b24jssdk-nuxt'],
-  ssr: false,
+  modules: ['@nuxt/eslint', 'reka-ui/nuxt', '@bitrix24/b24ui-nuxt', '@nuxtjs/google-fonts', '@bitrix24/b24jssdk-nuxt', '@pinia/nuxt'],
   devtools: {
     enabled: false
   },
@@ -18,11 +17,6 @@ export default defineNuxtConfig({
   typescript: {
     tsConfig: {
       compilerOptions: {
-        paths : {
-        "@models": [
-        "../app/services/models"
-        ]
-        }
       }
     }
   },
@@ -41,6 +35,14 @@ export default defineNuxtConfig({
       // Fix: "Blocked request. This host is not allowed" when using tunnels like ngrok
       allowedHosts: ['ib.minta365.ru']
     }
+  },
+
+  googleFonts:{
+    families : {
+      'Public Sans' : [300, 400, 500, 600, 700],
+      Inter : [400, 500, 600, 700]
+    },
+    display: 'swap'
   },
 
 

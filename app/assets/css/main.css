@@ -1,18 +1,20 @@
 @import "tailwindcss";
-/* @import "@bitrix24/b24ui-nuxt"; */
+/* @import "@bitrix24/b24ui-nuxt";  */
 
-/**
- * Custom bg
- */
-/* @layer base {
-  .light, :root {
-    --air-theme-bg-color: #ffffff;
-  }
 
-  .dark {
-    --air-theme-bg-color: #000000;
-  }
+ /* body{
+  color: #000000;
+ }
+  bo
+
+:root{
+  --ui-color-text-primary: #000000;
 } */
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+}
+
  @theme {
   --font-sans: 'Public', sans-serif;
  }
