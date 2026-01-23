@@ -148,7 +148,7 @@ function saveEditCompany(){
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Должность</span>
-                    <span>{{ value.POST }}</span>
+                    <span>{{ value.POST ?? "Не указано" }}</span>
                 </div>
                 <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
                     <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая"]}} почта</span>

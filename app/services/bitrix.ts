@@ -30,7 +30,8 @@ export class Bitrix {
                 "LAST_NAME",
                 "SECOND_NAME",
                 "PHONE",
-                "EMAIL"
+                "EMAIL",
+                "POST"
             ]
         })).getData().result as IContact[];
     }

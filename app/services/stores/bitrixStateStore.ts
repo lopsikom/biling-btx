@@ -40,10 +40,19 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     }
     function getShortName(item : IUser | IContact | undefined) : string{
         if(!item) return '';
-        const name = item.NAME ?? '';
-        const last_name = item.LAST_NAME ?? '';
-        const second_name = item.SECOND_NAME ?? '';
-        return `${last_name} ${name[0]}.${second_name[0]}.`;
+        const last_name = item.LAST_NAME;
+        if(last_name){
+            const shortTitle = [
+            item.NAME,
+            item.SECOND_NAME
+            ].filter(Boolean)
+            .map(i => i![0])
+            .join('.');
+            return `${last_name} ${shortTitle}.`;
+        }
+        else{
+            return `${item.NAME} ${item.SECOND_NAME}`
+        }
     }
     function lastActivityCompany(){
          if(!bitrixCompany.value ) return;
