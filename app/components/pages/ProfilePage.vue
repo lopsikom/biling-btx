@@ -3,9 +3,10 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import UploadIcon from '@bitrix24/b24icons-vue/actions/UploadIcon'
 import { storeToRefs } from 'pinia'
-import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum } from '~/services/models'
+import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum, type DiffAdress } from '~/services/models'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
+import { diffArray, diffObject } from '~/services/utils/utils'
 
 const menuStore = useMenuStore();
 const bitrixStateStore = useBitrixStateStore();
@@ -23,22 +24,81 @@ const editContacts = ref<IContact[]>();
 const editAddress = ref<IAddress[]>();
 
 
+function diffAdress(oldArray : IAddress[],newArray : IAddress[]) : DiffAdress[]{
+    const diff : DiffAdress[] = [];
+        newArray.forEach((n , i) => {
+        const diffobj = diffObject(oldArray[i],n);
+        if(diffobj?.ADDRESS_2){
+            if(diffobj.ADDRESS_2 === bitrixStateStore.addressesNormalized[i]?.addres){
+                delete diffobj.ADDRESS_2;
+            }
+        }
+        if(Object.keys(diffobj!).length > 0) {
+            diff.push({
+                TYPE_ID : n.TYPE_ID,
+                ENTITY_ID : n.ENTITY_ID,
+                ENTITY_TYPE_ID : n.ENTITY_TYPE_ID,
+                data : diffobj!
+            })
+        }
+    })
+    return diff;
+}
+
 function openEditCompany(){
-    if(!bitrixCompany.value || !companyRequisite.value || !companyAddress.value) return
-    editCompany.value = {...bitrixCompany.value};
-    editRequisite.value = [...companyRequisite.value];
-    editAddress.value = [...companyAddress.value];
+    editCompany.value = {...bitrixCompany.value!};
+    editRequisite.value = structuredClone(toRaw(companyRequisite.value));
+    editAddress.value = structuredClone(toRaw(companyAddress.value));
+    editAddress.value?.forEach((a, i) => {
+       if(!a.ADDRESS_2 || a.ADDRESS_2.trim() == "") a.ADDRESS_2 = bitrixStateStore.addressesNormalized[i]?.addres
+    });
     openEditMode.value.companyInfo = true;
     openEditSelector.value.companyInfo = false;
 }
 
 function saveEditCompany(){
-    if(!editCompany.value || !editRequisite.value || !editAddress.value) return; 
-    bitrixCompany.value = {...editCompany.value};
-    companyRequisite.value = [...editRequisite.value];
-    companyAddress.value = [...editAddress.value]
+    const diffComp = diffObject(bitrixCompany.value, editCompany.value);
+    const diffReq = diffArray(companyRequisite.value!, editRequisite.value!, "ID");
+    const diffAdresses = diffAdress(companyAddress.value!, editAddress.value!)
+    if(Object.keys(diffComp!).length > 0){
+        console.log(diffComp);
+        try{
+            bitrixStateStore.bitrixClient?.companyUpdate(diffComp!)
+        }catch(e){
+            console.log(e)
+        }
+        bitrixCompany.value = {...editCompany.value!};
+    }
+    if(diffReq.length > 0){
+        console.log(diffReq);
+        diffReq.forEach(r => {
+            try{
+                bitrixStateStore.bitrixClient?.updateRequisite(r.data, r.id)
+            }catch(e){
+                console.log(e)
+            }
+        })
+        companyRequisite.value = structuredClone(toRaw(editRequisite.value));
+    }
+    if(diffAdresses.length > 0){
+        console.log(diffAdresses)
+        diffAdresses.forEach(a => {
+            try{
+                bitrixStateStore.bitrixClient?.updateAdress(a);
+            }catch(e){
+                console.log(e)
+            }
+        })
+        companyAddress.value = structuredClone(toRaw(editAddress.value));
+    }
     openEditMode.value.companyInfo = false;
-}
+} 
+
+// const isNotChangeCompany = computed(() =>{
+//     return JSON.stringify(bitrixCompany.value) !== JSON.stringify(editCompany.value) ||
+//     JSON.stringify(companyRequisite.value) !== JSON.stringify(editRequisite.value) ||
+//     JSON.stringify(companyContacts.value) !== JSON.stringify(editContacts.value) 
+// })
 
 
 
@@ -68,10 +128,10 @@ function saveEditCompany(){
                     <Cross25Icon class="w-6 h-6 hover-item"/>
                     <span class="hover-item select-none text-sm" @click="() => openEditMode.companyInfo = false">Отменить</span>
                 </div>
-                <div class="save-btn items-center flex py-1 px-2 gap-1" @click="saveEditCompany">
+                <button class="save-btn items-center flex py-1 px-2 gap-1"  @click="saveEditCompany">
                     <UploadIcon class="w-5.5 h-5.5 text-slate-50" />
                     <span class="select-none text-sm text-slate-50">Сохранить</span>
-                </div>
+                </button>
             </div>
         </div>
     </div>
@@ -151,11 +211,11 @@ function saveEditCompany(){
                     <span>{{ value.POST ?? "Не указано" }}</span>
                 </div>
                 <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
-                    <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая"]}} почта</span>
+                    <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая почта"]}}</span>
                     <span>{{ email.VALUE }}</span>
                 </div>
                 <div class="flex flex-col gap-1" v-for="(phone, index2 ) in value.PHONE" :key="index2">
-                    <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый"}} телефон</span>
+                    <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый телефон"}}</span>
                     <span>{{ phone.VALUE }}</span>
                 </div>
             </div>

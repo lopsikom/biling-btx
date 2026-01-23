@@ -72,6 +72,7 @@ export const mockCompany : ICompnany = {
 };
 export const mockRequisite: IRequisite[] = [
     {
+      ID : 1,
   ENTITY_TYPE_ID: 4,
   ENTITY_ID: 1,
   PRESET_ID: 1,

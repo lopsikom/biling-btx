@@ -101,6 +101,7 @@ export interface ICompnany {
   USER_FIELDS? : IField[]
 }
 export interface IRequisite{
+    ID : number,
     ENTITY_TYPE_ID : number,
     ENTITY_ID : number,
     PRESET_ID : number,

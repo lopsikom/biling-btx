@@ -1,5 +1,5 @@
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAddress, IAddresType, ICompnany, IContact, IField, IRequisite, IUser, IUserField } from '~/services/models'
+import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IField, IRequisite, IUser, IUserField } from '~/services/models'
 
 export class Bitrix {
     public bitrixFrame : B24Frame
@@ -56,15 +56,37 @@ export class Bitrix {
             }
         })).getData().result as IAddress[]
     }
-    async companyUpdate(data : any){
-       return (await this.bitrixFrame.callMethod("crm.company.update", {
-            "id" : this.bitrixFrame.placement.options.ID,
-            "fields" : data
-        })).getData().result;
-    }
     async getAddresTypes() : Promise<IAddresType[]>{
         return (await this.bitrixFrame.callMethod("crm.enum.addresstype")).getData().result as IAddresType[]
     }
+    async companyUpdate(data : Partial<ICompnany>, id? : number){
+       return (await this.bitrixFrame.callMethod("crm.company.update", {
+            id : id ?? this.bitrixFrame.placement.options.ID,
+            fields : data
+        })).getData();
+    }
+    async updateAdress(data : DiffAdress){
+        return (await this.bitrixFrame.callMethod("crm.address.update", {
+            fields: {
+                TYPE_ID : data.TYPE_ID,
+                ENTITY_TYPE_ID : data.ENTITY_TYPE_ID,
+                ENTITY_ID : data.ENTITY_ID,
+                ADDRESS_1 : data.data.ADDRESS_1,
+                ADDRESS_2 : data.data.ADDRESS_2,
+                CITY : data.data.CITY,
+                POSTAL_CODE : data.data.POSTAL_CODE,
+                REGION : data.data.REGION,
+                PROVINCE : data.data.PROVINCE,
+                COUNTRY : data.data.COUNTRY
+            }
+        })).getData();
+    }
+    async updateRequisite(data : Partial<IRequisite>, id? : number | string){
+        return (await this.bitrixFrame.callMethod("crm.requisite.update", {
+            id : id,
+            fields : data
+        })).getData();
+    } 
     
 }
 
