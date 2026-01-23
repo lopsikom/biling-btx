@@ -38,6 +38,7 @@ export class Bitrix {
     async companyRequisite(id? : number) : Promise<IRequisite[]> {
         return (await this.bitrixFrame.callMethod("crm.requisite.list", {
             filter : {
+                ENTITY_TYPE_ID : 4,
                 ENTITY_ID : id ?? this.bitrixFrame.placement.options.ID
             }
         })).getData().result as IRequisite[];
