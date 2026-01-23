@@ -44,7 +44,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.companyRequisite = await bitrix.companyRequisite();
         bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
         bitrixStateStore.companyAddress = await bitrix.companyAdress();
-        bitrixStateStore.companyAssignUser = await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID);
+        bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
         return {bitrix, Company}
     }catch(e){
         console.error(e)

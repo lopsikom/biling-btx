@@ -41,10 +41,10 @@ export class Bitrix {
             }
         })).getData().result as IRequisite[];
     }
-    async getUser(id : number) : Promise<IUser> {
+    async getUser(id : number) : Promise<IUser[]> {
         return (await this.bitrixFrame.callMethod("user.get", {
             ID : id
-        })).getData().result as IUser 
+        })).getData().result as IUser[]
     }
     async companyAdress(id? : number) : Promise<IAddress[]>{
         return (await this.bitrixFrame.callMethod("crm.address.list", {
