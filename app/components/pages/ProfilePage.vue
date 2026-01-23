@@ -3,48 +3,40 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import UploadIcon from '@bitrix24/b24icons-vue/actions/UploadIcon'
 import { storeToRefs } from 'pinia'
+import type { IAddress, IRequisite, IUser, ICompnany, IContact } from '~/services/models'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 
-const menuStore = useMenuStore()
+const menuStore = useMenuStore();
+const bitrixStateStore = useBitrixStateStore();
 
 const { openEditMode, openEditSelector} = storeToRefs(menuStore)
+const {bitrixCompany, companyAssignUser, companyContacts, companyRequisite, companyAddress} = storeToRefs(bitrixStateStore)
 
 
 
-type companyType = {
-    name : string,
-    inn : string,
-    orgrn : string,
-    adres : string,
-    adren_mail : string
-}
 
-let company = reactive({
-    name : "ООО 'Техносфера'",
-    inn : "7701234567",
-    orgrn : '1234567890123',
-    adres : 'г. Москва, ул. Примерная, д. 1',
-    adren_mail : '127015, г. Москва, ул. Новодмитровская, д. 5А, стр. 4'
-} as companyType)
 
-const editCompany = ref<companyType>({
-    name : "",
-    inn : "",
-    orgrn : "",
-    adres : "",
-    adren_mail : ""
-})
+const editCompany = ref<ICompnany>();
+const editRequisite = ref<IRequisite[]>();
+const editContacts = ref<IContact[]>();
+const editAddress = ref<IAddress[]>();
 
 
 function openEditCompany(){
+    if(!bitrixCompany.value || !companyRequisite.value || !companyAddress.value) return
+    editCompany.value = {...bitrixCompany.value};
+    editRequisite.value = [...companyRequisite.value];
+    editAddress.value = [...companyAddress.value];
     openEditMode.value.companyInfo = true;
     openEditSelector.value.companyInfo = false;
-    editCompany.value = {...company};
 }
 
 function saveEditCompany(){
-    if(!editCompany.value) return;
-    company = {...editCompany.value};
+    if(!editCompany.value || !editRequisite.value || !editAddress.value) return; 
+    bitrixCompany.value = {...editCompany.value};
+    companyRequisite.value = [...editRequisite.value];
+    companyAddress.value = [...editAddress.value]
     openEditMode.value.companyInfo = false;
 }
 
@@ -86,28 +78,24 @@ function saveEditCompany(){
     <div class="company-info-grid">
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">Юридическое название</span>
-            <span v-if="!openEditMode.companyInfo">{{ company.name }}</span>
-            <InputBox v-else v-model="editCompany.name" ::rows="1"/>
+            <span v-if="!openEditMode.companyInfo">{{ bitrixCompany?.TITLE }}</span>
+            <InputBox v-else-if="editCompany" v-model="editCompany.TITLE" ::rows="1"/>
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
-            <span v-if="!openEditMode.companyInfo">{{ company.inn }}</span>
-            <InputBox v-else type="text" v-model="editCompany.inn" :rows="1" class="edit-input"/>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN ?? 'Отсутсвует'}}</span>
+            <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1" class="edit-input"/>
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
-            <span v-if="!openEditMode.companyInfo">{{ company.orgrn }}</span>
-            <InputBox v-else type="text" v-model="editCompany.orgrn" :rows="1" class="edit-input"/>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN ?? 'Отсутсвует' }}</span>
+            <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" class="edit-input"/>
         </div>
-        <div class="flex flex-col gap-1">
-            <span class="text-gray-500 text-sm">Юридический адрес</span>
-            <span v-if="!openEditMode.companyInfo">{{ company.adres }}</span>
-            <InputBox v-else type="text" v-model="editCompany.adres" :rows="1" class="edit-input"/>
-        </div>
-        <div class="flex flex-col gap-1">
-            <span class="text-gray-500 text-sm">Адрес почтовой корреспонденции</span>
-            <p v-if="!openEditMode.companyInfo">{{ company.adren_mail }}</p>
-            <InputBox v-else type="text" v-model="editCompany.adren_mail" :rows="2"  style="width: 201%;"/>
+        <!-- Продумать изменение адрессов -->
+        <div class="flex flex-col gap-1" v-for="(value, index) in bitrixStateStore.addressesNormalized" :key="index"> 
+            <span class="text-gray-500 text-sm">{{ value.title }}</span>
+            <span v-if="!openEditMode.companyInfo">{{ value.addres }}</span>
+            <InputBox v-else-if="editAddress" type="text" v-model="editAddress[index]!.ADDRESS_2" :rows="1" class="edit-input"/>
         </div>
     </div>
     <!-- Сделать увеличение инпутов -->
@@ -131,7 +119,7 @@ function saveEditCompany(){
         </div>
     </div>
     <div class="flex flex-col px-5 mt-5 gap-5">
-        <div class="flex flex-col gap-5">
+        <!-- <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts">
             <p class="font-semibold">Администрация</p>
             <div class="contacts-info-grid">
                 <div class="flex flex-col gap-1">
@@ -151,26 +139,24 @@ function saveEditCompany(){
                     <span>+7 (495) 123-45-67</span>
                 </div>
             </div>
-            <div class="bg-gray-300 mt-3" style="width: 100%; height: 1px;"></div>
-        </div>
-        <div class="flex flex-col gap-5">
-            <p class="font-semibold">Бухгалтерия</p>
+        </div> -->
+        <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts" :key="index">
             <div class="contacts-info-grid">
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">ФИО</span>
-                    <span>Иванов Иван Иванович</span>
+                    <span>{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Email</span>
-                    <span>accounting@technosfera.ru</span>
+                    <span>{{ value.EMAIL }}</span>
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Должность</span>
-                    <span>Главный бухгалтер</span>
+                    <span>{{ value.POST }}</span>
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Телефон</span>
-                    <span>+7 (495) 123-45-68</span>
+                    <span>{{ value.PHONE }}</span>
                 </div>
             </div>
         </div>

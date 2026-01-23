@@ -10,6 +10,8 @@ const useMenuStore = defineStore('menu', () => {
         companyInfo : false,
         userInfo : false
     })
+
+    const fetchDataLoad = ref<boolean>(true)
     
     function closeAllMenu(){
         const keys = Object.keys(openEditSelector)
@@ -21,6 +23,7 @@ const useMenuStore = defineStore('menu', () => {
     return{
         openEditMode,
         openEditSelector,
+        fetchDataLoad,
         closeAllMenu
     }
 

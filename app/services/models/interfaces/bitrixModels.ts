@@ -36,8 +36,8 @@ export interface ICompnany {
   COMPANY_TYPE: string;
   TITLE: string;
 
-  LOGO: string | null;
-  LEAD_ID: number | null;
+  LOGO: string | undefined;
+  LEAD_ID: number | undefined;
 
   HAS_PHONE: 'Y' | 'N';
   HAS_EMAIL: 'Y' | 'N';
@@ -47,14 +47,14 @@ export interface ICompnany {
   CREATED_BY_ID: number;
   MODIFY_BY_ID: number;
 
-  BANKING_DETAILS: string | null;
-  INDUSTRY: string | null;
+  BANKING_DETAILS: string | undefined;
+  INDUSTRY: string | undefined;
 
-  REVENUE: number | null;
-  CURRENCY_ID: string | null;
-  EMPLOYEES: string | null;
+  REVENUE: number | undefined;
+  CURRENCY_ID: string | undefined;
+  EMPLOYEES: string | undefined;
 
-  COMMENTS: string | null;
+  COMMENTS: string | undefined;
 
   DATE_CREATE: string;
   DATE_MODIFY: string; 
@@ -62,41 +62,41 @@ export interface ICompnany {
   OPENED: 'Y' | 'N';
   IS_MY_COMPANY: 'Y' | 'N';
 
-  ORIGINATOR_ID: string | null;
-  ORIGIN_ID: string | null;
-  ORIGIN_VERSION: string | null;
+  ORIGINATOR_ID: string | undefined;
+  ORIGIN_ID: string | undefined;
+  ORIGIN_VERSION: string | undefined;
 
-  ADDRESS: string | null;
-  ADDRESS_2: string | null;
-  ADDRESS_CITY: string | null;
-  ADDRESS_POSTAL_CODE: string | null;
-  ADDRESS_REGION: string | null;
-  ADDRESS_PROVINCE: string | null;
-  ADDRESS_COUNTRY: string | null;
-  ADDRESS_COUNTRY_CODE: string | null;
-  ADDRESS_LOC_ADDR_ID: string | null;
+  ADDRESS: string | undefined;
+  ADDRESS_2: string | undefined;
+  ADDRESS_CITY: string | undefined;
+  ADDRESS_POSTAL_CODE: string | undefined;
+  ADDRESS_REGION: string | undefined;
+  ADDRESS_PROVINCE: string | undefined;
+  ADDRESS_COUNTRY: string | undefined;
+  ADDRESS_COUNTRY_CODE: string | undefined;
+  ADDRESS_LOC_ADDR_ID: string | undefined;
 
-  ADDRESS_LEGAL: string | null;
+  ADDRESS_LEGAL: string | undefined;
 
-  REG_ADDRESS: string | null;
-  REG_ADDRESS_2: string | null;
-  REG_ADDRESS_CITY: string | null;
-  REG_ADDRESS_POSTAL_CODE: string | null;
-  REG_ADDRESS_REGION: string | null;
-  REG_ADDRESS_PROVINCE: string | null;
-  REG_ADDRESS_COUNTRY: string | null;
-  REG_ADDRESS_COUNTRY_CODE: string | null;
-  REG_ADDRESS_LOC_ADDR_ID: string | null;
+  REG_ADDRESS: string | undefined;
+  REG_ADDRESS_2: string | undefined;
+  REG_ADDRESS_CITY: string | undefined;
+  REG_ADDRESS_POSTAL_CODE: string | undefined;
+  REG_ADDRESS_REGION: string | undefined;
+  REG_ADDRESS_PROVINCE: string | undefined;
+  REG_ADDRESS_COUNTRY: string | undefined;
+  REG_ADDRESS_COUNTRY_CODE: string | undefined;
+  REG_ADDRESS_LOC_ADDR_ID: string | undefined;
 
-  UTM_SOURCE: string | null;
-  UTM_MEDIUM: string | null;
-  UTM_CAMPAIGN: string | null;
-  UTM_CONTENT: string | null;
-  UTM_TERM: string | null;
+  UTM_SOURCE: string | undefined;
+  UTM_MEDIUM: string | undefined;
+  UTM_CAMPAIGN: string | undefined;
+  UTM_CONTENT: string | undefined;
+  UTM_TERM: string | undefined;
 
-  LAST_ACTIVITY_BY: number | null;
-  LAST_ACTIVITY_TIME: string | null;
-  LAST_COMMUNICATION_TIME: string | null;
+  LAST_ACTIVITY_BY: number;
+  LAST_ACTIVITY_TIME: string;
+  LAST_COMMUNICATION_TIME: string | undefined;
 
   USER_FIELDS? : IField[]
 }
@@ -132,13 +132,30 @@ export interface IContact{
 }
 export interface IUser{
     ID : number,
-    NAME : string,
-    LAST_NAME : string,
-    SECOND_NAME : string,
-    EMAIL : string,
-    LAST_LOGIN : string,
-    IS_ONLINE : "Y" | "N",
-    WORK_PHONE : string,
-    WORK_POSITION : string,
-    ACTIVE : boolean
+    NAME? : string,
+    LAST_NAME? : string,
+    SECOND_NAME? : string,
+    EMAIL? : string,
+    LAST_LOGIN? : string,
+    IS_ONLINE? : "Y" | "N",
+    WORK_PHONE? : string,
+    WORK_POSITION? : string,
+    ACTIVE? : boolean
+}
+export interface IAddress{
+    TYPE_ID : number,
+    ENTITY_TYPE_ID : number,
+    ENTITY_ID : number,
+    ADDRESS_1? : string,
+    ADDRESS_2? : string,
+    CITY? : string,
+    POSTAL_CODE? : number
+    REGION? : string,
+    PROVINCE? : string,
+    COUNTRY? : string
+}
+
+export interface IAddresType {
+    ID : number,
+    NAME : string
 }

@@ -2,6 +2,10 @@
 import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
 import MoreIcon from '@bitrix24/b24icons-vue/actions/MoreIcon'
 import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore';
+
+const bitrixStateStore = useBitrixStateStore()
+
 
 </script>
 <template>
@@ -21,8 +25,8 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
                 <span class="font-semibold select-none">Дата создания</span>
             </div>
             <div class="flex flex-col">
-                <span class="text-2xl cursor-default">2024-01-15</span>
-                <span class="text-gray-500 text-sm cursor-default">Последняя активность:<br>2 часа назад</span>
+                <span class="text-2xl cursor-default">{{ bitrixStateStore.getDateCreate() }}</span>
+                <span class="text-gray-500 text-sm cursor-default">Последняя активность:<br>{{ bitrixStateStore.lastActivityCompany() }}</span>
             </div>
         </div>
         <div class="main-info-item any-white-container blue-hover">
@@ -30,8 +34,8 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
                 <span class="font-semibold select-none">Отвественный</span>
             </div>
             <div class="flex flex-col">
-                <span class="text-2xl cursor-default">Иванов И.И.</span>
-                <span class="text-gray-500 text-sm cursor-default">Менеджер по работе с клиентом</span>
+                <span class="text-2xl cursor-default">{{ bitrixStateStore.getShortName(bitrixStateStore.companyAssignUser) }}</span>
+                <span class="text-gray-500 text-sm cursor-default">{{ bitrixStateStore.companyAssignUser?.WORK_POSITION }}</span>
             </div>
         </div>
     </div>

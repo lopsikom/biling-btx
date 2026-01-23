@@ -21,6 +21,12 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    public : {
+      dev : process.env.DEV ?? false
+    }
+  },
+
   routeRules: {
     '/': { prerender: true }
   },

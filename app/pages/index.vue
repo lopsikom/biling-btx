@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ICompnany } from '~/services/models'
-import { Bitrix } from '~/services/bitrix'
+import initBitrix, { Bitrix } from '~/services/bitrix'
 import ArrowLeftSIcon from '@bitrix24/b24icons-vue/outline/ArrowLeftSIcon'
 import Plus30Icon from '@bitrix24/b24icons-vue/actions/Plus30Icon'
 import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
@@ -16,8 +16,12 @@ import EventsPage from '~/components/pages/eventsPage.vue'
 import FieldsPage from '~/components/pages/FieldsPage.vue'
 import { bilingPagesEnum } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockRequisite, mockUser } from '~/services/mock'
+import { Icon } from '@iconify/vue'
 
 const menuStore = useMenuStore()
+const bitrixStateStore = useBitrixStateStore()
 
 const pages = {
     [bilingPagesEnum.Main] : MainPage,
@@ -30,16 +34,42 @@ const pages = {
 const selectPage = ref<string>(bilingPagesEnum.Main);
 
 
-// const {data, pending, error} = await useAsyncData('bitrix', async () => {
-//     const frame = await useNuxtApp().$initializeB24Frame()
-//     const bitrix = new Bitrix(frame)
-//     const Company = await bitrix.companyInfo()
-//     debugger
-//     return {bitrix, Company}
-// })
+const {data, pending, error} = useAsyncData('bitrix', async () => {
+    menuStore.fetchDataLoad = true
+    try{
+        const bitrix = await initBitrix();
+        bitrixStateStore.bitrixClient = bitrix;
+        bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
+        bitrixStateStore.companyContacts = await bitrix.companyContacts();
+        bitrixStateStore.companyRequisite = await bitrix.companyRequisite();
+        bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
+        bitrixStateStore.companyAddress = await bitrix.companyAdress();
+        bitrixStateStore.companyAssignUser = await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID);
+        return {bitrix, Company}
+    }catch(e){
+        console.error(e)
+        if(useNuxtApp().$config.public.dev){
+            bitrixStateStore.bitrixCompany = mockCompany;
+            bitrixStateStore.companyRequisite = mockRequisite;
+            bitrixStateStore.companyContacts = mockContact;
+            bitrixStateStore.companyAssignUser = mockUser;
+            bitrixStateStore.addresTypes = mockAddressTypes;
+            bitrixStateStore.companyAddress = mockAddress;
+        }
+        return
+    }finally{
+        menuStore.fetchDataLoad = false;
+    }
+}, { server: false}
+)
 
-// const bitrix = computed(() => data.value?.bitrix)
-// const Company = computed(() => data.value?.Company)
+
+
+const Company = computed(() => bitrixStateStore.bitrixCompany)
+const Contacts = computed(() => bitrixStateStore.companyContacts)
+const Requisite = computed(() => bitrixStateStore.companyRequisite)
+const AssignUser = computed(() => bitrixStateStore.companyAssignUser)
+
 
 
 function switchPage(page : string){
@@ -56,7 +86,7 @@ function switchPage(page : string){
                 </div>
                 <div class="any-contaier-column" style="gap: 15px;">
                     <div class="any-contaier-row" style="gap: 10px">
-                        <p class="company-title">ООО "Техносфера"</p>
+                        <p class="company-title">{{ Company?.TITLE }}</p>
                         <div class="status-box">
                             <SuccessIcon class="w-4 h-4" style="color: white;" />
                             <p class="status-title select-none">Активна</p>
@@ -101,6 +131,9 @@ function switchPage(page : string){
             <component :is="pages[selectPage]"/>
         </div>
     </div>
+    <div class="load-container" v-if="menuStore.fetchDataLoad">
+        <Icon icon="line-md:loading-loop" width="120"/>
+    </div>
 </template>
 <style scoped>
 .app-container{
@@ -111,6 +144,19 @@ function switchPage(page : string){
     flex-direction: column;
     padding: 50px 100px;
     background-color: #f8fbfc;
+}
+
+.load-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.98);
+  z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .billing-container{
