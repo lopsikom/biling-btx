@@ -23,7 +23,15 @@ export class Bitrix {
         return ( await this.bitrixFrame.callMethod("crm.contact.list", {
             filter : {
                 COMPANY_ID : id ?? this.bitrixFrame.placement.options.ID
-            }
+            },
+            select : [
+                "ID",
+                "NAME",
+                "LAST_NAME",
+                "SECOND_NAME",
+                "PHONE",
+                "EMAIL"
+            ]
         })).getData().result as IContact[];
     }
     async companyRequisite(id? : number) : Promise<IRequisite[]> {
@@ -34,14 +42,14 @@ export class Bitrix {
         })).getData().result as IRequisite[];
     }
     async getUser(id : number) : Promise<IUser> {
-        return (await this.bitrixFrame.callMethod("", {
+        return (await this.bitrixFrame.callMethod("user.get", {
             ID : id
         })).getData().result as IUser 
     }
     async companyAdress(id? : number) : Promise<IAddress[]>{
-        return (await this.bitrixFrame.callMethod("crm.addres.list", {
+        return (await this.bitrixFrame.callMethod("crm.address.list", {
             filter : {
-                ENTITY_TYPE_ID : 8,
+                ENTITY_TYPE_ID : 4,
                 ENTITY_ID :id ?? this.bitrixFrame.placement.options.ID
             }
         })).getData().result as IAddress[]
@@ -53,7 +61,7 @@ export class Bitrix {
         })).getData().result;
     }
     async getAddresTypes() : Promise<IAddresType[]>{
-        return (await this.bitrixFrame.callMethod("crm.enums.addresstype")).getData().result as IAddresType[]
+        return (await this.bitrixFrame.callMethod("crm.enum.addresstype")).getData().result as IAddresType[]
     }
     
 }

@@ -98,8 +98,34 @@ export const mockContact: IContact[] = [
   DATE_CREATE: "2025-01-12T10:00:00",
   ASSIGNED_BY_ID: 10,
   CREATED_BY_ID: 10,
-  PHONE: "+7 999 123-45-67",
-  EMAIL: "ivan.petrov@example.com"
+  PHONE: [
+    {
+    ID : 1,
+    TYPE_ID : "PHONE",
+    VALUE_TYPE : "WORK",
+    VALUE : "+79991234567"
+  },
+  {
+    ID : 2,
+    TYPE_ID : "PHONE",
+    VALUE_TYPE : "HOME",
+    VALUE : "+79993234567"
+  }
+  ],
+  EMAIL: [
+        {
+    ID : 1,
+    TYPE_ID : "EMAIL",
+    VALUE_TYPE : "WORK",
+    VALUE : "iVAN.petrov@yandex.com"
+  },
+  {
+    ID : 2,
+    TYPE_ID : "EMAIL",
+    VALUE_TYPE : "HOME",
+    VALUE : "arbuzov.petrov@example.com"
+  }
+  ]
 },
 {
       ID: 12,
@@ -114,8 +140,34 @@ export const mockContact: IContact[] = [
   DATE_CREATE: "2025-01-12T10:00:00",
   ASSIGNED_BY_ID: 10,
   CREATED_BY_ID: 10,
-  PHONE: "+7 234 543-45-67",
-  EMAIL: "arbuz.petrov@example.com"
+ PHONE: [
+    {
+    ID : 1,
+    TYPE_ID : "PHONE",
+    VALUE_TYPE : "WORK",
+    VALUE : "+79991234567"
+  },
+  {
+    ID : 2,
+    TYPE_ID : "PHONE",
+    VALUE_TYPE : "HOME",
+    VALUE : "+79993234567"
+  }
+  ],
+  EMAIL: [
+        {
+    ID : 1,
+    TYPE_ID : "EMAIL",
+    VALUE_TYPE : "WORK",
+    VALUE : "iVAN.petrov@yandex.com"
+  },
+  {
+    ID : 2,
+    TYPE_ID : "EMAIL",
+    VALUE_TYPE : "HOME",
+    VALUE : "arbuzov.petrov@example.com"
+  }
+  ]
 }
 ]
 export const mockUser: IUser = {

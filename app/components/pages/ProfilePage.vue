@@ -3,7 +3,7 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import UploadIcon from '@bitrix24/b24icons-vue/actions/UploadIcon'
 import { storeToRefs } from 'pinia'
-import type { IAddress, IRequisite, IUser, ICompnany, IContact } from '~/services/models'
+import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum } from '~/services/models'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 
@@ -147,16 +147,16 @@ function saveEditCompany(){
                     <span>{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Email</span>
-                    <span>{{ value.EMAIL }}</span>
-                </div>
-                <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Должность</span>
                     <span>{{ value.POST }}</span>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Телефон</span>
-                    <span>{{ value.PHONE }}</span>
+                <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
+                    <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая"]}} почта</span>
+                    <span>{{ email.VALUE }}</span>
+                </div>
+                <div class="flex flex-col gap-1" v-for="(phone, index2 ) in value.PHONE" :key="index2">
+                    <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый"}} телефон</span>
+                    <span>{{ phone.VALUE }}</span>
                 </div>
             </div>
         </div>

@@ -127,8 +127,18 @@ export interface IContact{
     DATE_CREATE? : string
     ASSIGNED_BY_ID? : number,
     CREATED_BY_ID? : number,
-    PHONE? : string,
-    EMAIL : string
+    PHONE? : Array<{
+        ID : number,
+        VALUE_TYPE : string,
+        VALUE : string,
+        TYPE_ID : string
+    }>,
+    EMAIL? : Array<{
+        ID : number,
+        VALUE_TYPE : string,
+        VALUE : string,
+        TYPE_ID : string
+    }>
 }
 export interface IUser{
     ID : number,
