@@ -88,10 +88,10 @@ export class Bitrix {
         })).getData();
     } 
     async updateContact(data : Partial<IContact>, id : number | string){
-        return (await this.bitrixFrame.callMethod("crm.contact.update"),{
+        return (await this.bitrixFrame.callMethod("crm.contact.update", {
             id : id,
             fields : data
-        })
+        })).getData();
     }
     
 }
