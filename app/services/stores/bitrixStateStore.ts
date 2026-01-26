@@ -1,9 +1,10 @@
 import { Bitrix } from "../bitrix"
+import type { B24Frame } from '@bitrix24/b24jssdk'
 import type { IContact, IRequisite, IUser, ICompnany, IAddresType, IAddress, AddressType } from "../models"
 
 const useBitrixStateStore = defineStore('bitrixState', () => {
 
-    const bitrixClient = ref<Bitrix>();
+    let bitrixClient : Bitrix | undefined = undefined;
 
     const bitrixCompany = ref<ICompnany>();
     const companyContacts = ref<IContact[]>();
@@ -67,9 +68,15 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
             return `${date[2]}-${date[1]}-${date[0]}`
         }
     }
+
+    function setBitrixClient(bitrix : Bitrix){
+        bitrixClient = bitrix
+    }
+    function getBitrixClient(){
+        return bitrixClient
+    }
     
     return {
-        bitrixClient,
         bitrixCompany,
         companyContacts,
         companyAssignUser,
@@ -79,7 +86,9 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         addressesNormalized,
         getDateCreate,
         getShortName,
-        lastActivityCompany
+        lastActivityCompany,
+        getBitrixClient,
+        setBitrixClient
     };
 
 })

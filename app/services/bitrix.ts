@@ -90,8 +90,10 @@ export class Bitrix {
     
 }
 
-export default async function initBitrix() : Promise<Bitrix>{
-    const {$initializeB24Frame} = useNuxtApp()
-    const frame = await $initializeB24Frame()
+export default async function initBitrix(frame? : B24Frame) : Promise<Bitrix>{
+    if(!frame) {
+        const {$initializeB24Frame} = useNuxtApp()
+        frame = await $initializeB24Frame()
+    }
     return new Bitrix(frame)
 }

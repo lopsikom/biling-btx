@@ -38,7 +38,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
     menuStore.fetchDataLoad = true
     try{
         const bitrix = await initBitrix();
-        bitrixStateStore.bitrixClient = bitrix;
+        bitrixStateStore.setBitrixClient(bitrix);
         bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
         bitrixStateStore.companyContacts = await bitrix.companyContacts();
         bitrixStateStore.companyRequisite = await bitrix.companyRequisite();

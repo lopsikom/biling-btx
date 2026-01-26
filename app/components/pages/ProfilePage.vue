@@ -3,6 +3,8 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import UploadIcon from '@bitrix24/b24icons-vue/actions/UploadIcon'
 import { storeToRefs } from 'pinia'
+import type { Bitrix } from '~/services/bitrix'
+import initBitrix from '~/services/bitrix'
 import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum, type DiffAdress } from '~/services/models'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
@@ -14,8 +16,17 @@ const bitrixStateStore = useBitrixStateStore();
 const { openEditMode, openEditSelector} = storeToRefs(menuStore)
 const {bitrixCompany, companyAssignUser, companyContacts, companyRequisite, companyAddress} = storeToRefs(bitrixStateStore)
 
+let bitrixClient : Bitrix | undefined = undefined
 
-
+onMounted(async () => {
+    bitrixClient = bitrixStateStore.getBitrixClient();
+    if(!bitrixClient){
+        const {$initializeB24Frame} = useNuxtApp();
+        const frame = await $initializeB24Frame();
+        bitrixClient = await initBitrix(frame);
+        bitrixStateStore.setBitrixClient(bitrixClient);
+    }
+});
 
 
 const editCompany = ref<ICompnany>();
@@ -63,7 +74,7 @@ function saveEditCompany(){
     if(Object.keys(diffComp!).length > 0){
         console.log(diffComp);
         try{
-            bitrixStateStore.bitrixClient?.companyUpdate(diffComp!)
+            bitrixClient?.companyUpdate(diffComp!)
         }catch(e){
             console.log(e)
         }
@@ -73,7 +84,7 @@ function saveEditCompany(){
         console.log(diffReq);
         diffReq.forEach(r => {
             try{
-                bitrixStateStore.bitrixClient?.updateRequisite(r.data, r.id)
+                bitrixClient?.updateRequisite(r.data, r.id)
             }catch(e){
                 console.log(e)
             }
@@ -84,7 +95,7 @@ function saveEditCompany(){
         console.log(diffAdresses)
         diffAdresses.forEach(a => {
             try{
-                bitrixStateStore.bitrixClient?.updateAdress(a);
+                bitrixClient?.updateAdress(a);
             }catch(e){
                 console.log(e)
             }
