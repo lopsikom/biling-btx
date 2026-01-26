@@ -36,6 +36,7 @@ const bitrixStateStore = useBitrixStateStore()
             <div class="flex flex-col" v-if="bitrixStateStore.companyAssignUser">
                 <span class="text-2xl cursor-default">{{ bitrixStateStore.getShortName(bitrixStateStore.companyAssignUser) }}</span>
                 <span class="text-gray-500 text-sm cursor-default">{{ bitrixStateStore.companyAssignUser?.WORK_POSITION }}</span>
+                <span class="text-gray-500 text-sm cursor-default" style="margin-top: auto;">Нажмите для просмотра контактов</span>
             </div>
             <div class="flex flex-col" v-else>
                 <span class="text-3xl cursor-default">Отсутсвует</span>

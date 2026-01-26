@@ -128,18 +128,14 @@ export interface IContact{
     DATE_CREATE? : string
     ASSIGNED_BY_ID? : number,
     CREATED_BY_ID? : number,
-    PHONE? : Array<{
-        ID : number,
-        VALUE_TYPE : string,
-        VALUE : string,
-        TYPE_ID : string
-    }>,
-    EMAIL? : Array<{
-        ID : number,
-        VALUE_TYPE : string,
-        VALUE : string,
-        TYPE_ID : string
-    }>
+    PHONE? : Array<IContactInfo>,
+    EMAIL? : Array<IContactInfo>
+}
+export interface IContactInfo{
+    ID? : number,
+    VALUE_TYPE? : string,
+    VALUE ?: string,
+    TYPE_ID? : string
 }
 export interface IUser{
     ID : number,
@@ -169,4 +165,7 @@ export interface IAddress{
 export interface IAddresType {
     ID : number,
     NAME : string
+}
+export interface IEditContacts extends IContact {
+    TITLE_NAME? : string
 }

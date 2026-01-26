@@ -5,10 +5,11 @@ import UploadIcon from '@bitrix24/b24icons-vue/actions/UploadIcon'
 import { storeToRefs } from 'pinia'
 import type { Bitrix } from '~/services/bitrix'
 import initBitrix from '~/services/bitrix'
-import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum, type DiffAdress } from '~/services/models'
+import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum, type DiffAdress, type IEditContacts, type DiffWithID, type IContactInfo } from '~/services/models'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import { diffArray, diffObject } from '~/services/utils/utils'
+import InputBox from '../InputBox.vue'
 
 const menuStore = useMenuStore();
 const bitrixStateStore = useBitrixStateStore();
@@ -31,14 +32,14 @@ onMounted(async () => {
 
 const editCompany = ref<ICompnany>();
 const editRequisite = ref<IRequisite[]>();
-const editContacts = ref<IContact[]>();
+const editContacts = ref<IEditContacts[]>();
 const editAddress = ref<IAddress[]>();
 
 
 function diffAdress(oldArray : IAddress[],newArray : IAddress[]) : DiffAdress[]{
     const diff : DiffAdress[] = [];
         newArray.forEach((n , i) => {
-        const diffobj = diffObject(oldArray[i],n);
+        const diffobj = diffObject(oldArray[i]!,n);
         if(diffobj?.ADDRESS_2){
             if(diffobj.ADDRESS_2 === bitrixStateStore.addressesNormalized[i]?.addres){
                 delete diffobj.ADDRESS_2;
@@ -68,7 +69,7 @@ function openEditCompany(){
 }
 
 function saveEditCompany(){
-    const diffComp = diffObject(bitrixCompany.value, editCompany.value);
+    const diffComp = diffObject(bitrixCompany.value!, editCompany.value!);
     const diffReq = diffArray(companyRequisite.value!, editRequisite.value!, "ID");
     const diffAdresses = diffAdress(companyAddress.value!, editAddress.value!)
     if(Object.keys(diffComp!).length > 0){
@@ -104,12 +105,73 @@ function saveEditCompany(){
     }
     openEditMode.value.companyInfo = false;
 } 
+function openEditContacts() {
+    editContacts.value = structuredClone(toRaw(companyContacts.value));
+    editContacts.value?.forEach((c, i) => {
+        c.TITLE_NAME = [
+            companyContacts.value![i]?.NAME,
+            companyContacts.value![i]?.LAST_NAME,
+            companyContacts.value![i]?.SECOND_NAME,
+        ].filter(Boolean).join(" ");
+    })
+    openEditMode.value.userInfo = true;
+    openEditSelector.value.usersInfo = false;
 
-// const isNotChangeCompany = computed(() =>{
-//     return JSON.stringify(bitrixCompany.value) !== JSON.stringify(editCompany.value) ||
-//     JSON.stringify(companyRequisite.value) !== JSON.stringify(editRequisite.value) ||
-//     JSON.stringify(companyContacts.value) !== JSON.stringify(editContacts.value) 
-// })
+}
+
+function saveEditContacts (){
+    const mappedEditContacts = toRaw(editContacts.value!).map(c =>{
+        const newData = structuredClone(c);
+        if(newData.TITLE_NAME){
+            const [NAME, LAST_NAME, SECOND_NAME] = newData.TITLE_NAME.split(' ');
+            newData.NAME = NAME;
+            newData.LAST_NAME = LAST_NAME;
+            newData.SECOND_NAME = SECOND_NAME;
+            newData.TITLE_NAME = undefined;
+        }
+        return newData as IContact;
+    })
+    const diffCont = diffArray(toRaw(companyContacts.value!), mappedEditContacts, "ID")
+    // diffCont.forEach(c => {
+    //     const data = c.data as unknown as IEditContacts
+    //     if(data.TITLE_NAME){
+    //         const [NAME, LAST_NAME, SECOND_NAME] = data.TITLE_NAME.split(' ')
+    //         data.NAME 
+    //     }
+    // })
+    if(diffCont.length > 0){
+        diffCont.forEach(c => {
+            if(c.data.EMAIL && c.data.EMAIL?.length > 0){
+                c.data.EMAIL = c.data.EMAIL.map( e => {
+                    const email = e as unknown as DiffWithID<IContactInfo>
+                    return{
+                        ID : email.id as number,
+                        VALUE_TYPE : email.data.VALUE_TYPE,
+                        VALUE : email.data.VALUE,
+                        TYPE_ID : email.data.TYPE_ID
+                    }
+                })
+            }
+            if(c.data.PHONE && c.data.PHONE.length > 0){
+                c.data.PHONE = c.data.PHONE.map(p => {
+                    const phone = p as unknown as DiffWithID<IContactInfo>;
+                    return{
+                        ID : phone.id as number,
+                        VALUE_TYPE : phone.data.VALUE_TYPE,
+                        VALUE : phone.data.VALUE,
+                        TYPE_ID : phone.data.TYPE_ID
+                    }
+                })
+            }
+            try{
+                bitrixClient?.updateContact(c.data, c.id!);
+            }catch(e){
+                console.log(e)
+            }
+        })
+    }
+    console.log(diffCont)
+}
 
 
 
@@ -155,18 +217,18 @@ function saveEditCompany(){
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
             <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN ?? 'Отсутсвует'}}</span>
-            <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1" class="edit-input"/>
+            <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1"/>
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
             <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN ?? 'Отсутсвует' }}</span>
-            <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" class="edit-input"/>
+            <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" />
         </div>
         <!-- Продумать изменение адрессов -->
         <div class="flex flex-col gap-1" v-for="(value, index) in bitrixStateStore.addressesNormalized" :key="index"> 
             <span class="text-gray-500 text-sm">{{ value.title }}</span>
             <span v-if="!openEditMode.companyInfo">{{ value.addres }}</span>
-            <InputBox v-else-if="editAddress" type="text" v-model="editAddress[index]!.ADDRESS_2" :rows="1" class="edit-input"/>
+            <InputBox v-else-if="editAddress" type="text" v-model="editAddress[index]!.ADDRESS_2" :rows="1"/>
         </div>
     </div>
     <!-- Сделать увеличение инпутов -->
@@ -177,16 +239,28 @@ function saveEditCompany(){
             <span class="select-none">Контактная информация</span>
         </div>
         <div style="margin-left: auto; position: relative;">
-            <MoreBox @click.stop="() => openEditSelector.usersInfo = !openEditSelector.usersInfo" >
-            </MoreBox>
-            <Transition name="openEditSelector">
-                <div class="menu-edit-container any-white-container" v-if="openEditSelector.usersInfo" @click.stop>
-                <div class="flex gap-2 py-1 px-2 blue-hover" style="border-radius: 10px;" @click.stop="() => {openEditMode.userInfo = true; openEditSelector.usersInfo = false}">
-                    <OpenIn40Icon class="text-gray-500 w-5 h-5 hover-item" />
-                    <span class="text-gray-500 text-sm select-none hover-item">Изменить</span>
+            <div  v-if="!openEditMode.userInfo">
+                <MoreBox @click.stop="() => openEditSelector.usersInfo = !openEditSelector.usersInfo" >
+                </MoreBox>
+                <Transition name="openEditSelector">
+                    <div class="menu-edit-container any-white-container" v-if="openEditSelector.usersInfo" @click.stop>
+                    <div class="flex gap-2 py-1 px-2 blue-hover" style="border-radius: 10px;" @click.stop="openEditContacts">
+                        <OpenIn40Icon class="text-gray-500 w-5 h-5 hover-item" />
+                        <span class="text-gray-500 text-sm select-none hover-item">Изменить</span>
+                    </div>
                 </div>
+                </Transition>
             </div>
-            </Transition>
+            <div class="gap-2 flex" v-else>
+                <div class="any-gray-container items-center flex py-1 px-2 gap-1 blue-hover">
+                    <Cross25Icon class="w-6 h-6 hover-item"/>
+                    <span class="hover-item select-none text-sm" @click="() => openEditMode.userInfo = false">Отменить</span>
+                </div>
+                <button class="save-btn items-center flex py-1 px-2 gap-1"  @click="saveEditContacts">
+                    <UploadIcon class="w-5.5 h-5.5 text-slate-50" />
+                    <span class="select-none text-sm text-slate-50">Сохранить</span>
+                </button>
+            </div>
         </div>
     </div>
     <div class="flex flex-col px-5 mt-5 gap-5">
@@ -215,19 +289,23 @@ function saveEditCompany(){
             <div class="contacts-info-grid">
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">ФИО</span>
-                    <span>{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
+                    <span v-if="!openEditMode.userInfo">{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
+                    <InputBox v-else-if="editContacts" v-model="editContacts[index]!.TITLE_NAME" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 text-sm">Должность</span>
-                    <span>{{ value.POST ?? "Не указано" }}</span>
+                    <span v-if="!openEditMode.userInfo">{{ value.POST ?? "Не указано" }}</span>
+                    <InputBox v-else-if="editContacts" v-model="editContacts[index]!.POST" />
                 </div>
                 <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
                     <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая почта"]}}</span>
-                    <span>{{ email.VALUE }}</span>
+                    <span v-if="!openEditMode.userInfo">{{ email.VALUE }}</span>
+                    <InputBox v-else-if="editContacts && editContacts[index]?.EMAIL" v-model="editContacts[index]!.EMAIL[index2]!.VALUE" />
                 </div>
                 <div class="flex flex-col gap-1" v-for="(phone, index2 ) in value.PHONE" :key="index2">
                     <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый телефон"}}</span>
-                    <span>{{ phone.VALUE }}</span>
+                    <span v-if="!openEditMode.userInfo">{{ phone.VALUE }}</span>
+                    <InputBox v-else-if="editContacts && editContacts[index]?.PHONE" v-model="editContacts[index]!.PHONE[index2]!.VALUE" />
                 </div>
             </div>
         </div>
