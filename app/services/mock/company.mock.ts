@@ -1,5 +1,5 @@
 
-import type { IAddress, IAddresType, ICompnany, IContact, IRequisite, IUser } from "../models"
+import type { IAddress, IAddresType, ICompnany, IContact, Invoice, IRequisite, IUser } from "../models"
 
 export const mockCompany : ICompnany = {
   ID: 1,
@@ -235,3 +235,119 @@ export const mockAddressTypes: IAddresType[] = [
 
   },
 ];
+export const mockInvoice: Invoice[] =[
+  {
+  id: 12345,
+  title: "Счёт №12345",
+  xmlId: "INV-20260128-XYZ",
+
+  createdTime: "2026-01-25T10:15:30+00:00",
+  updatedTime: "2026-01-27T08:22:10+00:00",
+  createdBy: 1001,
+  updatedBy: 1002,
+  assignedById: 1003,
+
+  opened: true,
+  webformId: null,
+
+  lastCommunicationTime: "2026-01-27T16:45:00+00:00",
+  begindate: "2026-01-25",
+  closedate: "2026-02-10",
+  companyId: 555,
+
+  contactId: null,
+  contactIds: [3001, 3002],
+  contacts: [3001, 3002],
+  observers: [1004, 1005],
+
+  categoryId: 10,
+  movedTime: "2026-01-26T12:30:40+00:00",
+  movedBy: 1003,
+
+  stageId: "DT31_1:N",
+  previousStageId: "DRAFT",
+
+  sourceId: "WEB",
+  sourceDescription: "CRM форма сайта",
+
+  currencyId: "EUR",
+  isManualOpportunity: false,
+  opportunity: 1500,
+  taxValue: 300,
+
+  mycompanyId: 777,
+  lastActivityBy: 1003,
+  lastActivityTime: "2026-01-27T16:40:00+00:00",
+
+  isRecurring: false,
+  comments: "Оплачивается в течение 10 дней.",
+
+  accountNumber: "INV-2026-00012345",
+  locationId: null,
+
+  parentId2: 8001,
+  parentId7: null,
+
+  lastCommunicationCallTime: "2026-01-27T16:20:00+00:00",
+  lastCommunicationEmailTime: "2026-01-26T14:10:00+00:00",
+  lastCommunicationImolTime: null,
+  lastCommunicationWebformTime: "2026-01-25T11:00:00+00:00",
+},
+{
+  id: 98765,
+  title: "Счёт №98765",
+  xmlId: "INV-20260201-ABC",
+
+  createdTime: "2026-02-01T09:05:15+00:00",
+  updatedTime: "2026-02-02T13:18:45+00:00",
+  createdBy: 1100,
+  updatedBy: 1101,
+  assignedById: 1102,
+
+  opened: false,
+  webformId: 42,
+
+  lastCommunicationTime: "2026-02-02T15:10:00+00:00",
+  begindate: "2026-02-01",
+  closedate: "2026-02-15",
+  companyId: 888,
+
+  contactId: null,
+  contactIds: [],
+  contacts: [],
+  observers: [1103],
+
+  categoryId: 12,
+  movedTime: "2026-02-02T10:02:30+00:00",
+  movedBy: 1102,
+
+  stageId: "DT31_1:U",
+  previousStageId: "SENT",
+
+  sourceId: "EMAIL",
+  sourceDescription: "Письмо клиенту",
+
+  currencyId: "USD",
+  isManualOpportunity: true,
+  opportunity: 2500,
+  taxValue: 500,
+
+  mycompanyId: 888,
+  lastActivityBy: 1103,
+  lastActivityTime: "2026-02-02T15:05:00+00:00",
+
+  isRecurring: true,
+  comments: "Автоматическое выставление каждый месяц.",
+
+  accountNumber: "INV-2026-00098765",
+  locationId: 120,
+
+  parentId2: null,
+  parentId7: 9002,
+
+  lastCommunicationCallTime: null,
+  lastCommunicationEmailTime: "2026-02-02T14:55:00+00:00",
+  lastCommunicationImolTime: "2026-02-02T15:00:00+00:00",
+  lastCommunicationWebformTime: null,
+}
+]

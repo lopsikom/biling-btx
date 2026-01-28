@@ -78,3 +78,7 @@ export async function copyToClipboard(text : string) {
     console.log(e)
   }
 }
+
+// export function normalizeDate(date : Date){
+//     return `${date[2]}-${date[1]}-${date[0]}`
+// }

@@ -171,3 +171,60 @@ export interface IAddresType {
 export interface IEditContacts extends IContact {
     TITLE_NAME? : string
 }
+export interface Invoice {
+  id: number;
+  title: string;
+  xmlId: string | null;
+
+  createdTime: string | null;
+  updatedTime: string | null;
+  createdBy: number | null;
+  updatedBy: number | null;
+  assignedById: number | null;
+
+  opened: boolean;
+  webformId: number | null;
+
+  lastCommunicationTime: string | null;
+  begindate: string | null;
+  closedate: string | null;
+  companyId: number | null;
+
+  contactId: number | null;
+  contactIds: number[] | null;
+  contacts: number[] | null;
+  observers: number[] | null;
+
+  categoryId: number | null;
+  movedTime: string | null;
+  movedBy: number | null;
+
+  stageId: string | null;
+  previousStageId: string | null;
+
+  sourceId: string | null;
+  sourceDescription: string | null;
+
+  currencyId: string | null;
+  isManualOpportunity: boolean;
+  opportunity: number | null;
+  taxValue: number | null;
+
+  mycompanyId: number | null;
+  lastActivityBy: number | null;
+  lastActivityTime: string | null;
+
+  isRecurring: boolean;
+  comments: string | null;
+
+  accountNumber: string | null;
+  locationId: number | null;
+
+  parentId2: number | null;
+  parentId7: number | null;
+
+  lastCommunicationCallTime: string | null;
+  lastCommunicationEmailTime: string | null;
+  lastCommunicationImolTime: string | null;
+  lastCommunicationWebformTime: string | null;
+}

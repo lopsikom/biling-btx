@@ -220,6 +220,7 @@ const search = ref<string>()
     transition: box-shadow 0.15s ease;
 }
 .users-list-grid{
+    
     display: grid;
     grid-auto-rows: auto;
     width: 100%;
@@ -229,7 +230,7 @@ const search = ref<string>()
     grid-template-columns: repeat(5, minmax(max-content, 1fr));
     gap: 10px;
     border-top: 1px solid #d1d5db;
-    padding: 10px 0px 10px 0px;
+    padding: 10px 5px 10px 5px;
 }
 .status-box{
     align-self: center;
