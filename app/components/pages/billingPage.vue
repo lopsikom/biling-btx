@@ -3,6 +3,9 @@ import { Icon } from '@iconify/vue';
 import { invoiceStage, invoiceStageEnum } from '~/services/models/enums/bitrix/invoiceStageEnum';
 import SearchIcon from '@bitrix24/b24icons-vue/outline/SearchIcon'
 import { mockInvoice } from '~/services/mock';
+import useBitrixStateStore from '~/services/stores/bitrixStateStore';
+
+const bitrixStateStore = useBitrixStateStore();
 
 enum currencyEnum{
     "RUB" = "руб.",
@@ -61,7 +64,7 @@ statusSelector.unshift(toRaw(statusFilter.value));
                             <div class="font-semibold">Дата выставления</div>
                             <div class="font-semibold">Срок оплаты</div>
                         </div>
-                        <div class="users-list-row users-item" v-for="(value, index) in mockInvoice" :key="index">
+                        <div class="users-list-row users-item" v-for="(value, index) in bitrixStateStore.companyInvoice" :key="index">
                             <div>{{ value.title }}</div>
                             <div>52</div>
                             <div>{{ value.opportunity }} {{ currencyEnum[value.currencyId! as keyof typeof currencyEnum] }}</div>

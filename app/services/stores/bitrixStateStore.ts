@@ -1,6 +1,6 @@
 import { Bitrix } from "../bitrix"
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IContact, IRequisite, IUser, ICompnany, IAddresType, IAddress, AddressType } from "../models"
+import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice } from "../models"
 
 const useBitrixStateStore = defineStore('bitrixState', () => {
 
@@ -11,6 +11,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     const companyRequisite = ref<IRequisite[]>();
     const companyAssignUser = ref<IUser>();
     const companyAddress = ref<IAddress[]>(); // Поменять на enum
+    const companyInvoice = ref<Invoice[]>();
     
     const addresTypes = ref<IAddresType[]>();
 
@@ -95,6 +96,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         companyAssignUser,
         companyRequisite,
         companyAddress,
+        companyInvoice,
         addresTypes,
         addressesNormalized,
         getDateCreate,

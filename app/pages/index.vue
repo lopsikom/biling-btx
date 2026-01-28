@@ -17,7 +17,7 @@ import FieldsPage from '~/components/pages/FieldsPage.vue'
 import { bilingPagesEnum } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockRequisite, mockUser } from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
@@ -53,6 +53,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
         bitrixStateStore.companyAddress = await bitrix.companyAdress();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
+        bitrixStateStore.companyInvoice = await bitrix.getInvoice();
         return {bitrix, Company}
     }catch(e){
         console.error(e)
@@ -63,6 +64,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrixStateStore.companyAssignUser = mockUser;
             bitrixStateStore.addresTypes = mockAddressTypes;
             bitrixStateStore.companyAddress = mockAddress;
+            bitrixStateStore.companyInvoice = mockInvoice;
         }
         return
     }finally{
