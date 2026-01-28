@@ -19,9 +19,13 @@ import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockRequisite, mockUser } from '~/services/mock'
 import { Icon } from '@iconify/vue'
+import useModalStore from '~/services/stores/modalStore'
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
+import AssignUserModal from '~/components/AssignUserModal.vue'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
+const modalStore = useModalStore();
 
 const pages = {
     [bilingPagesEnum.Main] : MainPage,
@@ -30,6 +34,10 @@ const pages = {
     [bilingPagesEnum.Billing] : BillingPage,
     [bilingPagesEnum.Events] : EventsPage
 };
+
+const modalsEnum = {
+    [ModalEnum.ASSIGN_MODAL] : AssignUserModal
+}
 
 const selectPage = ref<string>(bilingPagesEnum.Main);
 
@@ -78,6 +86,14 @@ function switchPage(page : string){
 
 </script>
 <template>
+        <DialogRoot  :open="modalStore.openModal">
+        <DialogPortal>
+            <DialogOverlay class="modal-overlay" />
+            <DialogContent v-if="modalStore.openModal" class="modal-content any-white-container">
+                <component v-if="modalStore.modalID" :is="modalsEnum[modalStore.modalID]"></component>
+            </DialogContent>
+        </DialogPortal>
+    </DialogRoot>
     <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
             <div class="title-container">
@@ -136,6 +152,7 @@ function switchPage(page : string){
     </div>
 </template>
 <style scoped>
+@import '~/assets/css/any-container.css';
 .app-container{
     height: 100vh;
     width: 100%;
@@ -144,6 +161,34 @@ function switchPage(page : string){
     flex-direction: column;
     padding: 50px 100px;
     background-color: #f8fbfc;
+}
+
+
+
+.modal-overlay{
+    animation: modal-overlay-show 0.15s ease-out; 
+    background-color: rgba(91, 91, 91, 0.545);
+    position: fixed;
+    inset: 0;
+
+}
+.modal-content{
+  overflow-y: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background-color: #f7fafc;
+  outline: none;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 85vh;
+  padding: 25px;
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content[data-state="open"] {
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .load-container{
@@ -282,6 +327,23 @@ function switchPage(page : string){
 .back-arrow-box:hover .back-arrow-svg, .add-tag-box:hover .changeable-icon, .transparent-box:hover .changeable-icon, .transparent-box:hover .transparent-box-title{
     color: #437db4;
     transition: color 0.15s ease;
+}
+
+@keyframes modal-overlay-show{
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes contentShow{
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 </style>

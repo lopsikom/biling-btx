@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { ModalEnum } from "../models/enums/billing/ModalsEnum";
 
 const useMenuStore = defineStore('menu', () => {
 

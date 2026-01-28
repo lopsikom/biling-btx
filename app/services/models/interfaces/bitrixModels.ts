@@ -146,8 +146,10 @@ export interface IUser{
     LAST_LOGIN? : string,
     IS_ONLINE? : "Y" | "N",
     WORK_PHONE? : string,
+    PERSONAL_PHONE? : string
     WORK_POSITION? : string,
-    ACTIVE? : boolean
+    ACTIVE? : boolean,
+    PERSONAL_PHOTO? : string
 }
 export interface IAddress{
     TYPE_ID : number,

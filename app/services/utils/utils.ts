@@ -1,3 +1,4 @@
+import { useClipboard } from "@vueuse/core";
 import type { DiffWithID } from "../models";
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -68,4 +69,12 @@ export function diffArray<T, K extends keyof T>(
         }
     })
     return diff;
+}
+const {copy} = useClipboard()
+export async function copyToClipboard(text : string) {
+  try{
+    await copy(text)
+  }catch(e){
+    console.log(e)
+  }
 }

@@ -64,7 +64,20 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         else if (dateInterval < 3600000) return `${(dateInterval / 60000).toFixed()} минут назад`;
         else if (dateInterval < 86400000) return `${(dateInterval / 3600000).toFixed()} часов назад`;
         else {
-            const date = new Date(bitrixCompany.value?.DATE_CREATE ?? "").toLocaleDateString().split('.')   
+            const date = new Date(bitrixCompany.value?.LAST_ACTIVITY_TIME ?? "").toLocaleDateString().split('.')   
+            return `${date[2]}-${date[1]}-${date[0]}`
+        }
+    }
+    function lastActivityAssignUser(){
+        if(!companyAssignUser.value ) return;
+        const lastActivityDate = new Date(companyAssignUser.value.LAST_LOGIN ?? "");
+        const dateNow = new Date();
+        const dateInterval = dateNow.getTime() - lastActivityDate.getTime();
+        if(dateInterval < 60000)return `${(dateInterval / 1000).toFixed()} секунд назад`;
+        else if (dateInterval < 3600000) return `${(dateInterval / 60000).toFixed()} минут назад`;
+        else if (dateInterval < 86400000) return `${(dateInterval / 3600000).toFixed()} часов назад`;
+        else {
+            const date = new Date(companyAssignUser.value?.LAST_LOGIN ?? "").toLocaleDateString().split('.')   
             return `${date[2]}-${date[1]}-${date[0]}`
         }
     }
@@ -87,6 +100,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         getDateCreate,
         getShortName,
         lastActivityCompany,
+        lastActivityAssignUser,
         getBitrixClient,
         setBitrixClient
     };

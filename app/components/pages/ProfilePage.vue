@@ -169,8 +169,10 @@ function saveEditContacts (){
                 console.log(e)
             }
         })
+        companyContacts.value = structuredClone(mappedEditContacts);
     }
-    console.log(diffCont)
+    openEditMode.value.userInfo = false;
+    console.log(diffCont);
 }
 
 
@@ -287,15 +289,17 @@ function saveEditContacts (){
         </div> -->
         <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts" :key="index">
             <div class="contacts-info-grid">
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">ФИО</span>
-                    <span v-if="!openEditMode.userInfo">{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
-                    <InputBox v-else-if="editContacts" v-model="editContacts[index]!.TITLE_NAME" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Должность</span>
-                    <span v-if="!openEditMode.userInfo">{{ value.POST ?? "Не указано" }}</span>
-                    <InputBox v-else-if="editContacts" v-model="editContacts[index]!.POST" />
+                <div class="firt-row-grid">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-gray-500 text-sm">ФИО</span>
+                        <span v-if="!openEditMode.userInfo">{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
+                        <InputBox v-else-if="editContacts" v-model="editContacts[index]!.TITLE_NAME" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-gray-500 text-sm">Должность</span>
+                        <span v-if="!openEditMode.userInfo">{{ value.POST ?? "Не указано" }}</span>
+                        <InputBox v-else-if="editContacts" v-model="editContacts[index]!.POST" />
+                    </div>
                 </div>
                 <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
                     <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая почта"]}}</span>
@@ -327,7 +331,15 @@ function saveEditContacts (){
 .contacts-info-grid{
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 20px;
+}
+.contacts-info-grid > :nth-child(1){
+    grid-column: span 3;
+}
+.firt-row-grid{
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr 1fr;
 }
 .menu-edit-container{
     padding: 2px;

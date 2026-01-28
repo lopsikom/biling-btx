@@ -3,8 +3,11 @@ import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
 import MoreIcon from '@bitrix24/b24icons-vue/actions/MoreIcon'
 import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
+import useModalStore from '~/services/stores/modalStore';
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
 
 const bitrixStateStore = useBitrixStateStore()
+const modalStore = useModalStore()
 
 
 </script>
@@ -29,7 +32,7 @@ const bitrixStateStore = useBitrixStateStore()
                 <span class="text-gray-500 text-sm cursor-default">Последняя активность:<br>{{ bitrixStateStore.lastActivityCompany() }}</span>
             </div>
         </div>
-        <div class="main-info-item any-white-container blue-hover">
+        <div class="main-info-item any-white-container blue-hover" @click="modalStore.showModal(ModalEnum.ASSIGN_MODAL)">
             <div>
                 <span class="font-semibold select-none">Отвественный</span>
             </div>

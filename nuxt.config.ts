@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', 'reka-ui/nuxt', '@bitrix24/b24ui-nuxt', '@nuxtjs/google-fonts', '@bitrix24/b24jssdk-nuxt', '@pinia/nuxt'],
+  modules: ['@nuxt/eslint', 'reka-ui/nuxt', '@bitrix24/b24ui-nuxt', '@nuxtjs/google-fonts', '@bitrix24/b24jssdk-nuxt', '@pinia/nuxt', '@vueuse/nuxt'],
   devtools: {
     enabled: false
   },
