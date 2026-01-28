@@ -93,6 +93,14 @@ export class Bitrix {
             fields : data
         })).getData();
     }
+    async getInvoice(id? : number){
+        return (await this.bitrixFrame.callMethod("crm.item.list",{
+        entityTypeId : 31,
+        filter : {
+            companyId : id ?? this.bitrixFrame.placement.options.ID
+        }
+    })).getData().result
+    }
     
 }
 
