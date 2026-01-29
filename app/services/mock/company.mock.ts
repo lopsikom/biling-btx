@@ -264,7 +264,7 @@ export const mockInvoice: Invoice[] =[
   movedTime: "2026-01-26T12:30:40+00:00",
   movedBy: 1003,
 
-  stageId: "DT31_1:N",
+  stageId: "DT31_1:S",
   previousStageId: "DRAFT",
 
   sourceId: "WEB",
@@ -321,7 +321,7 @@ export const mockInvoice: Invoice[] =[
   movedTime: "2026-02-02T10:02:30+00:00",
   movedBy: 1102,
 
-  stageId: "DT31_1:U",
+  stageId: "DT31_1:P",
   previousStageId: "SENT",
 
   sourceId: "EMAIL",

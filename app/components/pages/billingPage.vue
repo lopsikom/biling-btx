@@ -5,13 +5,30 @@ import SearchIcon from '@bitrix24/b24icons-vue/outline/SearchIcon'
 import { mockInvoice } from '~/services/mock';
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
 
-const bitrixStateStore = useBitrixStateStore();
+
+
+type InvoiceGrid = {
+    id : string
+    name : string,
+    Assign : string,
+    oppuration : number,
+    currencyId : string,
+    status? : string,
+    beginDate? : string,
+    closeDate? : string
+}
 
 enum currencyEnum{
     "RUB" = "руб.",
-    "EUR" = "евро",
+    "EUR" = "€",
     "USD" = "$"
 }
+const bitrixStateStore = useBitrixStateStore();
+
+const {companyInvoice} = storeToRefs(bitrixStateStore)
+
+const InvoiceGridList = ref<InvoiceGrid[]>();
+
 
 const statusFilter = ref({value : 'none', label : 'Все статусы'})
 const statusSelector = Object.entries(invoiceStage).map(([key, value]) => ({
@@ -20,13 +37,56 @@ const statusSelector = Object.entries(invoiceStage).map(([key, value]) => ({
 }))
 statusSelector.unshift(toRaw(statusFilter.value));
 
+onMounted(async () => {
+    console.log(InvoiceGridList.value)
+    console.log("AWDAWDWAD");
+    const client = bitrixStateStore.getBitrixClient();
+    if(client && bitrixStateStore.companyInvoice){
+        const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
+            const assign = await client.getUser(i.assignedById!);
+            let assignName : string;
+            if(assign.length > 0){
+                assignName = [
+                    assign[0]?.NAME,
+                    assign[0]?.LAST_NAME
+                ].filter(Boolean).join(' ');
+            }
+            else assignName = "Отсуствует";
+            return {
+                id: i.id.toString(),
+                name: i.title,
+                Assign: assignName,
+                oppuration: i.opportunity ?? 0,
+                status: i.stageId,
+                beginDate: i.begindate,
+                closeDate: i.closedate
+            }   as InvoiceGrid
+        }))
+        InvoiceGridList.value = list;
+    }
+    else{
+        InvoiceGridList.value = mockInvoice.map(i => {
+            return {
+                id: i.id.toString(),
+                name: i.title,
+                Assign: "Иванов Иван",
+                oppuration: i.opportunity ?? 0,
+                currencyId : i.currencyId,
+                status: i.stageId,
+                beginDate: i.begindate,
+                closeDate: i.closedate
+            }   as InvoiceGrid
+        })
+    }
+});
+
 </script>
 <template>
     <div class="flex flex-col">
         <div class="any-white-container px-5 py-4 flex flex-col">
             <div class="flex flex-col gap-1">
                     <span class="select-none font-semibold">Счета</span>
-                    <span class="text-gray-500">Управление пользователями организации</span>
+                    <span class="text-gray-500 select-none">Управление счетами</span>
             </div>
             <div class="flex flex-col">
                 <div class="flex mt-5 gap-5">
@@ -58,21 +118,21 @@ statusSelector.unshift(toRaw(statusFilter.value));
         <div class="users-list-grid mt-[30px]">
                         <div class="users-list-row" style="border-width: 0;">
                             <div class="font-semibold">Имя</div>
-                            <div class="font-semibold">Сделка</div>
+                            <div class="font-semibold">Отвественный</div>
                             <div class="font-semibold">Сумма</div>
                             <div class="font-semibold">Статус</div>
                             <div class="font-semibold">Дата выставления</div>
                             <div class="font-semibold">Срок оплаты</div>
                         </div>
-                        <div class="users-list-row users-item" v-for="(value, index) in bitrixStateStore.companyInvoice" :key="index">
-                            <div>{{ value.title }}</div>
-                            <div>52</div>
-                            <div>{{ value.opportunity }} {{ currencyEnum[value.currencyId! as keyof typeof currencyEnum] }}</div>
+                        <div class="users-list-row users-item" v-for="(value, index) in InvoiceGridList" :key="index">
+                            <div>{{ value.name }}</div>
+                            <div>{{ value.Assign }}</div>
+                            <div>{{ value.oppuration }} {{ currencyEnum[value.currencyId! as keyof typeof currencyEnum] }}</div>
                             <div>
-                                <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" :class="`status-box-${invoiceStageEnum[value.stageId! as keyof typeof invoiceStageEnum]}`" style="width: fit-content;" >{{ invoiceStage[value.stageId!] }}</div>
+                                <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm select-none" :class="`status-box-${invoiceStageEnum[value.status! as keyof typeof invoiceStageEnum]}`" style="width: fit-content;" >{{ invoiceStage[value.status!] }}</div>
                             </div>
-                            <div>{{ new Date(value.begindate!).toLocaleDateString() }}</div>
-                            <div>{{ new Date(value.closedate!).toLocaleDateString() }}</div>
+                            <div>{{ new Date(value.beginDate!).toLocaleDateString() }}</div>
+                            <div>{{ new Date(value.closeDate!).toLocaleDateString() }}</div>
                         </div>
         </div>
     </div>
@@ -167,19 +227,19 @@ statusSelector.unshift(toRaw(statusFilter.value));
     width: fit-content;
 }
 .status-box-NEW{
- background-color: #66b0f0;
+ background-color: #81c4ff;
   -webkit-text-fill-color: black;
 }
 .status-box-SEND-CLIENT{
  background-color: #3b74a6;
-  -webkit-text-fill-color: black;
+  -webkit-text-fill-color: white;
 }
 .status-box-PAY{
- background-color: #3fff59;
+ background-color: #6ffe82;
  -webkit-text-fill-color: black;
 }
 .status-box-UNPAY{
- background-color: #f30000;
+ background-color: #fd3d3d;
  -webkit-text-fill-color: white;
 }
 .users-item:hover{

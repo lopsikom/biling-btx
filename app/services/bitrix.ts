@@ -1,5 +1,5 @@
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IField, IRequisite, IUser, IUserField } from '~/services/models'
+import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IField, Invoice, IRequisite, IUser, IUserField } from '~/services/models'
 
 export class Bitrix {
     public bitrixFrame : B24Frame
@@ -99,7 +99,7 @@ export class Bitrix {
         filter : {
             companyId : id ?? this.bitrixFrame.placement.options.ID
         }
-    })).getData().result
+    })).getData().result as Invoice[];
     }
     
 }
