@@ -10,9 +10,11 @@ import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import { diffArray, diffObject } from '~/services/utils/utils'
 import InputBox from '../InputBox.vue'
+import useToastStore from '~/services/stores/toastStore'
 
 const menuStore = useMenuStore();
 const bitrixStateStore = useBitrixStateStore();
+const openToast = useToastStore().openToast;
 
 const { openEditMode, openEditSelector} = storeToRefs(menuStore)
 const {bitrixCompany, companyAssignUser, companyContacts, companyRequisite, companyAddress} = storeToRefs(bitrixStateStore)
@@ -104,6 +106,7 @@ function saveEditCompany(){
         companyAddress.value = structuredClone(toRaw(editAddress.value));
     }
     openEditMode.value.companyInfo = false;
+    openToast("Информация об организации успешно сохранена");
 } 
 function openEditContacts() {
     editContacts.value = structuredClone(toRaw(companyContacts.value));
@@ -172,7 +175,7 @@ function saveEditContacts (){
         companyContacts.value = structuredClone(mappedEditContacts);
     }
     openEditMode.value.userInfo = false;
-    console.log(diffCont);
+    openToast("Контактная информация успешно сохранена");
 }
 
 

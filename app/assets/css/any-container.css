@@ -22,6 +22,11 @@
     border-width: 1.5px;
     border-radius: 10px;
 }
+.any-black-container{
+    background: rgb(22, 22, 22);
+    border-width: 1.5px;
+    border-radius: 10px;
+}
 .green-container-item{
     color: #2ca93e
 }

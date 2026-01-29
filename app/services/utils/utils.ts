@@ -1,5 +1,6 @@
 import { useClipboard } from "@vueuse/core";
 import type { DiffWithID } from "../models";
+import useToastStore from "../stores/toastStore";
 
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -73,7 +74,8 @@ export function diffArray<T, K extends keyof T>(
 const {copy} = useClipboard()
 export async function copyToClipboard(text : string) {
   try{
-    await copy(text)
+    await copy(text);
+    useToastStore().openToast("Текст скопирован");
   }catch(e){
     console.log(e)
   }

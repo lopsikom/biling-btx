@@ -101,6 +101,7 @@ function switchPage(page : string){
             </DialogContent>
         </DialogPortal>
     </DialogRoot>
+    <Toast></Toast>
     <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
             <div class="title-container">
