@@ -27,7 +27,7 @@ const bitrixStateStore = useBitrixStateStore();
 
 const {companyInvoice} = storeToRefs(bitrixStateStore)
 
-const InvoiceGridList = ref<InvoiceGrid[]>();
+const InvoiceGridList = ref<InvoiceGrid[]>([]);
 
 
 const statusFilter = ref({value : 'none', label : 'Все статусы'})
@@ -37,47 +37,47 @@ const statusSelector = Object.entries(invoiceStage).map(([key, value]) => ({
 }))
 statusSelector.unshift(toRaw(statusFilter.value));
 
-onMounted(async () => {
-    const client = bitrixStateStore.getBitrixClient();
-    if(client && bitrixStateStore.companyInvoice){
-        const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
-            const assign = await client.getUser(i.assignedById!);
-            let assignName : string;
-            if(assign.length > 0){
-                assignName = [
-                    assign[0]?.NAME,
-                    assign[0]?.LAST_NAME
-                ].filter(Boolean).join(' ');
-            }
-            else assignName = "Отсуствует";
-            return {
-                id: i.id.toString(),
-                name: i.title,
-                Assign: assignName,
-                oppuration: i.opportunity ?? 0,
-                currencyId : i.currencyId,
-                status: i.stageId,
-                beginDate: i.begindate,
-                closeDate: i.closedate
-            }   as InvoiceGrid
-        }))
-        InvoiceGridList.value = list;
-    }
-    else{
-        InvoiceGridList.value = mockInvoice.map(i => {
-            return {
-                id: i.id.toString(),
-                name: i.title,
-                Assign: "Иванов Иван",
-                oppuration: i.opportunity ?? 0,
-                currencyId : i.currencyId,
-                status: i.stageId,
-                beginDate: i.begindate,
-                closeDate: i.closedate
-            }   as InvoiceGrid
-        })
-    }
-});
+// onMounted(async () => {
+//     const client = bitrixStateStore.getBitrixClient();
+//     if(client && bitrixStateStore.companyInvoice){
+//         const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
+//             const assign = await client.getUser(i.assignedById!);
+//             let assignName : string;
+//             if(assign.length > 0){
+//                 assignName = [
+//                     assign[0]?.NAME,
+//                     assign[0]?.LAST_NAME
+//                 ].filter(Boolean).join(' ');
+//             }
+//             else assignName = "Отсуствует";
+//             return {
+//                 id: i.id.toString(),
+//                 name: i.title,
+//                 Assign: assignName,
+//                 oppuration: i.opportunity ?? 0,
+//                 currencyId : i.currencyId,
+//                 status: i.stageId,
+//                 beginDate: i.begindate,
+//                 closeDate: i.closedate
+//             }   as InvoiceGrid
+//         }))
+//         InvoiceGridList.value = list;
+//     }
+//     else{
+//         InvoiceGridList.value = mockInvoice.map(i => {
+//             return {
+//                 id: i.id.toString(),
+//                 name: i.title,
+//                 Assign: "Иванов Иван",
+//                 oppuration: i.opportunity ?? 0,
+//                 currencyId : i.currencyId,
+//                 status: i.stageId,
+//                 beginDate: i.begindate,
+//                 closeDate: i.closedate
+//             }   as InvoiceGrid
+//         })
+//     }
+// });
 
 </script>
 <template>
@@ -114,7 +114,7 @@ onMounted(async () => {
                     </div>
                </div>
         </div>
-        <div class="users-list-grid mt-[30px]">
+        <div class="users-list-grid mt-[30px]" v-if="InvoiceGridList.length > 0">
                         <div class="users-list-row" style="border-width: 0;">
                             <div class="font-semibold">Имя</div>
                             <div class="font-semibold">Отвественный</div>
@@ -133,6 +133,10 @@ onMounted(async () => {
                             <div>{{ new Date(value.beginDate!).toLocaleDateString() }}</div>
                             <div>{{ new Date(value.closeDate!).toLocaleDateString() }}</div>
                         </div>
+        </div>
+        <div class="flex items-center font-semibold text-lg
+         justify-center h-[200px]" v-else>
+            Записи отсуствуют
         </div>
     </div>
 

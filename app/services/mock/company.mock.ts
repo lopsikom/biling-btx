@@ -181,7 +181,7 @@ export const mockUser: IUser = {
   IS_ONLINE: "Y",
   WORK_PHONE: "+7 495 000-00-00",
   WORK_POSITION: "CRM администратор",
-  ACTIVE: true
+  ACTIVE: 1
 };
 
 export const mockAddress : IAddress[] = [

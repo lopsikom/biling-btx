@@ -28,7 +28,7 @@ const modalStore = useModalStore();
                         <Icon icon="lucide:user" class="w-7 h-7 text-sky-600"/>
                     </div>
                 </AvatarFallback>
-                <div :class="BitrixStore.companyAssignUser?.ACTIVE ? 'deactive-user' : 'active-user'"></div>
+                <div :class="BitrixStore.companyAssignUser?.IS_ONLINE === 'N' ? 'deactive-user' : 'active-user'"></div>
             </AvatarRoot>
             <div class="flex flex-col">
                 <span>{{ BitrixStore.getShortName(BitrixStore.companyAssignUser)}}</span>

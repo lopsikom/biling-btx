@@ -148,7 +148,7 @@ export interface IUser{
     WORK_PHONE? : string,
     PERSONAL_PHONE? : string
     WORK_POSITION? : string,
-    ACTIVE? : "Y" | "N",
+    ACTIVE? : number,
     PERSONAL_PHOTO? : string
 }
 export interface IAddress{
