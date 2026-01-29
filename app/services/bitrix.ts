@@ -99,7 +99,7 @@ export class Bitrix {
         filter : {
             companyId : id ?? this.bitrixFrame.placement.options.ID
         }
-    })).getData().result as Invoice[];
+    })).getData().result.items as Invoice[];
     }
     
 }

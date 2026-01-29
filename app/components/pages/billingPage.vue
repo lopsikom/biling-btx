@@ -38,8 +38,6 @@ const statusSelector = Object.entries(invoiceStage).map(([key, value]) => ({
 statusSelector.unshift(toRaw(statusFilter.value));
 
 onMounted(async () => {
-    console.log(InvoiceGridList.value)
-    console.log("AWDAWDWAD");
     const client = bitrixStateStore.getBitrixClient();
     if(client && bitrixStateStore.companyInvoice){
         const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
@@ -57,6 +55,7 @@ onMounted(async () => {
                 name: i.title,
                 Assign: assignName,
                 oppuration: i.opportunity ?? 0,
+                currencyId : i.currencyId,
                 status: i.stageId,
                 beginDate: i.begindate,
                 closeDate: i.closedate

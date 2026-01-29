@@ -327,7 +327,7 @@ export const mockInvoice: Invoice[] =[
   sourceId: "EMAIL",
   sourceDescription: "Письмо клиенту",
 
-  currencyId: "USD",
+  currencyId: "RUB",
   isManualOpportunity: true,
   opportunity: 2500,
   taxValue: 500,

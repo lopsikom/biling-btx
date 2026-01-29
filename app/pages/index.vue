@@ -22,6 +22,7 @@ import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import AssignUserModal from '~/components/AssignUserModal.vue'
+import { VisuallyHidden } from 'reka-ui'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -92,6 +93,10 @@ function switchPage(page : string){
         <DialogPortal>
             <DialogOverlay class="modal-overlay" />
             <DialogContent v-if="modalStore.openModal" class="modal-content any-white-container">
+                <VisuallyHidden as-child>
+                    <DialogTitle></DialogTitle>
+                    <DialogDescription></DialogDescription>
+                </VisuallyHidden>
                 <component v-if="modalStore.modalID" :is="modalsEnum[modalStore.modalID]"></component>
             </DialogContent>
         </DialogPortal>
