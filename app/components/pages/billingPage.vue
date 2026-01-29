@@ -37,47 +37,47 @@ const statusSelector = Object.entries(invoiceStage).map(([key, value]) => ({
 }))
 statusSelector.unshift(toRaw(statusFilter.value));
 
-// onMounted(async () => {
-//     const client = bitrixStateStore.getBitrixClient();
-//     if(client && bitrixStateStore.companyInvoice){
-//         const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
-//             const assign = await client.getUser(i.assignedById!);
-//             let assignName : string;
-//             if(assign.length > 0){
-//                 assignName = [
-//                     assign[0]?.NAME,
-//                     assign[0]?.LAST_NAME
-//                 ].filter(Boolean).join(' ');
-//             }
-//             else assignName = "Отсуствует";
-//             return {
-//                 id: i.id.toString(),
-//                 name: i.title,
-//                 Assign: assignName,
-//                 oppuration: i.opportunity ?? 0,
-//                 currencyId : i.currencyId,
-//                 status: i.stageId,
-//                 beginDate: i.begindate,
-//                 closeDate: i.closedate
-//             }   as InvoiceGrid
-//         }))
-//         InvoiceGridList.value = list;
-//     }
-//     else{
-//         InvoiceGridList.value = mockInvoice.map(i => {
-//             return {
-//                 id: i.id.toString(),
-//                 name: i.title,
-//                 Assign: "Иванов Иван",
-//                 oppuration: i.opportunity ?? 0,
-//                 currencyId : i.currencyId,
-//                 status: i.stageId,
-//                 beginDate: i.begindate,
-//                 closeDate: i.closedate
-//             }   as InvoiceGrid
-//         })
-//     }
-// });
+onMounted(async () => {
+    const client = bitrixStateStore.getBitrixClient();
+    if(client && bitrixStateStore.companyInvoice){
+        const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
+            const assign = await client.getUser(i.assignedById!);
+            let assignName : string;
+            if(assign.length > 0){
+                assignName = [
+                    assign[0]?.NAME,
+                    assign[0]?.LAST_NAME
+                ].filter(Boolean).join(' ');
+            }
+            else assignName = "Отсуствует";
+            return {
+                id: i.id.toString(),
+                name: i.title,
+                Assign: assignName,
+                oppuration: i.opportunity ?? 0,
+                currencyId : i.currencyId,
+                status: i.stageId,
+                beginDate: i.begindate,
+                closeDate: i.closedate
+            }   as InvoiceGrid
+        }))
+        InvoiceGridList.value = list;
+    }
+    else{
+        InvoiceGridList.value = mockInvoice.map(i => {
+            return {
+                id: i.id.toString(),
+                name: i.title,
+                Assign: "Иванов Иван",
+                oppuration: i.opportunity ?? 0,
+                currencyId : i.currencyId,
+                status: i.stageId,
+                beginDate: i.begindate,
+                closeDate: i.closedate
+            }   as InvoiceGrid
+        })
+    }
+});
 
 </script>
 <template>
@@ -135,7 +135,7 @@ statusSelector.unshift(toRaw(statusFilter.value));
                         </div>
         </div>
         <div class="flex items-center font-semibold text-lg
-         justify-center h-[200px]" v-else>
+         justify-center h-[200px] select-none" v-else>
             Записи отсуствуют
         </div>
     </div>
