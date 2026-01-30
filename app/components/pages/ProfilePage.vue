@@ -70,7 +70,7 @@ function openEditCompany(){
     openEditSelector.value.companyInfo = false;
 }
 
-function saveEditCompany(){
+async function saveEditCompany(){
     if(editCompany.value?.TITLE.trim() === ""){
         editCompany.value.TITLE = bitrixCompany.value!.TITLE;
     }
@@ -103,7 +103,7 @@ function saveEditCompany(){
     }
     if(diffAdresses.length > 0){
         console.log(diffAdresses)
-        diffAdresses.forEach(async a => {
+        await Promise.all(diffAdresses.map(async a => {
             try{
                 if(a.data.ADDRESS_2?.trim() === ''){
                     console.log("adwa")
@@ -113,13 +113,14 @@ function saveEditCompany(){
                         console.log(a);
                         console.log(i);
                     }
-                    await bitrixClient?.deleteAddress(a)
-                    .then(b => {
-                        if(b.result){
-                            // deletedList.add(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
+                    // deletedList.add(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
+                    const b = await bitrixClient?.deleteAddress(a)
+                    if(b!.result){
                             editAddress.value?.splice(i, 1);
-                        }
-                    });                    
+                    }
+                    else{
+                        openToast("Ошибка удаления адресса");
+                    }                  
                 }
                 else await bitrixClient?.updateAdress(a);
             }catch(e){
@@ -127,7 +128,7 @@ function saveEditCompany(){
                 console.log(e)
                 return
             }
-        })
+        }))
         // По возможности решить проблему с structuredClone
         // editAddress.value = toRaw(editAddress.value?.filter(i => {
         //     console.log()
