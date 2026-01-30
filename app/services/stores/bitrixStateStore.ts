@@ -19,7 +19,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     const addressesNormalized = computed<AddressType[]>(() =>{
         if(!companyAddress.value) return [];
         return companyAddress.value.map(i => {
-            const addressTitle = addresTypes.value?.find(t => t.ID === i.TYPE_ID)?.NAME ?? "Адрес";
+            const addressTitle = addresTypes.value?.find(t => t.ID.toString() === i.TYPE_ID.toString())?.NAME ?? "Адрес";
             return {
                 title : addressTitle,
                 addres : i.ADDRESS_2 ??
@@ -33,6 +33,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
                 ].filter(Boolean)
                 .join(', ')
             };
+            
         })
     })
 

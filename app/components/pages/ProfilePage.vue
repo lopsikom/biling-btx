@@ -8,7 +8,7 @@ import initBitrix from '~/services/bitrix'
 import { type IAddress, type IRequisite, type IUser, type ICompnany, type IContact, EmailTypeEnum, PhonelTypeEnum, type DiffAdress, type IEditContacts, type DiffWithID, type IContactInfo } from '~/services/models'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
-import { diffArray, diffObject } from '~/services/utils/utils'
+import { diffArray, diffObject, makeKey } from '~/services/utils/utils'
 import InputBox from '../InputBox.vue'
 import useToastStore from '~/services/stores/toastStore'
 
@@ -71,6 +71,9 @@ function openEditCompany(){
 }
 
 function saveEditCompany(){
+    if(editCompany.value?.TITLE.trim() === ""){
+        editCompany.value.TITLE = bitrixCompany.value!.TITLE;
+    }
     const diffComp = diffObject(bitrixCompany.value!, editCompany.value!);
     const diffReq = diffArray(companyRequisite.value!, editRequisite.value!, "ID");
     const diffAdresses = diffAdress(companyAddress.value!, editAddress.value!)
@@ -79,7 +82,9 @@ function saveEditCompany(){
         try{
             bitrixClient?.companyUpdate(diffComp!)
         }catch(e){
+            openToast("Ошибка сохранения данных");
             console.log(e)
+            return
         }
         bitrixCompany.value = {...editCompany.value!};
     }
@@ -89,20 +94,45 @@ function saveEditCompany(){
             try{
                 bitrixClient?.updateRequisite(r.data, r.id)
             }catch(e){
+                openToast("Ошибка сохранения данных");
                 console.log(e)
+                return
             }
         })
         companyRequisite.value = structuredClone(toRaw(editRequisite.value));
     }
     if(diffAdresses.length > 0){
         console.log(diffAdresses)
-        diffAdresses.forEach(a => {
+        diffAdresses.forEach(async a => {
             try{
-                bitrixClient?.updateAdress(a);
+                if(a.data.ADDRESS_2?.trim() === ''){
+                    console.log("adwa")
+                    const i = editAddress.value!.findIndex(a2 => a2.TYPE_ID === a.TYPE_ID && a2.ENTITY_ID === a.ENTITY_ID && a2.ENTITY_TYPE_ID && a.ENTITY_TYPE_ID);
+                    console.log(i);
+                    if (i > -1){
+                        console.log(a);
+                        console.log(i);
+                    }
+                    await bitrixClient?.deleteAddress(a)
+                    .then(b => {
+                        if(b.result){
+                            // deletedList.add(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
+                            editAddress.value?.splice(i, 1);
+                        }
+                    });                    
+                }
+                else await bitrixClient?.updateAdress(a);
             }catch(e){
+                openToast("Ошибка сохранения данных");
                 console.log(e)
+                return
             }
         })
+        // По возможности решить проблему с structuredClone
+        // editAddress.value = toRaw(editAddress.value?.filter(i => {
+        //     console.log()
+        //     return !deletedList.has(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
+        // }));
         companyAddress.value = structuredClone(toRaw(editAddress.value));
     }
     openEditMode.value.companyInfo = false;
@@ -126,22 +156,21 @@ function saveEditContacts (){
     const mappedEditContacts = toRaw(editContacts.value!).map(c =>{
         const newData = structuredClone(c);
         if(newData.TITLE_NAME){
-            const [NAME, LAST_NAME, SECOND_NAME] = newData.TITLE_NAME.split(' ');
-            newData.NAME = NAME;
-            newData.LAST_NAME = LAST_NAME;
-            newData.SECOND_NAME = SECOND_NAME;
-            newData.TITLE_NAME = undefined;
+            if(newData.TITLE_NAME.trim() !== ""){
+                const [NAME, LAST_NAME, SECOND_NAME] = newData.TITLE_NAME.split(' ');
+                newData.NAME = NAME;
+                newData.LAST_NAME = LAST_NAME;
+                newData.SECOND_NAME = SECOND_NAME;
+                delete newData.TITLE_NAME;
+            }
+            else{
+                delete newData.TITLE_NAME
+            }
         }
+        
         return newData as IContact;
     })
     const diffCont = diffArray(toRaw(companyContacts.value!), mappedEditContacts, "ID")
-    // diffCont.forEach(c => {
-    //     const data = c.data as unknown as IEditContacts
-    //     if(data.TITLE_NAME){
-    //         const [NAME, LAST_NAME, SECOND_NAME] = data.TITLE_NAME.split(' ')
-    //         data.NAME 
-    //     }
-    // })
     if(diffCont.length > 0){
         diffCont.forEach(c => {
             if(c.data.EMAIL && c.data.EMAIL?.length > 0){
@@ -217,16 +246,16 @@ function saveEditContacts (){
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">Юридическое название</span>
             <span v-if="!openEditMode.companyInfo">{{ bitrixCompany?.TITLE }}</span>
-            <InputBox v-else-if="editCompany" v-model="editCompany.TITLE" ::rows="1"/>
+            <InputBox v-else-if="editCompany" v-model="editCompany.TITLE" :rows="1"/>
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN ?? 'Отсутсвует'}}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует'}}</span>
             <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1"/>
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN ?? 'Отсутсвует' }}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует' }}</span>
             <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" />
         </div>
         <!-- Продумать изменение адрессов -->
@@ -269,33 +298,12 @@ function saveEditContacts (){
         </div>
     </div>
     <div class="flex flex-col px-5 mt-5 gap-5">
-        <!-- <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts">
-            <p class="font-semibold">Администрация</p>
-            <div class="contacts-info-grid">
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">ФИО</span>
-                    <span>Сидорова Мария Петровна</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Email</span>
-                    <span>ivanov@technosfera.ru</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Должность</span>
-                    <span>Генеральный директор</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 text-sm">Телефон</span>
-                    <span>+7 (495) 123-45-67</span>
-                </div>
-            </div>
-        </div> -->
         <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts" :key="index">
             <div class="contacts-info-grid">
                 <div class="firt-row-grid">
                     <div class="flex flex-col gap-1">
                         <span class="text-gray-500 text-sm">ФИО</span>
-                        <span v-if="!openEditMode.userInfo">{{ value.LAST_NAME }} {{ value.NAME }} {{ value.SECOND_NAME }}</span>
+                        <span v-if="!openEditMode.userInfo">{{ value.NAME }} {{ value.LAST_NAME }} {{ value.SECOND_NAME }}</span>
                         <InputBox v-else-if="editContacts" v-model="editContacts[index]!.TITLE_NAME" />
                     </div>
                     <div class="flex flex-col gap-1">

@@ -77,11 +77,6 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
 
 
 const Company = computed(() => bitrixStateStore.bitrixCompany)
-const Contacts = computed(() => bitrixStateStore.companyContacts)
-const Requisite = computed(() => bitrixStateStore.companyRequisite)
-const AssignUser = computed(() => bitrixStateStore.companyAssignUser)
-
-
 
 function switchPage(page : string){
     selectPage.value = page;

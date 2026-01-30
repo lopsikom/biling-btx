@@ -52,7 +52,7 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("crm.address.list", {
             filter : {
                 ENTITY_TYPE_ID : 4,
-                ENTITY_ID :id ?? this.bitrixFrame.placement.options.ID
+                ENTITY_ID : id ?? this.bitrixFrame.placement.options.ID
             }
         })).getData().result as IAddress[]
     }
@@ -71,13 +71,23 @@ export class Bitrix {
                 TYPE_ID : data.TYPE_ID,
                 ENTITY_TYPE_ID : data.ENTITY_TYPE_ID,
                 ENTITY_ID : data.ENTITY_ID,
-                ADDRESS_1 : data.data.ADDRESS_1,
+                ADDRESS_1 : "",
                 ADDRESS_2 : data.data.ADDRESS_2,
-                CITY : data.data.CITY,
-                POSTAL_CODE : data.data.POSTAL_CODE,
-                REGION : data.data.REGION,
-                PROVINCE : data.data.PROVINCE,
-                COUNTRY : data.data.COUNTRY
+                CITY : "",
+                POSTAL_CODE : "",
+                REGION : "",
+                PROVINCE : "",
+                COUNTRY : ""
+            }
+        })).getData();
+    }
+    async deleteAddress(data : DiffAdress){
+        return (await this.bitrixFrame.callMethod("crm.address.delete",
+            {
+            fields : {
+                TYPE_ID : data.TYPE_ID,
+                ENTITY_TYPE_ID : data.ENTITY_TYPE_ID,
+                ENTITY_ID : data.ENTITY_ID
             }
         })).getData();
     }
