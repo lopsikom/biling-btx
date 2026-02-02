@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { ICompnany } from '~/services/models'
 import initBitrix, { Bitrix } from '~/services/bitrix'
 import ArrowLeftSIcon from '@bitrix24/b24icons-vue/outline/ArrowLeftSIcon'
 import Plus30Icon from '@bitrix24/b24icons-vue/actions/Plus30Icon'
@@ -8,37 +7,24 @@ import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import BoxIcon from '@bitrix24/b24icons-vue/outline/BoxIcon'
 import KeyIcon from '@bitrix24/b24icons-vue/outline/KeyIcon'
 import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
-import MainPage from '~/components/pages/MainPage.vue'
-import ProfilePage from '~/components/pages/ProfilePage.vue'
-import UsersPage from '~/components/pages/UsersPage.vue'
-import BillingPage from '~/components/pages/billingPage.vue'
-import EventsPage from '~/components/pages/eventsPage.vue'
-import FieldsPage from '~/components/pages/FieldsPage.vue'
 import { bilingPagesEnum } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
-import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
-import AssignUserModal from '~/components/AssignUserModal.vue'
 import { VisuallyHidden } from 'reka-ui'
+import { pagesEnum } from '~/components/pages'
+import { modalsEnum } from '~/components/models'
+import ErrorModal from '~/components/models/ErrorModal.vue'
+import useErrorStateStore from '~/services/stores/errorStateStore'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
 const modalStore = useModalStore();
+const errorModal = useErrorStateStore();
 
-const pages = {
-    [bilingPagesEnum.Main] : MainPage,
-    [bilingPagesEnum.Profile] : ProfilePage,
-    [bilingPagesEnum.Users] : UsersPage,
-    [bilingPagesEnum.Billing] : BillingPage,
-    [bilingPagesEnum.Events] : EventsPage
-};
 
-const modalsEnum = {
-    [ModalEnum.ASSIGN_MODAL] : AssignUserModal
-}
 
 const selectPage = ref<string>(bilingPagesEnum.Main);
 
@@ -66,6 +52,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrixStateStore.addresTypes = mockAddressTypes;
             bitrixStateStore.companyAddress = mockAddress;
             bitrixStateStore.companyInvoice = mockInvoice;
+        }
+        else{
+            errorModal.showError({message : 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e}, "Ошибка Bitrix");
         }
         return
     }finally{
@@ -97,6 +86,7 @@ function switchPage(page : string){
         </DialogPortal>
     </DialogRoot>
     <Toast></Toast>
+    <ErrorModal></ErrorModal>
     <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
             <div class="title-container">
@@ -143,11 +133,11 @@ function switchPage(page : string){
                 </div>         
             </div>
             <div class="page-selector-grid">
-                <div class="page-item" v-for="page in Object.keys(pages)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
+                <div class="page-item" v-for="page in Object.keys(pagesEnum)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
                     <span class="select-none font-semibold" >{{ page }}</span>
                 </div>
             </div>
-            <component :is="pages[selectPage]"/>
+            <component :is="pagesEnum[selectPage]"/>
         </div>
     </div>
     <div class="load-container" v-if="menuStore.fetchDataLoad">

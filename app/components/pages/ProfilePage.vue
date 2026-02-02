@@ -307,21 +307,25 @@ function saveEditContacts (){
                         <span v-if="!openEditMode.userInfo">{{ value.NAME }} {{ value.LAST_NAME }} {{ value.SECOND_NAME }}</span>
                         <InputBox v-else-if="editContacts" v-model="editContacts[index]!.TITLE_NAME" />
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1" v-if="value.POST && value.POST.trim() != ''">
                         <span class="text-gray-500 text-sm">Должность</span>
                         <span v-if="!openEditMode.userInfo">{{ value.POST ?? "Не указано" }}</span>
                         <InputBox v-else-if="editContacts" v-model="editContacts[index]!.POST" />
                     </div>
                 </div>
-                <div class="flex flex-col gap-1" v-for="(email, index2) in value.EMAIL" :key="index2">
-                    <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая почта"]}}</span>
-                    <span v-if="!openEditMode.userInfo">{{ email.VALUE }}</span>
-                    <InputBox v-else-if="editContacts && editContacts[index]?.EMAIL" v-model="editContacts[index]!.EMAIL[index2]!.VALUE" />
+                <div  v-for="(email, index2) in value.EMAIL" :key="index2">
+                    <div class="flex flex-col gap-1" v-if="email.VALUE && email.VALUE.trim() != ''">
+                        <span class="text-gray-500 text-sm">{{ EmailTypeEnum[email.VALUE_TYPE as keyof typeof EmailTypeEnum ?? "Неопределённая почта"]}}</span>
+                        <span v-if="!openEditMode.userInfo">{{ email.VALUE }}</span>
+                        <InputBox v-else-if="editContacts && editContacts[index]?.EMAIL" v-model="editContacts[index]!.EMAIL[index2]!.VALUE" />
+                    </div>
                 </div>
-                <div class="flex flex-col gap-1" v-for="(phone, index2 ) in value.PHONE" :key="index2">
-                    <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый телефон"}}</span>
-                    <span v-if="!openEditMode.userInfo">{{ phone.VALUE }}</span>
-                    <InputBox v-else-if="editContacts && editContacts[index]?.PHONE" v-model="editContacts[index]!.PHONE[index2]!.VALUE" />
+                <div  v-for="(phone, index2 ) in value.PHONE" :key="index2">
+                    <div class="flex flex-col gap-1" v-if="phone.VALUE && phone.VALUE.trim() != ''">
+                        <span class="text-gray-500 text-sm">{{ PhonelTypeEnum[phone.VALUE_TYPE as keyof typeof PhonelTypeEnum] ?? "Неопределённый телефон"}}</span>
+                        <span v-if="!openEditMode.userInfo">{{ phone.VALUE }}</span>
+                        <InputBox v-else-if="editContacts && editContacts[index]?.PHONE" v-model="editContacts[index]!.PHONE[index2]!.VALUE" />
+                    </div>
                 </div>
             </div>
         </div>

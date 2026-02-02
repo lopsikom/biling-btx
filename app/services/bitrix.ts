@@ -120,7 +120,6 @@ export default async function initBitrix(frame? : B24Frame) : Promise<Bitrix>{
         frame = await $initializeB24Frame()
     }
     const bitrixClient = new Bitrix(frame);
-    debugger
     if(!bitrixClient.bitrixFrame.placement.isSliderMode){
         const size = bitrixClient.bitrixFrame.parent.getScrollSize()
         const height = window.screen.height * 0.666

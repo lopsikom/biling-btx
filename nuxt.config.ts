@@ -6,6 +6,10 @@ export default defineNuxtConfig({
   },
   ssr : false,
 
+  plugins : [
+    '~/plugins/error-handler.client.ts'
+  ],
+
   css: ['~/assets/css/main.css'],
 
   app: {

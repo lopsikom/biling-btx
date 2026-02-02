@@ -38,8 +38,8 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     })
 
     function getDateCreate(){
-        const date = new Date(bitrixCompany.value?.DATE_CREATE ?? "").toLocaleDateString().split('.')   
-        return `${date[2]}-${date[1]}-${date[0]}`
+        const date = new Date(bitrixCompany.value?.DATE_CREATE ?? "").toLocaleDateString().split('.')
+        return date[0] !== "Invalid Date" ? date.filter(Boolean).join('-') : '00-00-0000';
     }
     function getShortName(item : IUser | IContact | undefined) : string{
         if(!item) return '';
@@ -67,7 +67,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         else if (dateInterval < 86400000) return `${(dateInterval / 3600000).toFixed()} часов назад`;
         else {
             const date = new Date(bitrixCompany.value?.LAST_ACTIVITY_TIME ?? "").toLocaleDateString().split('.')   
-            return `${date[2]}-${date[1]}-${date[0]}`
+            return date.join('-');
         }
     }
     function lastActivityAssignUser(){
