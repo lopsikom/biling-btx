@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) =>{
         if(!portal){
             return false
         }
-        const data = await bitrixAPI.enterHandler(portal.domain, portal.client_id);
-        console.log(data);
+        const data = await bitrixAPI.enterHandler(portal.domain, portal.client_id); 
+        console.log('data ', data);
         return true
     }catch(e){
         console.log(e)

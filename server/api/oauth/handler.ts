@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
                 })
             }
             const token = await bitrixAPI.getPortalToken(code.toString(), portal.client_id, portal.client_secret, server_domain.toString());
-            console.log(token);
+            console.log('prekol ', token);
 
             patchPortal(portal.id, token.refresh_token, token.access_token)
             const data = {
