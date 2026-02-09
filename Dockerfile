@@ -17,6 +17,8 @@ ENV NUXT_PUBLIC_BASE_URI=$NUXT_PUBLIC_BASE_URI
 
 RUN npm ci
 
+RUN npx prisma generate
+
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]
