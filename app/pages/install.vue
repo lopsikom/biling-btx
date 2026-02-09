@@ -13,6 +13,7 @@ onMounted( async () => {
         const data = frame.auth.getAuthData()
         if(!data) {badInstall.value = true; return}
         const verify = await $axios.verifyBitrixUser(data.access_token);
+        debugger
         if(!verify) {badInstall.value = true; return}
         try{
             await frame.callMethod('placement.bind',{

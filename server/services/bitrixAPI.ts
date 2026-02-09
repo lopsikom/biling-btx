@@ -45,6 +45,7 @@ export class bitrixAPI {
         return response.data as IBitrixToken;
     }
     async enterHandler(domain : string, client_id : string){
+        console.log(`https://${domain}/oauth/authorize/`)
         const response = await this.AxiosClient.get(`https://${domain}/oauth/authorize/`,{
             params : {
                 client_id : client_id
