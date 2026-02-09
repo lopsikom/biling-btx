@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../models/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model address {
+  id             Int          @id @default(autoincrement())
+  requsite_id    Int
+  company_id     Int
+  portal_id      Int
+  entity_type_id Int
+  type_id        Int
+  address_1      String?
+  address_2      String?
+  city           String?
+  postal_code    String?      @db.Char(10)
+  region         String?
+  province       String?
+  country        String?
+  country_code   String?
+  company        company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal         portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  requisite      requisite    @relation(fields: [requsite_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  address_type   address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model address_type {
+  id                     Int                      @id
+  name                   String
+  address                address[]
+  autoinformation_module autoinformation_module[]
+}
+
+model autoinformation_module {
+  id           Int          @id @default(autoincrement())
+  company_id   Int
+  type_id      Int
+  quantity     Int?
+  price        Float?       @db.Real
+  active       Boolean?
+  company      company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  address_type address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model autoinformation_type {
+  id   Int     @id @default(autoincrement())
+  name String?
+}
+
+model chat_bot {
+  id                  Int                   @id @default(autoincrement())
+  company_id          Int
+  tariff_id           Int
+  lines_count         Int
+  active              Boolean
+  company             company               @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tariff              tariff                @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  chat_bot_messengers chat_bot_messengers[]
+}
+
+model chat_bot_messengers {
+  chat_bot_id  Int
+  messenger_id Int
+  chat_bot     chat_bot   @relation(fields: [chat_bot_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  messengers   messengers @relation(fields: [messenger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([chat_bot_id, messenger_id])
+}
+
+model company {
+  id                                              Int                      @id @default(autoincrement())
+  bitrix_id                                       String
+  portal_id                                       Int
+  title                                           String
+  type                                            String?                  @db.Char(10)
+  company_type                                    String?                  @db.Char(10)
+  industry                                        String?                  @db.Char(10)
+  assigned_by_id                                  Int?
+  created_by_id                                   Int?
+  modify_by_id                                    Int?
+  opened                                          Boolean?
+  is_my_company                                   Boolean?
+  date_create                                     DateTime?                @db.Date
+  date_modify                                     DateTime?                @db.Date
+  raw_json                                        Json?
+  address                                         address[]
+  autoinformation_module                          autoinformation_module[]
+  chat_bot                                        chat_bot[]
+  user_bitrix_company_assigned_by_idTouser_bitrix user_bitrix?             @relation("company_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
+  user_bitrix_company_created_by_idTouser_bitrix  user_bitrix?             @relation("company_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
+  user_bitrix_company_modify_by_idTouser_bitrix   user_bitrix?             @relation("company_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
+  portal                                          portal                   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contact                                         contact[]
+  invoice                                         invoice[]
+  requisite                                       requisite[]
+  vats                                            vats[]
+  webform                                         webform[]
+}
+
+model contact {
+  id                                              Int              @id @default(autoincrement())
+  company_id                                      Int
+  portal_id                                       Int
+  bitrix_id                                       Int
+  name                                            String
+  second_name                                     String?
+  last_name                                       String?
+  post                                            String?
+  type_id                                         String?
+  birthdate                                       DateTime?        @db.Date
+  created_by_id                                   Int
+  modify_by_id                                    Int
+  assigned_by_id                                  Int
+  opened                                          Boolean
+  date_create                                     DateTime         @db.Date
+  date_modify                                     DateTime         @db.Date
+  last_activty_time                               DateTime         @db.Date
+  raw_json                                        Json?
+  user_bitrix_contact_assigned_by_idTouser_bitrix user_bitrix      @relation("contact_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  company                                         company          @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_contact_created_by_idTouser_bitrix  user_bitrix      @relation("contact_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user_bitrix_contact_modify_by_idTouser_bitrix   user_bitrix      @relation("contact_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  portal                                          portal           @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contact_email                                   contact_email[]
+  contact_phones                                  contact_phones[]
+  vats                                            vats[]
+}
+
+model contact_email {
+  id                Int               @id @default(autoincrement())
+  contact_id        Int
+  portal_id         Int
+  type_id           String?
+  value             String?
+  value_type        Int
+  contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model contact_info_type {
+  id             Int              @id
+  name           String
+  contact_email  contact_email[]
+  contact_phones contact_phones[]
+}
+
+/// This table has subclasses and requires additional setup for migrations. Visit https://pris.ly/d/table-inheritance for more info.
+model contact_phones {
+  id                Int               @id @default(autoincrement())
+  contact_id        Int
+  portal_id         Int
+  type_id           String?
+  value             String?
+  value_type        Int
+  contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model contract {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model invoice {
+  id                                               String      @id
+  company_id                                       Int
+  portal_id                                        Int
+  bitrix_id                                        Int
+  title                                            String
+  created_time                                     DateTime    @db.Date
+  updated_time                                     DateTime    @db.Date
+  created_by                                       Int
+  updated_by                                       Int
+  assigned_by_id                                   Int
+  opened                                           Boolean
+  begindate                                        DateTime    @db.Date
+  closedate                                        DateTime    @db.Date
+  category_id                                      String?
+  stage_id                                         String?     @db.Char(10)
+  currency_id                                      String?     @db.Char(3)
+  opportunity                                      Float?      @db.Real
+  last_activty_by                                  Int
+  last_activty_time                                DateTime    @db.Date
+  raw_json                                         Json?
+  user_bitrix_invoice_assigned_by_idTouser_bitrix  user_bitrix @relation("invoice_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  company                                          company     @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_invoice_created_byTouser_bitrix      user_bitrix @relation("invoice_created_byTouser_bitrix", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user_bitrix_invoice_last_activty_byTouser_bitrix user_bitrix @relation("invoice_last_activty_byTouser_bitrix", fields: [last_activty_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  portal                                           portal      @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_invoice_updated_byTouser_bitrix      user_bitrix @relation("invoice_updated_byTouser_bitrix", fields: [updated_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+}
+
+model messengers {
+  id                  Int                   @id
+  name                String
+  chat_bot_messengers chat_bot_messengers[]
+}
+
+model portal {
+  id             Int              @id @default(autoincrement())
+  client_id      String
+  client_secret  String
+  domain         String
+  refresh_token  String?
+  access_token   String?
+  address        address[]
+  company        company[]
+  contact        contact[]
+  contact_email  contact_email[]
+  contact_phones contact_phones[]
+  invoice        invoice[]
+  requisite      requisite[]
+  user_bitrix    user_bitrix[]
+}
+
+model requisite {
+  id                Int       @id @default(autoincrement())
+  company_id        Int
+  portal_id         Int
+  bitrix_id         Int
+  name              String?
+  active            Boolean?
+  sort              String?
+  inn               String
+  kpp               String?
+  ogrn              String?
+  company_name      String?
+  company_full_name String?
+  date_create       DateTime? @db.Date
+  date_modify       DateTime? @db.Date
+  raw_json          Json?
+  address           address[]
+  company           company   @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal            portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tariff {
+  id       Int        @id @default(autoincrement())
+  name     String?
+  chat_bot chat_bot[]
+  webform  webform[]
+}
+
+model user_bitrix {
+  id                                           Int       @id @default(autoincrement())
+  bitrix_id                                    Int
+  portal_id                                    Int
+  email                                        String
+  name                                         String
+  last_name                                    String?
+  second_name                                  String?
+  personal_gender                              String?   @db.Char(1)
+  personal_birthday                            DateTime? @db.Date
+  personal_photo                               String?
+  personal_phone                               String?
+  personal_mobile                              String?
+  work_phone                                   String?
+  work_position                                String?
+  work_departament                             String?
+  company_company_assigned_by_idTouser_bitrix  company[] @relation("company_assigned_by_idTouser_bitrix")
+  company_company_created_by_idTouser_bitrix   company[] @relation("company_created_by_idTouser_bitrix")
+  company_company_modify_by_idTouser_bitrix    company[] @relation("company_modify_by_idTouser_bitrix")
+  contact_contact_assigned_by_idTouser_bitrix  contact[] @relation("contact_assigned_by_idTouser_bitrix")
+  contact_contact_created_by_idTouser_bitrix   contact[] @relation("contact_created_by_idTouser_bitrix")
+  contact_contact_modify_by_idTouser_bitrix    contact[] @relation("contact_modify_by_idTouser_bitrix")
+  invoice_invoice_assigned_by_idTouser_bitrix  invoice[] @relation("invoice_assigned_by_idTouser_bitrix")
+  invoice_invoice_created_byTouser_bitrix      invoice[] @relation("invoice_created_byTouser_bitrix")
+  invoice_invoice_last_activty_byTouser_bitrix invoice[] @relation("invoice_last_activty_byTouser_bitrix")
+  invoice_invoice_updated_byTouser_bitrix      invoice[] @relation("invoice_updated_byTouser_bitrix")
+  portal                                       portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model vats {
+  id          Int      @id @default(autoincrement())
+  company_id  Int
+  contract_id Int?
+  value       Int
+  duration    Int
+  active      Boolean?
+  company     company  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  contact     contact? @relation(fields: [contract_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model webform {
+  id         Int      @id @default(autoincrement())
+  company_id Int
+  tarrif_id  Int
+  active     Boolean?
+  company    company  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tariff     tariff   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

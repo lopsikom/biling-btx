@@ -228,3 +228,31 @@ export interface Invoice {
   lastCommunicationImolTime: string | null;
   lastCommunicationWebformTime: string | null;
 }
+
+export interface IAppInfo {
+    client_id : string,
+    scope : string,
+    expires: string,
+    install : {
+        installed : boolean,
+        version : string,
+        status : string,
+        scope : string,
+        domain : string,
+        uri: string,
+        client_endpoint : string,
+        member_id : string,
+        member_type : string
+    }
+} 
+export interface IBitrixToken{
+    access_token : string,
+    client_endpoint : string,
+    domain : string,
+    expires_in : number,
+    member_id : string,
+    refresh_token : string,
+    scope : string,
+    server_endpoint : string,
+    status : string
+}

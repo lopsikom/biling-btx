@@ -1,1 +1,1 @@
-export * from './bitrixModels'
+export * from '../../../../shared/models/bitrixModels'

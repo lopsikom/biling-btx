@@ -1,0 +1,43 @@
+name: billing-dev
+
+on:
+    push:
+        branches:
+            - 'dev*'
+jobs:
+
+    build-and-push:
+        name: Build & push Docker image
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Log in to GHCR
+              uses: docker/login-action@v2
+              with:
+                registry: ghcr.io
+                username: ${{secrets.GHCR_USER}}
+                password: ${{secrets.GHCR_TOKEN}}
+            - name: Build Docker image
+              run: |
+                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL_DEV}}" --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL_DEV}}" --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI_DEV}}" -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}-dev:${{ github.sha }} .
+                  docker push ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}-dev:${{ github.sha }}
+
+    deploy:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy on server
+              uses: D3rHase/ssh-command-action@v0.2.2
+              with:
+                    host: ${{secrets.SERVER_IP}}
+                    user: ${{secrets.SSH_USER}}
+                    private_key: ${{secrets.SSH_KEY}}
+                    command: |
+                        docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }};
+                        docker pull ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};
+                        docker stop ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
+                        docker rm ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
+                        docker run -p 5000:3000 -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};
