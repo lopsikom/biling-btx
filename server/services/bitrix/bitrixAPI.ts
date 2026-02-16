@@ -32,6 +32,19 @@ export class bitrixAPI {
         });
         return response.data as bitrixResponse<IAppInfo>;
     }
+    async getAccesToken(client_id : string, client_secret : string, refresh_token : string){
+        const response = await this.AxiosClient.get(`https://oauth.bitrix24.tech/oauth/token/`,{
+        params: {
+            grant_type : "refresh_token",
+            client_id : client_id,
+            client_secret : client_secret,
+            refresh_token : refresh_token
+            }
+            
+            
+        });
+        return response.data as IBitrixToken;
+    }
     async getPortalToken(code : string, client_id : string, client_secret : string, url : string) : Promise<IBitrixToken>{
         const response = await this.AxiosClient.get(`https://${url}/oauth/token/`,{
         params: {

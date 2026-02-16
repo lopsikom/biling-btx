@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
-import { bitrixResponse } from "./bitrixAPI";
+import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
 import { IAddress, ICompnany, IContact, Invoice, IRequisite } from "../models";
+import { config } from "process";
 
 export default class companyClient{
     domain : string;
@@ -14,7 +15,19 @@ export default class companyClient{
         this.axiosClient = axios.create({baseURL : `https://${this.domain}`, headers : {
             'Content-Type': 'application/json'
         }});
-    } //добавить интенцирапторы
+        this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
+            if(!config.params.auth) {
+                const portal = await getPortal({id : this.portal_id})
+                console.log(portal);
+                if(!portal || !portal.refresh_token) return config
+                const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
+                console.log(token);
+                if(!token) return config
+                config.params.auth = token.access_token;
+            }
+            return config
+        })
+    }   
 
     async getCompanyInfo(){
         const response = await this.axiosClient.get('/rest/crm.company.get', {

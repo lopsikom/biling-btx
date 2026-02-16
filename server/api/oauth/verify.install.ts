@@ -1,4 +1,5 @@
 import bitrixAPI from "~~/server/services/bitrix/bitrixAPI";
+import syncService from "~~/server/services/syncService";
 import getPortalByUserBitrix from "~~/server/utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) =>{
@@ -15,7 +16,8 @@ export default defineEventHandler(async (event) =>{
             return false
         }
         const data = await bitrixAPI.enterHandler(portal.domain, portal.client_id); 
-        console.log('data ', data);
+        console.log('data ', data); //добавить проверку
+        const sync = syncService.installSync(portal.id);
         return true
     }catch(e){
         console.log(e)

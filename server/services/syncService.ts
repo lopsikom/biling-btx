@@ -13,13 +13,13 @@ import upsertAddress from "../utils/prisma/postAddress";
 import upsertInvoice from "../utils/prisma/postInvoice";
 
 
-export default class syncService{
+export class syncService{
     private portals : Record<string, number> = {}
 
-    constructor(portals : Record<string, number>){
-        this.portals =  portals;
+    constructor(portals? : Record<string, number>){
+        if(portals) this.portals =  portals;
     }
-    async installSync(portal : string | number) : boolean{
+    async installSync(portal : string | number) : Promise<boolean>{
         try{
             let id : number;
             let domain : string;
@@ -55,7 +55,7 @@ export default class syncService{
                 })
                 return user[0]
             }))
-            const companyClients = await Promise.all(companysBitrix.map(async b => { // Убрать thenы
+            const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
                     const com = await postCompanyPrisma( id, {
                     bitrix_id : b.ID.toString(),
@@ -73,8 +73,8 @@ export default class syncService{
                 })
                 console.log(`Company '${b.TITLE}' added`)
                 const company = new companyClient(domain, id, b.ID)
-                await company.getRequisites()
-                .then(r => upsertRequisites(id, ...r.result.map(m => {
+                const r = await company.getRequisites()
+                await upsertRequisites(id, ...r.result.map(m => {
                     return {
                         bitrix_id : m.ID,
                         name : m.NAME,
@@ -89,10 +89,9 @@ export default class syncService{
                         company : {connect : {id : com[0]!.id}},
                         portal : {connect : {id : id}}
                     } as requisiteCreateInput
-                })))
-                .then(async r => {
-                    const addresses = await company.getAddress()
-                    return upsertAddress(id, ...addresses.result.map(a =>{
+                }))
+                const addresses = await company.getAddress()
+                await upsertAddress(id, ...addresses.result.map(a =>{
                         return {
                             entity_type_id : a.ENTITY_TYPE_ID,
                             address_1 : a.ADDRESS_1,
@@ -107,57 +106,52 @@ export default class syncService{
                             portal : {connect : {id : id}}
                         } as addressCreateInput
                     }))
+                const c = await company.getContacts()
+                const data : ContactWithData[] = c.result.map(cc => {
+                    return {
+                        contact : {
+                            bitrix_id : cc.ID,
+                            name : cc.NAME,
+                            second_name : cc.SECOND_NAME,
+                            last_name : cc.LAST_NAME,
+                            post : cc.POST,
+                            type_id : cc.TYPE_ID,
+                            opened : cc.OPENED === "Y",
+                            date_create : cc.DATE_CREATE,
+                            date_modify : cc.DATE_MODIFY,
+                            user_bitrix_contact_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                            user_bitrix_contact_created_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                            user_bitrix_contact_modify_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                            portal : {connect : {id : id}},
+                            company : {connect : {id :com[0]!.id}}
 
-                })
-                await company.getContacts()
-                .then(c => {
-                    const data : ContactWithData[] = c.result.map(cc => {
-                        return {
-                            contact : {
-                                bitrix_id : cc.ID,
-                                name : cc.NAME,
-                                second_name : cc.SECOND_NAME,
-                                last_name : cc.LAST_NAME,
-                                post : cc.POST,
-                                type_id : cc.TYPE_ID,
-                                opened : cc.OPENED === "Y",
-                                date_create : cc.DATE_CREATE,
-                                date_modify : cc.DATE_MODIFY,
-                                user_bitrix_contact_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                                user_bitrix_contact_created_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                                user_bitrix_contact_modify_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                        },
+                        emails : cc.EMAIL?.map(e => {
+                            return {
+                                type_id : e.TYPE_ID,
+                                value : e.VALUE,
+                                bitrix_id : e.ID,
+                                contact_info_type : {connect : {id : e.VALUE_TYPE}},
                                 portal : {connect : {id : id}},
-                                company : {connect : {id :com[0]!.id}}
+                                contact : {connect : {id : com[0].id}}
 
-                            },
-                            emails : cc.EMAIL?.map(e => {
-                                return {
-                                    type_id : e.TYPE_ID,
-                                    value : e.VALUE,
-                                    bitrix_id : e.ID,
-                                    contact_info_type : {connect : {id : e.VALUE_TYPE}},
-                                    portal : {connect : {id : id}},
-                                    contact : {connect : {id : com[0].id}}
-
-                                } as contact_emailCreateInput
-                            }),
-                            phones : cc.PHONE?.map(p => {
-                                return {
-                                    type_id : p.TYPE_ID,
-                                    value : p.VALUE,
-                                    bitrix_id : p.ID,
-                                    contact_info_type : {connect : {id : p.VALUE_TYPE}},
-                                    portal : {connect : {id : id}},
-                                    contact : {connect : {id : com[0].id}}
-                                } as contact_phonesCreateInput
-                            })
-                        } as ContactWithData
-                    })
-                    return upsertContactWithData(id, ...data);
+                            } as contact_emailCreateInput
+                        }),
+                        phones : cc.PHONE?.map(p => {
+                            return {
+                                type_id : p.TYPE_ID,
+                                value : p.VALUE,
+                                bitrix_id : p.ID,
+                                contact_info_type : {connect : {id : p.VALUE_TYPE}},
+                                portal : {connect : {id : id}},
+                                contact : {connect : {id : com[0].id}}
+                            } as contact_phonesCreateInput
+                        })
+                    } as ContactWithData
                 })
-                await company.getInvoice()
-                .then(i => {
-                    return upsertInvoice(id, ...i.result.map(ii => {
+                await upsertContactWithData(id, ...data);
+                const i = await company.getInvoice()
+                upsertInvoice(id, ...i.result.map(ii => {
                         return {
                             bitrix_id : ii.id,
                             title : ii.title,
@@ -179,14 +173,14 @@ export default class syncService{
                             portal : {connect : {id : id}},
                         } as invoiceCreateInput
                     }))
-                })
+                    console.log("AAAAAAAAAAAA")
                 }catch(e){
                     console.log(`Error added company '${b.TITLE}\nError:\n${e}`)
                     return false
                 }
             }))
             if(companyClients.length < 0) return false;
-            
+            return true;  
 
 
         }catch(e){
@@ -195,3 +189,5 @@ export default class syncService{
         }
     }
 }
+
+export default new syncService() //Занести в плагин
