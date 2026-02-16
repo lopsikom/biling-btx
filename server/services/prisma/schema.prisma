@@ -26,6 +26,7 @@ model address {
   address_type   address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([company_id, entity_type_id, portal_id])
+  @@unique([portal_id, entity_type_id, type_id])
 }
 
 model address_type {
@@ -127,6 +128,8 @@ model contact {
   portal                                          portal           @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_email                                   contact_email[]
   contact_phones                                  contact_phones[]
+
+  @@unique([portal_id, bitrix_id])
 }
 
 model contact_email {
@@ -140,6 +143,8 @@ model contact_email {
   contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model contact_info_type {
@@ -161,6 +166,8 @@ model contact_phones {
   contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id])
 }
 
 model contract {
@@ -201,6 +208,8 @@ model invoice {
   user_bitrix_invoice_last_activty_byTouser_bitrix user_bitrix @relation("invoice_last_activty_byTouser_bitrix", fields: [last_activty_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
   portal                                           portal      @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_bitrix_invoice_updated_byTouser_bitrix      user_bitrix @relation("invoice_updated_byTouser_bitrix", fields: [updated_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id])
 }
 
 model messengers {
@@ -244,6 +253,8 @@ model requisite {
   bitrix_id         String
   company           company   @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model tariff {
@@ -282,6 +293,8 @@ model user_bitrix {
   invoice_invoice_last_activty_byTouser_bitrix invoice[] @relation("invoice_last_activty_byTouser_bitrix")
   invoice_invoice_updated_byTouser_bitrix      invoice[] @relation("invoice_updated_byTouser_bitrix")
   portal                                       portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model vats {
