@@ -81,7 +81,6 @@ export class syncService{
                     user_bitrix_company_created_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.CREATED_BY_ID)?.id}}
                 })
                 console.log(`Company '${b.TITLE}' added`)
-                console.log(companyClients)
                 const company = new companyClient(domain, id, b.ID)
                 const r = await company.getRequisites()
                 await upsertRequisites(id, ...r.result.map(m => {
