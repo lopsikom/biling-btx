@@ -5,10 +5,10 @@ import { config } from "process";
 
 export default class companyClient{
     domain : string;
-    bitrix_id : number;
+    bitrix_id : string;
     portal_id : number;
     axiosClient : AxiosInstance;
-    constructor(domainBitrix : string, id : number, bitrix_id : number){
+    constructor(domainBitrix : string, id : number, bitrix_id : string){
         this.domain = domainBitrix;
         this.portal_id = id;
         this.bitrix_id = bitrix_id;

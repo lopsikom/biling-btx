@@ -32,7 +32,7 @@ export interface IUserField{
 }
 
 export interface ICompnany {
-  ID: number;
+  ID: string;
   COMPANY_TYPE: string;
   TITLE: string;
 
@@ -101,7 +101,7 @@ export interface ICompnany {
   USER_FIELDS? : IField[]
 }
 export interface IRequisite{
-    ID : number,
+    ID : string,
     ENTITY_TYPE_ID : number,
     ENTITY_ID : number,
     PRESET_ID : number,
@@ -118,7 +118,7 @@ export interface IRequisite{
 }
 
 export interface IContact{
-    ID : number,
+    ID : string,
     POST? : string,
     NAME? : string,
     SECOND_NAME? : string,
@@ -136,13 +136,13 @@ export interface IContact{
     EMAIL? : Array<IContactInfo>
 }
 export interface IContactInfo{
-    ID? : number,
+    ID? : string,
     VALUE_TYPE? : string,
     VALUE ?: string,
     TYPE_ID? : string
 }
 export interface IUser{
-    ID : number,
+    ID : string,
     NAME? : string,
     LAST_NAME? : string,
     SECOND_NAME? : string,
@@ -169,14 +169,14 @@ export interface IAddress{
 }
 
 export interface IAddresType {
-    ID : number,
+    ID : string,
     NAME : string
 }
 export interface IEditContacts extends IContact {
     TITLE_NAME? : string
 }
 export interface Invoice {
-  id: number;
+  id: string;
   title: string;
   xmlId: string | null;
 

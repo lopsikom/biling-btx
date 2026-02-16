@@ -67,7 +67,7 @@ export class syncService{
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
                     const com = await postCompanyPrisma( id, {
-                    bitrix_id : b.ID.toString(),
+                    bitrix_id : b.ID,
                     title : b.TITLE,
                     company_type : b.COMPANY_TYPE,
                     industry : b.INDUSTRY,
