@@ -64,7 +64,7 @@ export class syncService{
                 return user[0]
             }))
             console.log(mappedUsers)
-            const companyClients = await Promise.all(companysBitrix.map(async b => { 
+            const companyClients = await Promise.all(companysBitrix.map(async b => { // Поменять подключение связей
                 try{
                     const com = await postCompanyPrisma( id, {
                     bitrix_id : b.ID,
@@ -76,9 +76,9 @@ export class syncService{
                     date_create : b.DATE_CREATE,
                     date_modify : b.DATE_MODIFY,
                     portal : {connect : {id : id}},
-                    user_bitrix_company_assigned_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.ID)?.id}},
-                    user_bitrix_company_modify_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.ID)?.id}},
-                    user_bitrix_company_created_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.ID)?.id}}
+                    user_bitrix_company_assigned_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.ASSIGNED_BY_ID)?.id}},
+                    user_bitrix_company_modify_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.MODIFY_BY_ID)?.id}},
+                    user_bitrix_company_created_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.CREATED_BY_ID)?.id}}
                 })
                 console.log(`Company '${b.TITLE}' added`)
                 console.log(companyClients)
@@ -129,9 +129,9 @@ export class syncService{
                             opened : cc.OPENED === "Y",
                             date_create : cc.DATE_CREATE,
                             date_modify : cc.DATE_MODIFY,
-                            user_bitrix_contact_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                            user_bitrix_contact_created_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                            user_bitrix_contact_modify_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                            user_bitrix_contact_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ASSIGNED_BY_ID)}.id},
+                            user_bitrix_contact_created_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.CREATED_BY_ID)}.id},
+                            user_bitrix_contact_modify_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.MODIFY_BY_ID)}.id},
                             portal : {connect : {id : id}},
                             company : {connect : {id :com[0]!.id}}
 
@@ -175,10 +175,10 @@ export class syncService{
                             currency_id : ii.currencyId,
                             opportunity : ii.opportunity,
                             last_activty_time : ii.lastActivityTime,
-                            user_bitrix_invoice_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                            user_bitrix_invoice_created_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                            user_bitrix_invoice_last_activty_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
-                            user_bitrix_invoice_updated_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ID)}.id},
+                            user_bitrix_invoice_assigned_by_idTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.ASSIGNED_BY_ID)}.id},
+                            user_bitrix_invoice_created_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.CREATED_BY_ID)}.id},
+                            user_bitrix_invoice_last_activty_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.LAST_ACTIVITY_BY)}.id},
+                            user_bitrix_invoice_updated_byTouser_bitrix : {connect :{id : mappedUsers.find(u => u.bitrix_id === b.MODIFY_BY_ID)}.id},
                             company : {connect : {id : com[0].id}},
                             portal : {connect : {id : id}},
                         } as invoiceCreateInput

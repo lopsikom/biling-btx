@@ -43,9 +43,9 @@ export interface ICompnany {
   HAS_EMAIL: 'Y' | 'N';
   HAS_IMOL: 'Y' | 'N';
 
-  ASSIGNED_BY_ID: number;
-  CREATED_BY_ID: number;
-  MODIFY_BY_ID: number;
+  ASSIGNED_BY_ID: string;
+  CREATED_BY_ID: string;
+  MODIFY_BY_ID: string;
 
   BANKING_DETAILS: string | undefined;
   INDUSTRY: string | undefined;
@@ -94,7 +94,7 @@ export interface ICompnany {
   UTM_CONTENT: string | undefined;
   UTM_TERM: string | undefined;
 
-  LAST_ACTIVITY_BY: number;
+  LAST_ACTIVITY_BY: string;
   LAST_ACTIVITY_TIME: string;
   LAST_COMMUNICATION_TIME: string | undefined;
 
@@ -129,8 +129,8 @@ export interface IContact{
     SOURSCE_ID? : string,
     COMPANY_ID? : number,
     DATE_CREATE? : string
-    ASSIGNED_BY_ID? : number,
-    CREATED_BY_ID? : number,
+    ASSIGNED_BY_ID? : string,
+    CREATED_BY_ID? : string,
     DATE_MODIFY? : string,
     PHONE? : Array<IContactInfo>,
     EMAIL? : Array<IContactInfo>
@@ -182,9 +182,9 @@ export interface Invoice {
 
   createdTime: string | null;
   updatedTime: string | null;
-  createdBy: number | null;
-  updatedBy: number | null;
-  assignedById: number | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  assignedById: string | null;
 
   opened: boolean;
   webformId: number | null;
