@@ -24,7 +24,7 @@ export async function upsertContactWithData(id : number, ...args : ContactWithDa
 export async function upsertContact(id : number, ...args : contactCreateInput[]){
     const response = await Promise.all(args.map(async contact => {
         return await prisma.contact.upsert({
-            where : {bitrix_id_portal_id : {
+            where : {portal_id_bitrix_id : {
                 portal_id : id,
                 bitrix_id : contact.bitrix_id
             }},
@@ -38,7 +38,7 @@ export async function upsertContact(id : number, ...args : contactCreateInput[])
 export async function upsertEmail(id : number, ...args : contact_emailCreateInput[]){
     const response = await Promise.all(args.map(async email => {
         return await prisma.contact_email.upsert({
-            where : {contact_id_portal_id_bitrix_id : {
+            where : {portal_id_bitrix_id : {
                 portal_id : id,
                 contact_id : email.contact.connect!.id!,
                 bitrix_id : email.bitrix_id
@@ -53,7 +53,7 @@ export async function upsertEmail(id : number, ...args : contact_emailCreateInpu
 export async function upsertPhones(id : number, ...args : contact_phonesCreateInput[]){
     const response = await Promise.all(args.map(async phone => {
         return await prisma.contact_phones.upsert({
-            where : {contact_id_portal_id_bitrix_id : {
+            where : {bitrix_id_portal_id : {
                 portal_id : id,
                 contact_id : phone.contact.connect!.id!,
                 bitrix_id : phone.bitrix_id
