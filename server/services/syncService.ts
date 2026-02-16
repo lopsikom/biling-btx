@@ -11,6 +11,7 @@ import { formToJSON } from "axios";
 import { ContactWithData, upsertContactWithData } from "../utils/prisma/postContact";
 import upsertAddress from "../utils/prisma/postAddress";
 import upsertInvoice from "../utils/prisma/postInvoice";
+import { getBitrixTokenByRefresh } from "../utils/getBitrixToken";
 
 
 export class syncService{
@@ -35,13 +36,13 @@ export class syncService{
                 if(!data) return false;
                 domain = data;
             }
-            const token = await getBitrixTokenByPortal(id)
+            const token = await getBitrixTokenByRefresh(id)
             console.log(token)
             console.log(id)
             console.log(domain)
             if(!token) return false
-            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
-            const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
+            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.acessToken)).result
+            const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.acessToken)).result
             console.log(companysBitrix)
             console.log(usersBitrix)
 
