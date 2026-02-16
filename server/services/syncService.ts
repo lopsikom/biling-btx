@@ -14,7 +14,7 @@ import upsertInvoice from "../utils/prisma/postInvoice";
 
 
 export class syncService{
-    private portals : Record<string, number> = {}
+    private portals : Record<string, number> = {"b24-sxsxo9.bitrix24.ru" : 4}
 
     constructor(portals? : Record<string, number>){
         if(portals) this.portals =  portals;
