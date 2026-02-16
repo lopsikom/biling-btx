@@ -107,6 +107,8 @@ export interface IRequisite{
     PRESET_ID : number,
     NAME : string,
     CODE? : string,
+    SORT : number,
+    ACTIVE : "Y" | "N",
     RQ_INN? : string,
     RQ_KPP? : string,
     RQ_IFNS? : string,
@@ -120,6 +122,7 @@ export interface IContact{
     POST? : string,
     NAME? : string,
     SECOND_NAME? : string,
+    OPENED? : "Y" | "N",
     LAST_NAME? : string,
     LEAD_ID? : number,
     TYPE_ID? : string,
@@ -128,6 +131,7 @@ export interface IContact{
     DATE_CREATE? : string
     ASSIGNED_BY_ID? : number,
     CREATED_BY_ID? : number,
+    DATE_MODIFY? : string,
     PHONE? : Array<IContactInfo>,
     EMAIL? : Array<IContactInfo>
 }

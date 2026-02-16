@@ -1,5 +1,6 @@
 import axios, {AxiosInstance} from "axios"
-import { IAppInfo, IBitrixToken } from "./models"
+import { IAppInfo, IBitrixToken, ICompnany, IUser } from "../models"
+import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 
 export interface bitrixResponse<T>{
     result : T,
@@ -39,19 +40,35 @@ export class bitrixAPI {
             client_secret : client_secret,
             code : code
             }
-
+            
             
         });
         return response.data as IBitrixToken;
     }
     async enterHandler(domain : string, client_id : string){
         console.log(`https://${domain}/oauth/authorize/`)
-        const response = await this.AxiosClient.get(`https://${domain}/oauth/authorize/`,{
+        const response = await this.AxiosClient.get(`https://${domain}/oauth/authorize`,{
             params : {
                 client_id : client_id
             }
         })
-        return response.data;
+        return response.data as bitrixTokens;
+    }
+    async getCompanies(domain : string, token : string){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.list`, {
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<ICompnany[]>
+    }
+    async getBitrixUsers(domain : string, token : string){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/user.get`,{
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<IUser[]>;
     }
 }
 

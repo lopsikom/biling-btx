@@ -1,11 +1,14 @@
+import { portalWhereInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 
-export default async function getPortalPrisma(domain : string, client_id? : string){
+export default async function getPortalPrisma(data : portalWhereInput){
     return await prisma.portal.findFirst({
-        where: {
-            domain : domain,
-            client_id : client_id
-        }
+        where : data
     })
 }
 
+export async function getPortalsPrisma(data? : portalWhereInput){
+    return await prisma.portal.findMany({
+        where : data
+    })
+} 

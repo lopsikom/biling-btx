@@ -9,7 +9,6 @@ datasource db {
 
 model address {
   id             Int          @id @default(autoincrement())
-  requsite_id    Int
   company_id     Int
   portal_id      Int
   entity_type_id Int
@@ -24,41 +23,44 @@ model address {
   country_code   String?
   company        company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal         portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  requisite      requisite    @relation(fields: [requsite_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   address_type   address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([company_id, entity_type_id, portal_id])
 }
 
 model address_type {
-  id                     Int                      @id
-  name                   String
-  address                address[]
-  autoinformation_module autoinformation_module[]
+  id      Int       @id
+  name    String
+  address address[]
 }
 
 model autoinformation_module {
-  id           Int          @id @default(autoincrement())
-  company_id   Int
+  id           Int                  @id @default(autoincrement())
+  contract_id  Int
   type_id      Int
   quantity     Int?
-  price        Float?       @db.Real
+  price        Float?               @db.Real
   active       Boolean?
-  company      company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  address_type address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tarrif_id    Int?
+  contract     contract             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tariff       tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  address_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model autoinformation_type {
-  id   Int     @id @default(autoincrement())
-  name String?
+  id                     Int                      @id @default(autoincrement())
+  name                   String?
+  autoinformation_module autoinformation_module[]
 }
 
 model chat_bot {
   id                  Int                   @id @default(autoincrement())
-  company_id          Int
-  tariff_id           Int
+  contract_id         Int
+  tariff_id           Int?
   lines_count         Int
   active              Boolean
-  company             company               @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tariff              tariff                @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contract            contract              @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tariff              tariff?               @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   chat_bot_messengers chat_bot_messengers[]
 }
 
@@ -72,33 +74,32 @@ model chat_bot_messengers {
 }
 
 model company {
-  id                                              Int                      @id @default(autoincrement())
+  id                                              Int          @id @default(autoincrement())
   bitrix_id                                       String
   portal_id                                       Int
   title                                           String
-  type                                            String?                  @db.Char(10)
-  company_type                                    String?                  @db.Char(10)
-  industry                                        String?                  @db.Char(10)
+  type                                            String?      @db.Char(10)
+  company_type                                    String?      @db.Char(10)
+  industry                                        String?      @db.Char(10)
   assigned_by_id                                  Int?
   created_by_id                                   Int?
   modify_by_id                                    Int?
   opened                                          Boolean?
   is_my_company                                   Boolean?
-  date_create                                     DateTime?                @db.Date
-  date_modify                                     DateTime?                @db.Date
+  date_create                                     DateTime?    @db.Date
+  date_modify                                     DateTime?    @db.Date
   raw_json                                        Json?
   address                                         address[]
-  autoinformation_module                          autoinformation_module[]
-  chat_bot                                        chat_bot[]
-  user_bitrix_company_assigned_by_idTouser_bitrix user_bitrix?             @relation("company_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
-  user_bitrix_company_created_by_idTouser_bitrix  user_bitrix?             @relation("company_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
-  user_bitrix_company_modify_by_idTouser_bitrix   user_bitrix?             @relation("company_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
-  portal                                          portal                   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_company_assigned_by_idTouser_bitrix user_bitrix? @relation("company_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
+  user_bitrix_company_created_by_idTouser_bitrix  user_bitrix? @relation("company_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
+  user_bitrix_company_modify_by_idTouser_bitrix   user_bitrix? @relation("company_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
+  portal                                          portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact                                         contact[]
+  contract                                        contract[]
   invoice                                         invoice[]
   requisite                                       requisite[]
-  vats                                            vats[]
-  webform                                         webform[]
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model contact {
@@ -118,7 +119,6 @@ model contact {
   opened                                          Boolean
   date_create                                     DateTime         @db.Date
   date_modify                                     DateTime         @db.Date
-  last_activty_time                               DateTime         @db.Date
   raw_json                                        Json?
   user_bitrix_contact_assigned_by_idTouser_bitrix user_bitrix      @relation("contact_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   company                                         company          @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -127,7 +127,8 @@ model contact {
   portal                                          portal           @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_email                                   contact_email[]
   contact_phones                                  contact_phones[]
-  vats                                            vats[]
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model contact_email {
@@ -137,9 +138,12 @@ model contact_email {
   type_id           String?
   value             String?
   value_type        Int
+  bitrix_id         Int
   contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([contact_id, portal_id, bitrix_id])
 }
 
 model contact_info_type {
@@ -157,18 +161,26 @@ model contact_phones {
   type_id           String?
   value             String?
   value_type        Int
+  bitrix_id         Int
   contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([contact_id, portal_id, bitrix_id])
 }
 
 model contract {
-  id   Int    @id @default(autoincrement())
-  name String
+  id                     Int                      @id @default(autoincrement())
+  name                   String
+  company_id             Int
+  autoinformation_module autoinformation_module[]
+  chat_bot               chat_bot[]
+  company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vats                   vats[]
+  webform                webform[]
 }
 
 model invoice {
-  id                                               String      @id
   company_id                                       Int
   portal_id                                        Int
   bitrix_id                                        Int
@@ -188,12 +200,15 @@ model invoice {
   last_activty_by                                  Int
   last_activty_time                                DateTime    @db.Date
   raw_json                                         Json?
+  id                                               Int         @id @default(autoincrement())
   user_bitrix_invoice_assigned_by_idTouser_bitrix  user_bitrix @relation("invoice_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   company                                          company     @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_bitrix_invoice_created_byTouser_bitrix      user_bitrix @relation("invoice_created_byTouser_bitrix", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
   user_bitrix_invoice_last_activty_byTouser_bitrix user_bitrix @relation("invoice_last_activty_byTouser_bitrix", fields: [last_activty_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
   portal                                           portal      @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_bitrix_invoice_updated_byTouser_bitrix      user_bitrix @relation("invoice_updated_byTouser_bitrix", fields: [updated_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model messengers {
@@ -235,16 +250,19 @@ model requisite {
   date_create       DateTime? @db.Date
   date_modify       DateTime? @db.Date
   raw_json          Json?
-  address           address[]
   company           company   @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   portal            portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model tariff {
-  id       Int        @id @default(autoincrement())
-  name     String?
-  chat_bot chat_bot[]
-  webform  webform[]
+  id                     Int                      @id @default(autoincrement())
+  name                   String?
+  autoinformation_module autoinformation_module[]
+  chat_bot               chat_bot[]
+  vats                   vats[]
+  webform                webform[]
 }
 
 model user_bitrix {
@@ -255,7 +273,6 @@ model user_bitrix {
   name                                         String
   last_name                                    String?
   second_name                                  String?
-  personal_gender                              String?   @db.Char(1)
   personal_birthday                            DateTime? @db.Date
   personal_photo                               String?
   personal_phone                               String?
@@ -263,6 +280,7 @@ model user_bitrix {
   work_phone                                   String?
   work_position                                String?
   work_departament                             String?
+  personal_gender                              String?   @db.Char(1)
   company_company_assigned_by_idTouser_bitrix  company[] @relation("company_assigned_by_idTouser_bitrix")
   company_company_created_by_idTouser_bitrix   company[] @relation("company_created_by_idTouser_bitrix")
   company_company_modify_by_idTouser_bitrix    company[] @relation("company_modify_by_idTouser_bitrix")
@@ -274,24 +292,26 @@ model user_bitrix {
   invoice_invoice_last_activty_byTouser_bitrix invoice[] @relation("invoice_last_activty_byTouser_bitrix")
   invoice_invoice_updated_byTouser_bitrix      invoice[] @relation("invoice_updated_byTouser_bitrix")
   portal                                       portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([bitrix_id, portal_id])
 }
 
 model vats {
   id          Int      @id @default(autoincrement())
-  company_id  Int
-  contract_id Int?
+  contract_id Int
   value       Int
   duration    Int
   active      Boolean?
-  company     company  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  contact     contact? @relation(fields: [contract_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tarrif_id   Int?
+  contract    contract @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tariff      tariff?  @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model webform {
-  id         Int      @id @default(autoincrement())
-  company_id Int
-  tarrif_id  Int
-  active     Boolean?
-  company    company  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tariff     tariff   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id          Int      @id @default(autoincrement())
+  contract_id Int
+  tarrif_id   Int
+  active      Boolean?
+  contract    contract @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
+  tariff      tariff   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

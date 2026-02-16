@@ -1,31 +1,22 @@
-import bitrixAPI from "~~/server/services/bitrixAPI";
-import getPortalPrisma from "~~/server/utils/prisma/getPortal";
-import patchPortal from "~~/server/utils/prisma/patchPortal";
 
 export default defineEventHandler(async (event) => {
+    console.log("adaawdawdawdawdwd")
     const query = getQuery(event);
     const code = query.code;
     const domain = query.domain;
     const server_domain = query.server_domain;
     if(code && domain && server_domain){
         try{
-            const portal = await getPortalPrisma(domain.toString());
-            if(!portal){
+            const data = getBitrixTokenByCode(code.toString(), domain.toString(), server_domain.toString());
+            if(!data) {
                 throw createError({
-                    status : 404,
-                    statusText : 'Empty portal'
+                    status : 400,
+                    statusMessage : "Bad Request"
                 })
             }
-            const token = await bitrixAPI.getPortalToken(code.toString(), portal.client_id, portal.client_secret, server_domain.toString());
-            console.log('prekol ', token);
-
-            patchPortal(portal.id, token.refresh_token, token.access_token)
-            const data = {
-                refresh : token.refresh_token,
-            }
             setResponseStatus(event, 202)
+            console.log(data);
             return data 
-            
             
         }
         catch(e){

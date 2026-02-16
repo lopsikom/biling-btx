@@ -1,4 +1,4 @@
-import bitrixAPI from "~~/server/services/bitrixAPI";
+import bitrixAPI from "~~/server/services/bitrix/bitrixAPI";
 import getPortalByUserBitrix from "~~/server/utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) =>{
