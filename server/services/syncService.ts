@@ -36,9 +36,12 @@ export class syncService{
                 domain = data;
             }
             const token = await getBitrixTokenByPortal(id)
+            console.log(token)
+            console.log(id)
+            console.log(domain)
             if(!token) return false
             const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
-            const usersBitrix = await (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
+            const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
             console.log(companysBitrix)
             console.log(usersBitrix)
 

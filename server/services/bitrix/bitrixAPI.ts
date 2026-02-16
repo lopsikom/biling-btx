@@ -73,6 +73,7 @@ export class bitrixAPI {
                 auth : token
             }
         })
+        console.log("adawdawdawd", response)
         return response.data as bitrixResponse<ICompnany[]>
     }
     async getBitrixUsers(domain : string, token : string){
