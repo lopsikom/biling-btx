@@ -20,6 +20,7 @@ export class syncService{
         if(portals) this.portals =  portals;
     }
     async installSync(portal : string | number) : Promise<boolean>{
+        console.log("123")
         try{
             let id : number;
             let domain : string;
@@ -38,8 +39,11 @@ export class syncService{
             if(!token) return false
             const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
             const usersBitrix = await (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
+            console.log(companysBitrix)
+            console.log(usersBitrix)
 
             if(usersBitrix.length < 0) return false
+
             const mappedUsers = await Promise.all(usersBitrix.map(async u => {
                 const user = await upsertUserPrisma(id, {
                     bitrix_id : u.ID,
@@ -55,6 +59,7 @@ export class syncService{
                 })
                 return user[0]
             }))
+            console.log(mappedUsers)
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
                     const com = await postCompanyPrisma( id, {
@@ -72,6 +77,7 @@ export class syncService{
                     user_bitrix_company_created_by_idTouser_bitrix : {connect : {id : mappedUsers.find(u => u.bitrix_id === b.ID)?.id}}
                 })
                 console.log(`Company '${b.TITLE}' added`)
+                console.log(companyClients)
                 const company = new companyClient(domain, id, b.ID)
                 const r = await company.getRequisites()
                 await upsertRequisites(id, ...r.result.map(m => {
