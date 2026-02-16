@@ -39,8 +39,8 @@ export async function getBitrixTokenByRefresh(portal_id : number){
     const portal = await getPortalPrisma({
         id : portal_id
     })
-    if(!portal || !portal.access_token)return;
-    const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.access_token)
+    if(!portal || !portal.refresh_token)return;
+    const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token)
     return {
         acessToken : token.access_token,
         refresh : token.refresh_token
