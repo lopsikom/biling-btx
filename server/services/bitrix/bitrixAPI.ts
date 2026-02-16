@@ -33,6 +33,9 @@ export class bitrixAPI {
         return response.data as bitrixResponse<IAppInfo>;
     }
     async getAccesToken(client_id : string, client_secret : string, refresh_token : string){
+        console.log(client_id);
+        console.log(client_secret)
+        console.log(refresh_token)
         const response = await this.AxiosClient.get(`https://oauth.bitrix24.tech/oauth/token/`,{
         params: {
             grant_type : "refresh_token",
@@ -43,6 +46,7 @@ export class bitrixAPI {
             
             
         });
+        console.log(response)
         return response.data as IBitrixToken;
     }
     async getPortalToken(code : string, client_id : string, client_secret : string, url : string) : Promise<IBitrixToken>{
