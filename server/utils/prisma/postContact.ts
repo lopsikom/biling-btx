@@ -1,17 +1,25 @@
 import { contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
+import { IContactInfo } from "~~/shared/models/bitrixModels";
+import { emailsPhonesMapUpsertPrisma } from "../mappers";
 
 export type ContactWithData = {
     contact : contactCreateInput,
-    emails : contact_emailCreateInput[],
-    phones : contact_phonesCreateInput[]
+    emails? : IContactInfo[],
+    phones? : IContactInfo[]
 }
 
 export async function upsertContactWithData(id : number, ...args : ContactWithData[]){
     const response = await Promise.all(args.map(async c => {
         const contact = (await upsertContact(id, c.contact))[0];
-        const emails = await upsertEmail(id, ...c.emails);
-        const phones = await upsertPhones(id, ...c.phones);
+        let emails;
+        let phones;
+        if(c.emails){
+            emails = await upsertEmail(id, ...emailsPhonesMapUpsertPrisma(id, contact.id, ...c.emails));
+        }
+        if(c.phones){
+            phones = await upsertPhones(id,...emailsPhonesMapUpsertPrisma(id, contact.id, ...c.phones));
+        }
         return {
             contact,
             emails,
@@ -40,7 +48,6 @@ export async function upsertEmail(id : number, ...args : contact_emailCreateInpu
         return await prisma.contact_email.upsert({
             where : {portal_id_bitrix_id : {
                 portal_id : id,
-                contact_id : email.contact.connect!.id!,
                 bitrix_id : email.bitrix_id
             }},
             update : email,
@@ -55,7 +62,6 @@ export async function upsertPhones(id : number, ...args : contact_phonesCreateIn
         return await prisma.contact_phones.upsert({
             where : {bitrix_id_portal_id : {
                 portal_id : id,
-                contact_id : phone.contact.connect!.id!,
                 bitrix_id : phone.bitrix_id
             }},
             update : phone,

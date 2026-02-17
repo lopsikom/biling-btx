@@ -3,7 +3,7 @@ import type { IAddress } from "../interfaces"
 export type DiffAdress = {
     TYPE_ID? : number,
     ENTITY_ID? : number,
-    ENTITY_TYPE_ID? : number,
+    ENTITY_TYPE_ID? : string,
     data : Partial<IAddress>
 }
 

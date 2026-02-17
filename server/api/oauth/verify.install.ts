@@ -15,8 +15,9 @@ export default defineEventHandler(async (event) =>{
         if(!portal){
             return false
         }
-        const data = await bitrixAPI.enterHandler(portal.domain, portal.client_id); 
-        //console.log('data ', data); //добавить проверку
+        if(!portal.refresh_token) {
+            await bitrixAPI.enterHandler(portal.domain, portal.client_id); 
+        }
         const sync = await syncService.installSync(portal.id);
         console.log(sync)
         return true

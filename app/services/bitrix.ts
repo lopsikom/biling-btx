@@ -13,13 +13,13 @@ export class Bitrix {
     async companyUserFields() : Promise<IUserField[]>{
         return (await this.bitrixFrame.callMethod("crm.company.userfield.list", {})).getData().result as IUserField[]
     }
-    async companyInfo(id? : number) : Promise<ICompnany>{
+    async companyInfo(id? : string | number) : Promise<ICompnany>{
         console.log(this.bitrixFrame.placement.options.ID)
         return (await this.bitrixFrame.callMethod("crm.company.get", {
             id : id ?? this.bitrixFrame.placement.options.ID
         })).getData().result as ICompnany
     }
-    async companyContacts(id? : number) : Promise<IContact[]>{
+    async companyContacts(id? : string | number) : Promise<IContact[]>{
         return ( await this.bitrixFrame.callMethod("crm.contact.list", {
             filter : {
                 COMPANY_ID : id ?? this.bitrixFrame.placement.options.ID
@@ -35,7 +35,7 @@ export class Bitrix {
             ]
         })).getData().result as IContact[];
     }
-    async companyRequisite(id? : number) : Promise<IRequisite[]> {
+    async companyRequisite(id? : string | number) : Promise<IRequisite[]> {
         return (await this.bitrixFrame.callMethod("crm.requisite.list", {
             filter : {
                 ENTITY_TYPE_ID : 4,
@@ -43,12 +43,12 @@ export class Bitrix {
             }
         })).getData().result as IRequisite[];
     }
-    async getUser(id : number) : Promise<IUser[]> {
+    async getUser(id : string | number) : Promise<IUser[]> {
         return (await this.bitrixFrame.callMethod("user.get", {
             ID : id
         })).getData().result as IUser[]
     }
-    async companyAdress(id? : number) : Promise<IAddress[]>{
+    async companyAdress(id? : string | number) : Promise<IAddress[]>{
         return (await this.bitrixFrame.callMethod("crm.address.list", {
             filter : {
                 ENTITY_TYPE_ID : 4,
@@ -59,7 +59,7 @@ export class Bitrix {
     async getAddresTypes() : Promise<IAddresType[]>{
         return (await this.bitrixFrame.callMethod("crm.enum.addresstype")).getData().result as IAddresType[]
     }
-    async companyUpdate(data : Partial<ICompnany>, id? : number){
+    async companyUpdate(data : Partial<ICompnany>, id? : string | number){
        return (await this.bitrixFrame.callMethod("crm.company.update", {
             id : id ?? this.bitrixFrame.placement.options.ID,
             fields : data

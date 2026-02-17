@@ -18,10 +18,8 @@ export default class companyClient{
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
             if(!config.params.auth) {
                 const portal = await getPortal({id : this.portal_id})
-                console.log(portal);
                 if(!portal || !portal.refresh_token) return config
                 const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
-                console.log(token);
                 if(!token) return config
                 config.params.auth = token.access_token;
             }
@@ -72,7 +70,12 @@ export default class companyClient{
                     "SECOND_NAME",
                     "PHONE",
                     "EMAIL",
-                    "POST"
+                    "POST",
+                    "DATE_CREATE",
+                    "DATE_MODIFY",
+                    "CREATED_BY_ID",
+                    "ASSIGNED_BY_ID",
+                    "MODIFY_BY_ID"
                 ]
             }
         })
@@ -87,7 +90,7 @@ export default class companyClient{
                 }
             }
         })
-        return response.data as bitrixResponse<Invoice[]>
+        return response.data as bitrixResponse<{items : Invoice[]}>
     }
     
 

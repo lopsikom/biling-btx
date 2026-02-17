@@ -43,7 +43,6 @@ export class bitrixAPI {
             
             
         });
-        console.log(response)
         return response.data as IBitrixToken;
     }
     async getPortalToken(code : string, client_id : string, client_secret : string, url : string) : Promise<IBitrixToken>{
@@ -60,7 +59,6 @@ export class bitrixAPI {
         return response.data as IBitrixToken;
     }
     async enterHandler(domain : string, client_id : string){
-        console.log(`https://${domain}/oauth/authorize/`)
         const response = await this.AxiosClient.get(`https://${domain}/oauth/authorize`,{
             params : {
                 client_id : client_id
@@ -74,7 +72,6 @@ export class bitrixAPI {
                 auth : token
             }
         })
-        console.log("adawdawdawd", response)
         return response.data as bitrixResponse<ICompnany[]>
     }
     async getBitrixUsers(domain : string, token : string){

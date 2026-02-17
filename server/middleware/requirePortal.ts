@@ -4,7 +4,7 @@ import getPortalByUserBitrix from "../utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) => {
     if(!event.path.startsWith("/api")) return
-    if(event.path.startsWith("/api/oauth")) return
+    if(event.path.startsWith("/api/oauth") || event.path.startsWith("/api/test")) return
     const token = getHeader(event, "Authorization");
     if(!token){
         throw createError({

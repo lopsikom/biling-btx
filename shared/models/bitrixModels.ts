@@ -120,7 +120,7 @@ export interface IRequisite{
 export interface IContact{
     ID : string,
     POST? : string,
-    NAME? : string,
+    NAME : string,
     SECOND_NAME? : string,
     OPENED? : "Y" | "N",
     LAST_NAME? : string,
@@ -128,10 +128,11 @@ export interface IContact{
     TYPE_ID? : string,
     SOURSCE_ID? : string,
     COMPANY_ID? : number,
-    DATE_CREATE? : string
+    DATE_CREATE : string
     ASSIGNED_BY_ID? : string,
     CREATED_BY_ID? : string,
-    DATE_MODIFY? : string,
+    MODIFY_BY_ID? : string,
+    DATE_MODIFY : string,
     PHONE? : Array<IContactInfo>,
     EMAIL? : Array<IContactInfo>
 }
@@ -157,7 +158,7 @@ export interface IUser{
 }
 export interface IAddress{
     TYPE_ID : number,
-    ENTITY_TYPE_ID : number,
+    ENTITY_TYPE_ID : string,
     ENTITY_ID : number,
     ADDRESS_1? : string,
     ADDRESS_2? : string,
@@ -176,7 +177,7 @@ export interface IEditContacts extends IContact {
     TITLE_NAME? : string
 }
 export interface Invoice {
-  id: string;
+  id: number;
   title: string;
   xmlId: string | null;
 
@@ -186,7 +187,7 @@ export interface Invoice {
   updatedBy: string | null;
   assignedById: string | null;
 
-  opened: boolean;
+  opened: string;
   webformId: number | null;
 
   lastCommunicationTime: string | null;
@@ -215,7 +216,7 @@ export interface Invoice {
   taxValue: number | null;
 
   mycompanyId: number | null;
-  lastActivityBy: number | null;
+  lastActivityBy: string | null;
   lastActivityTime: string | null;
 
   isRecurring: boolean;

@@ -159,7 +159,7 @@ function saveEditContacts (){
         if(newData.TITLE_NAME){
             if(newData.TITLE_NAME.trim() !== ""){
                 const [NAME, LAST_NAME, SECOND_NAME] = newData.TITLE_NAME.split(' ');
-                newData.NAME = NAME;
+                newData.NAME = NAME ?? "";
                 newData.LAST_NAME = LAST_NAME;
                 newData.SECOND_NAME = SECOND_NAME;
                 delete newData.TITLE_NAME;
@@ -176,9 +176,9 @@ function saveEditContacts (){
         diffCont.forEach(c => {
             if(c.data.EMAIL && c.data.EMAIL?.length > 0){
                 c.data.EMAIL = c.data.EMAIL.map( e => {
-                    const email = e as unknown as DiffWithID<IContactInfo>
+                    const email = e as DiffWithID<IContactInfo>
                     return{
-                        ID : email.id as number,
+                        ID : email.id?.toString(),
                         VALUE_TYPE : email.data.VALUE_TYPE,
                         VALUE : email.data.VALUE,
                         TYPE_ID : email.data.TYPE_ID
@@ -187,9 +187,9 @@ function saveEditContacts (){
             }
             if(c.data.PHONE && c.data.PHONE.length > 0){
                 c.data.PHONE = c.data.PHONE.map(p => {
-                    const phone = p as unknown as DiffWithID<IContactInfo>;
+                    const phone = p as DiffWithID<IContactInfo>;
                     return{
-                        ID : phone.id as number,
+                        ID : phone.id?.toString(),
                         VALUE_TYPE : phone.data.VALUE_TYPE,
                         VALUE : phone.data.VALUE,
                         TYPE_ID : phone.data.TYPE_ID

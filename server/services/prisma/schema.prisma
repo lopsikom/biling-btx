@@ -8,31 +8,23 @@ datasource db {
 }
 
 model address {
-  id             Int          @id @default(autoincrement())
+  id             Int     @id @default(autoincrement())
   company_id     Int
   portal_id      Int
-  entity_type_id Int
-  type_id        Int
   address_1      String?
   address_2      String?
   city           String?
-  postal_code    String?      @db.Char(10)
+  postal_code    String? @db.Char(10)
   region         String?
   province       String?
   country        String?
   country_code   String?
-  company        company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  portal         portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  address_type   address_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  type_id        String
+  entity_type_id String
+  company        company @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal         portal  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([company_id, entity_type_id, portal_id])
-  @@unique([portal_id, entity_type_id, type_id])
-}
-
-model address_type {
-  id      Int       @id
-  name    String
-  address address[]
+  @@unique([company_id, portal_id, type_id, entity_type_id])
 }
 
 model autoinformation_module {
@@ -113,18 +105,18 @@ model contact {
   post                                            String?
   type_id                                         String?
   birthdate                                       DateTime?        @db.Date
-  created_by_id                                   Int
-  modify_by_id                                    Int
-  assigned_by_id                                  Int
+  created_by_id                                   Int?
+  modify_by_id                                    Int?
+  assigned_by_id                                  Int?
   opened                                          Boolean
   date_create                                     DateTime         @db.Date
   date_modify                                     DateTime         @db.Date
   raw_json                                        Json?
   bitrix_id                                       String
-  user_bitrix_contact_assigned_by_idTouser_bitrix user_bitrix      @relation("contact_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user_bitrix_contact_assigned_by_idTouser_bitrix user_bitrix?     @relation("contact_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
   company                                         company          @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user_bitrix_contact_created_by_idTouser_bitrix  user_bitrix      @relation("contact_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  user_bitrix_contact_modify_by_idTouser_bitrix   user_bitrix      @relation("contact_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user_bitrix_contact_created_by_idTouser_bitrix  user_bitrix?     @relation("contact_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
+  user_bitrix_contact_modify_by_idTouser_bitrix   user_bitrix?     @relation("contact_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
   portal                                          portal           @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contact_email                                   contact_email[]
   contact_phones                                  contact_phones[]
@@ -133,39 +125,30 @@ model contact {
 }
 
 model contact_email {
-  id                Int               @id @default(autoincrement())
-  contact_id        Int
-  portal_id         Int
-  type_id           String?
-  value             String?
-  value_type        Int
-  bitrix_id         String
-  contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id         Int     @id @default(autoincrement())
+  contact_id Int
+  portal_id  Int
+  type_id    String?
+  value      String?
+  bitrix_id  String
+  value_type String
+  contact    contact @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal     portal  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([portal_id, bitrix_id])
 }
 
-model contact_info_type {
-  id             Int              @id
-  name           String
-  contact_email  contact_email[]
-  contact_phones contact_phones[]
-}
-
 /// This table has subclasses and requires additional setup for migrations. Visit https://pris.ly/d/table-inheritance for more info.
 model contact_phones {
-  id                Int               @id @default(autoincrement())
-  contact_id        Int
-  portal_id         Int
-  type_id           String?
-  value             String?
-  value_type        Int
-  bitrix_id         String
-  contact           contact           @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  portal            portal            @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  contact_info_type contact_info_type @relation(fields: [value_type], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id         Int     @id @default(autoincrement())
+  contact_id Int
+  portal_id  Int
+  type_id    String?
+  value      String?
+  bitrix_id  String
+  value_type String
+  contact    contact @relation(fields: [contact_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  portal     portal  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([bitrix_id, portal_id])
 }
@@ -185,29 +168,29 @@ model invoice {
   company_id                                       Int
   portal_id                                        Int
   title                                            String
-  created_time                                     DateTime    @db.Date
-  updated_time                                     DateTime    @db.Date
-  created_by                                       Int
-  updated_by                                       Int
-  assigned_by_id                                   Int
+  created_time                                     DateTime     @db.Date
+  updated_time                                     DateTime     @db.Date
+  created_by                                       Int?
+  updated_by                                       Int?
+  assigned_by_id                                   Int?
   opened                                           Boolean
-  begindate                                        DateTime    @db.Date
-  closedate                                        DateTime    @db.Date
+  begindate                                        DateTime     @db.Date
+  closedate                                        DateTime     @db.Date
   category_id                                      String?
-  stage_id                                         String?     @db.Char(10)
-  currency_id                                      String?     @db.Char(3)
-  opportunity                                      Float?      @db.Real
+  stage_id                                         String?      @db.Char(10)
+  currency_id                                      String?      @db.Char(3)
+  opportunity                                      Float?       @db.Real
   last_activty_by                                  Int
-  last_activty_time                                DateTime    @db.Date
+  last_activty_time                                DateTime     @db.Date
   raw_json                                         Json?
-  id                                               Int         @id @default(autoincrement())
+  id                                               Int          @id @default(autoincrement())
   bitrix_id                                        String
-  user_bitrix_invoice_assigned_by_idTouser_bitrix  user_bitrix @relation("invoice_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  company                                          company     @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user_bitrix_invoice_created_byTouser_bitrix      user_bitrix @relation("invoice_created_byTouser_bitrix", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  user_bitrix_invoice_last_activty_byTouser_bitrix user_bitrix @relation("invoice_last_activty_byTouser_bitrix", fields: [last_activty_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  portal                                           portal      @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user_bitrix_invoice_updated_byTouser_bitrix      user_bitrix @relation("invoice_updated_byTouser_bitrix", fields: [updated_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user_bitrix_invoice_assigned_by_idTouser_bitrix  user_bitrix? @relation("invoice_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
+  company                                          company      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_invoice_created_byTouser_bitrix      user_bitrix? @relation("invoice_created_byTouser_bitrix", fields: [created_by], references: [id], onUpdate: NoAction)
+  user_bitrix_invoice_last_activty_byTouser_bitrix user_bitrix  @relation("invoice_last_activty_byTouser_bitrix", fields: [last_activty_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  portal                                           portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_bitrix_invoice_updated_byTouser_bitrix      user_bitrix? @relation("invoice_updated_byTouser_bitrix", fields: [updated_by], references: [id], onUpdate: NoAction)
 
   @@unique([portal_id, bitrix_id])
 }
