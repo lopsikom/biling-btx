@@ -1,6 +1,7 @@
+import { IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotPost, IChatBotUpdate, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 import { IAddress, ICompnany, IContact, IContactInfo, Invoice, IRequisite, IUser } from "../services/models";
-import { user_bitrix } from "../services/models/generated/prisma/client";
-import { addressCreateInput, companyCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput } from "../services/models/generated/prisma/models";
+import { contract, user_bitrix } from "../services/models/generated/prisma/client";
+import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
 import { ContactWithData } from "./prisma/postContact";
 
 export function userMapUpsertPrisma(portal_id : number, ...user : IUser[]) : user_bitrixCreateInput[]{
@@ -147,4 +148,277 @@ export function invocieMapUpsertPrisma(portal_id : number, company_id : number, 
         if(lastactivy) i.user_bitrix_invoice_last_activty_byTouser_bitrix ={connect : {id : lastactivy.id}};
         return i
     })
+}
+
+export type contractPrismaGet = {
+    contract_status: {
+        id: number;
+        name: string;
+    };
+} & {
+    id: number;
+    name: string;
+    company_id: number;
+    status: number;
+    active: boolean | null;
+    temporary: boolean | null;
+    index: string | null;
+    date_begin: Date;
+    date_close: Date;
+    org_name: string;
+}
+export function contractGetMapPrisma(data : contractPrismaGet) : IContract;
+export function contractGetMapPrisma(data : contractPrismaGet[]) : IContract[]
+export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet[]): IContract | IContract[] {
+    if(Array.isArray(data)){
+        return data.map(c => {return{
+                id : c.id,
+                name : c.name,
+                company_id : c.company_id,
+                status : c.contract_status.name,
+                active : c.active,
+                temporary : c.temporary,
+                date_begin : c.date_begin.toString(),
+                date_close : c.date_close.toString(),
+                org_name : c.org_name
+            } as IContract} )
+    }
+    else return {
+        id : data.id,
+        name : data.name,
+        company_id : data.company_id,
+        status : data.contract_status.name,
+        active : data.active,
+        temporary : data.temporary,
+        date_begin : data.date_begin.toString(),
+        date_close : data.date_close.toString(),
+        org_name : data.org_name
+    } as IContract
+}
+
+
+
+export function contractInputMapPrisma(data : IContractPost) : contractCreateInput {
+    return {
+        name : data.name,
+        company : {connect : {id : data.company_id}},
+        contract_status : {connect : {id : data.status}},
+        active : data.active,
+        index : data.index,
+        temporary : data.temporary,
+        date_begin : data.date_begin,
+        date_close : data.date_close,
+        org_name : data.org_name
+    } as contractCreateInput
+}
+
+export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdateInput{
+    const contract = {
+        name : data.name,
+        active : data.active,
+        index : data.index,
+        temporary : data.temporary,
+        date_begin : data.date_begin,
+        date_close : data.date_close,
+        org_name : data.org_name
+    } as contractUpdateInput
+    if(data.company_id) contract.company = {connect : {id : data.company_id}}
+    if(data.status) contract.contract_status = {connect : {id : data.status}}
+    return contract
+}
+
+export function vatsInputMapPrisma(data : IVatsPost) : vatsCreateInput{
+    return {
+        additional_users : data.additional_user,
+        active : data.active,
+        price : data.price,
+        duration : data.duration,
+        title : data.title,
+        contract : {connect : {id : data.contract_id}},
+        tariff : {connect : {id : data.tarrif_id}}
+    } as vatsCreateInput
+}
+
+export function vatsUpdateMapPrisma(data : IVatsUpdate) : vatsUpdateInput{
+    const vats = {
+        additional_users : data.additional_user,
+        active : data.active,
+        price : data.price,
+        duration : data.duration,
+        title : data.title,
+    } as vatsUpdateInput
+
+    if(data.contract_id) vats.contract =  {connect : {id : data.contract_id}}
+    if(data.tarrif_id) vats.tariff = {connect : {id : data.tarrif_id}}
+
+    return vats
+}
+export function voiceRobotInputMapPrisma(data : IVoiceRobotPost) : voice_robotCreateInput{
+    const robot = {
+        lines : data.lines,
+        acitve : data.active,
+        price : data.price,
+        title : data.title,
+    } as voice_robotCreateInput
+    if(data.contract_id) robot.contract = {connect : {id : data.contract_id}}
+    if(data.tarrif_id) robot.tariff = {connect : {id : data.tarrif_id}}
+    return robot
+}
+
+export function voiceRobotPatchMapPrimsa(data : IVoiceRobotUpdate) : voice_robotUpdateInput{
+    const robot = {
+        lines : data.lines,
+        acitve : data.active,
+        price : data.price,
+        title : data.title,
+    } as voice_robotUpdateInput
+    if(data.contract_id) robot.contract = {connect : {id : data.contract_id}}
+    if(data.tarrif_id) robot.tariff = {connect : {id : data.tarrif_id}}
+    return robot
+}
+export function chatBotInputUpdateMapPrisma(data : IChatBotUpdate) : chat_botUpdateInput;
+export function chatBotInputUpdateMapPrisma(data : IChatBotPost) : chat_botCreateInput
+export function chatBotInputUpdateMapPrisma(data : IChatBotPost | IChatBotUpdate) : chat_botCreateInput | chat_botUpdateInput{
+    const chat = {
+        lines_count : data.lines_count,
+        active : data.active,
+        price : data.price,
+        title : data.title,
+    } as chat_botCreateInput | chat_botUpdateInput
+
+    if(data.contract_id) chat.contract = {connect : {id : data.contract_id}}
+    if(data.tarrif_id) chat.tariff = {connect : {id : data.tarrif_id}}
+
+    return chat
+}
+
+export type chatBotGetPrisma = {
+    chat_bot_messengers: {
+        messengers: {
+            name: string;
+        };
+    }[];
+} & {
+    id: number;
+    active: boolean;
+    price: number;
+    title : string
+    contract_id: number;
+    lines_count: number;
+    tariff_id: number | null;
+}
+
+export function chatBotGetMapPrisma(data : chatBotGetPrisma) : IChatBot;
+export function chatBotGetMapPrisma(data : chatBotGetPrisma[]) : IChatBot[]
+export function chatBotGetMapPrisma(data: chatBotGetPrisma | chatBotGetPrisma[]): IChatBot | IChatBot[] {
+    if(Array.isArray(data)){
+        return data.map(c => {return{
+                id : c.id,
+                active : c.active,
+                price : c.price,
+                title : c.title,
+                contract_id : c.contract_id,
+                lines_count : c.lines_count,
+                tarrif_id : c.tariff_id,
+                messengers : c.chat_bot_messengers.map(m => m.messengers.name)
+            } as IChatBot} )
+    }
+    else return {
+                id : data.id,
+                active : data.active,
+                price : data.price,
+                title : data.title,
+                contract_id : data.contract_id,
+                lines_count : data.lines_count,
+                tarrif_id : data.tariff_id,
+                messengers : data.chat_bot_messengers.map(m => m.messengers.name)
+    } as IChatBot
+}
+
+
+// export function chatBotUpdateMapPrisma (data : IChatBotUpdate) : chat_botUpdateInput{
+//     return {
+//         lines_count : data.lines_count,
+//         active : data.active,
+//         price : data.price,
+//         tariff : {connect : {id : data.tarrif_id}},
+//         contract : {connect : {id : data.contract_id}},
+        
+//     } as chat_botUpdateInput
+// }
+
+export function autoinformationInputMapPrisma(data : IAutoinformationPost) : autoinformation_moduleCreateInput
+export function autoinformationInputMapPrisma(data : IAutoinformationFilterUpdate) : autoinformation_moduleUpdateInput
+export function autoinformationInputMapPrisma(data : IAutoinformationPost | IAutoinformationFilterUpdate) : autoinformation_moduleCreateInput | autoinformation_moduleUpdateInput{
+    const auto = {
+        quantity : data.quantity,
+        price : data.price,
+        title : data.title,
+        active : data.active,
+        
+    } as autoinformation_moduleCreateInput | autoinformation_moduleUpdateInput
+
+    if(data.contract_id) auto.contract = {connect : {id : data.contract_id}}
+    if(data.tarrif_id) auto.tariff = {connect : {id : data.tarrif_id}}
+    if(data.type_id) auto.autoinformation_type = {connect : {id : data.type_id}}
+
+    return auto
+}
+
+export function webformInputUpdateMapPrisma(data : IWebFormFilterUpdate) : webformUpdateInput;
+export function webformInputUpdateMapPrisma(data : IWebformPost) : webformCreateInput;
+export function webformInputUpdateMapPrisma(data : IWebFormFilterUpdate | IWebformPost) : webformCreateInput | webformUpdateInput{
+    const webform = {
+        active : data.active,
+        price : data.price,
+        title : data.title,
+    }   as webformCreateInput | webformUpdateInput
+
+    
+    if(data.contract_id) webform.contract = {connect : {id : data.contract_id}}
+    if(data.tarrif_id) webform.tariff = {connect : {id : data.tarrif_id}}
+
+    console.log(webform)
+
+    return webform
+}
+
+export type webformGetPrisma = {
+    webform_webform_type: {
+        webform_type: {
+            name: string;
+        };
+    }[];
+} & {
+    id: number;
+    contract_id: number;
+    tarrif_id: number;
+    active: boolean | null;
+    price: number;
+    title: string;
+}
+
+export function webformGetMapPrisma(data : webformGetPrisma) : IWebform;
+export function webformGetMapPrisma(data : webformGetPrisma[]) : IWebform[];
+export function webformGetMapPrisma(data : webformGetPrisma | webformGetPrisma[]) : IWebform | IWebform[]{
+    if(Array.isArray(data)){
+        return data.map(c => {return{
+                id : c.id,
+                active : c.active,
+                price : c.price,
+                title : c.title,
+                contract_id : c.contract_id,
+                tarrif_id : c.tarrif_id,
+                integrations : c.webform_webform_type.map(m => m.webform_type.name)
+            } as IWebform} )
+    }
+    else return {
+                id : data.id,
+                active : data.active,
+                price : data.price,
+                title : data.title,
+                contract_id : data.contract_id,
+                tarrif_id : data.tarrif_id,
+                integrations : data.webform_webform_type.map(m => m.webform_type.name)
+    } as IWebform
 }

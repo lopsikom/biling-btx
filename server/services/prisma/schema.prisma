@@ -28,16 +28,17 @@ model address {
 }
 
 model autoinformation_module {
-  id           Int                  @id @default(autoincrement())
-  contract_id  Int
-  type_id      Int
-  quantity     Int?
-  price        Float?               @db.Real
-  active       Boolean?
-  tarrif_id    Int?
-  contract     contract             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tariff       tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  address_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                   Int                  @id @default(autoincrement())
+  contract_id          Int
+  type_id              Int
+  quantity             Int
+  price                Float                @db.Real
+  active               Boolean
+  tarrif_id            Int?
+  title                String
+  contract             contract             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tariff               tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  autoinformation_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model autoinformation_type {
@@ -52,6 +53,8 @@ model chat_bot {
   tariff_id           Int?
   lines_count         Int
   active              Boolean
+  price               Float                 @db.Real
+  title               String
   contract            contract              @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff              tariff?               @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   chat_bot_messengers chat_bot_messengers[]
@@ -87,6 +90,7 @@ model company {
   user_bitrix_company_created_by_idTouser_bitrix  user_bitrix? @relation("company_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
   user_bitrix_company_modify_by_idTouser_bitrix   user_bitrix? @relation("company_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
   portal                                          portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  connection                                      connection[]
   contact                                         contact[]
   contract                                        contract[]
   invoice                                         invoice[]
@@ -157,10 +161,19 @@ model contract {
   id                     Int                      @id @default(autoincrement())
   name                   String
   company_id             Int
+  status                 Int
+  active                 Boolean?
+  temporary              Boolean?
+  index                  String?
+  date_begin             DateTime                 @db.Date
+  date_close             DateTime                 @db.Date
+  org_name               String
   autoinformation_module autoinformation_module[]
   chat_bot               chat_bot[]
   company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contract_status        contract_status          @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
   vats                   vats[]
+  voice_robot            voice_robot[]
   webform                webform[]
 }
 
@@ -246,6 +259,7 @@ model tariff {
   autoinformation_module autoinformation_module[]
   chat_bot               chat_bot[]
   vats                   vats[]
+  voice_robot            voice_robot[]
   webform                webform[]
 }
 
@@ -281,21 +295,69 @@ model user_bitrix {
 }
 
 model vats {
+  id               Int      @id @default(autoincrement())
+  contract_id      Int
+  additional_users Int
+  active           Boolean?
+  tarrif_id        Int?
+  price            Float    @db.Real
+  duration         Int
+  title            String
+  contract         contract @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tariff           tariff?  @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model webform {
+  id                   Int                    @id @default(autoincrement())
+  contract_id          Int
+  tarrif_id            Int
+  active               Boolean?
+  price                Float                  @db.Real
+  title                String
+  contract             contract               @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
+  tariff               tariff                 @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  webform_webform_type webform_webform_type[]
+}
+
+model contract_status {
+  id       Int        @id @default(autoincrement())
+  name     String
+  contract contract[]
+}
+
+model webform_type {
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  webform_webform_type webform_webform_type[]
+}
+
+model voice_robot {
   id          Int      @id @default(autoincrement())
   contract_id Int
-  value       Int
-  duration    Int
-  active      Boolean?
   tarrif_id   Int?
+  lines       Int
+  acitve      Boolean?
+  price       Float    @db.Real
+  title       String
   contract    contract @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff      tariff?  @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model webform {
-  id          Int      @id @default(autoincrement())
-  contract_id Int
-  tarrif_id   Int
-  active      Boolean?
-  contract    contract @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
-  tariff      tariff   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model webform_webform_type {
+  webform_id   Int
+  type_id      Int
+  webform_type webform_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  webform      webform      @relation(fields: [webform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([webform_id, type_id])
+}
+
+model connection {
+  id         Int     @id @default(autoincrement())
+  company_id Int
+  title      String
+  status     String
+  source     String
+  type       String
+  company    company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

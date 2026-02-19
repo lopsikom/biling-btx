@@ -9,7 +9,8 @@ export default defineNuxtConfig({
   nitro : {
     plugins : [
       './plugins/prisma-check.ts',
-    ]
+    ],
+    serveStatic : false
   },
 
   plugins : [
