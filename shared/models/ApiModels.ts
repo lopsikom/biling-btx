@@ -230,5 +230,5 @@ export interface Integrations{
 }
 export interface ITarrifs {
     id : number,
-    name : string
+    name : string,
 }
