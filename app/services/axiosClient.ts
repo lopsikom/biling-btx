@@ -7,7 +7,7 @@ export class axiosClient{
     private AxiosClient;
     private BitrixFrame : B24Frame | undefined;
     constructor(){
-        const url = useRuntimeConfig().public.BaseUri + useRuntimeConfig().public.BaseUrl + "/api/";
+        const url = useRuntimeConfig().public.BaseUri + useRuntimeConfig().public.BaseUrl + "api/";
         this.AxiosClient = axios.create({baseURL : url, headers: {
             'Content-Type': 'application/json'
         }});
