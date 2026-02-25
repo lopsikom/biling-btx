@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
                     statusMessage : "Invalid id"
                 });
             }
+            console.log(data)
             const vats = await patchVatsPrisma(parseId, data);
                 if(!vats){
                     throw createError({

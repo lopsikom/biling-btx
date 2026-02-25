@@ -12,15 +12,16 @@ export interface IContract {
 }
 
 export interface IContractFilter {
-    name : string,
-    company_id : number,
-    status : string,
-    active : boolean,
-    index : string,
-    temporary : boolean,
-    date_begin : string,
-    date_close : string,
-    org_name : string
+    name? : string,
+    company_id? : number,
+    bitrxi_company_id : string,
+    status? : string,
+    active? : boolean,
+    index? : string,
+    temporary? : boolean,
+    date_begin? : string,
+    date_close? : string,
+    org_name? : string
 }
 
 export interface IContractPost{
@@ -49,7 +50,7 @@ export interface IContractUpdate{
 export interface IVats{
     id : number,
     contract_id : number,
-    additional_user : number,
+    additional_users : number,
     duration : number,
     title : string
     active : boolean,
@@ -58,17 +59,18 @@ export interface IVats{
 }
 export interface IVatsFilter{
     contract_id? : number,
-    additional_user? : number,
+    additional_users? : number,
     duration? : number,
     active? : boolean,
-    title? : string
+    title? : string,
+    bitrix_id? : string,
     tarrif_id? : number,
     price? : number
 }
 
 export interface IVatsPost{
     contract_id : number,
-    additional_user : number,
+    additional_users : number,
     duration : number,
     active : boolean,
     title : string
@@ -78,7 +80,7 @@ export interface IVatsPost{
 
 export interface IVatsUpdate{
     contract_id? : number,
-    additional_user? : number,
+    additional_users? : number,
     duration? : number,
     title? : string
     active? : boolean,
@@ -100,6 +102,7 @@ export interface IVoiceRobotFilter{
     tarrif_id? : number,
     title? : string
     lines? : number,
+    bitrix_id? : string,
     active? : boolean,
     price? : number
 }
@@ -136,6 +139,7 @@ export interface IChatBotFilter {
     tarrif_id? : number,
     title? : string
     lines_count? : number,
+    bitrix_id? : string,
     active? : boolean,
     price? : number,
     messengers? : string[]
@@ -156,12 +160,12 @@ export interface IChatBotUpdate {
     lines_count? : number,
     active? : boolean,
     price? : number,
-    messengers? : string[]
+    messengers? : number[]
 }
 
 export interface IAutoinformation{
     id : number,
-    conrtact_id : number,
+    contract_id : number,
     type_id : number,
     quantity : number,
     price : number,
@@ -183,6 +187,7 @@ export interface IAutoinformationFilterUpdate{
     type_id? : number,
     quantity? : number,
     price? : number,
+    bitrix_id? : string,
     active? : boolean,
     tarrif_id? : number,
     title? : string
@@ -203,7 +208,8 @@ export interface IWebFormFilterUpdate{
     active? : boolean,
     price? : number,
     title? : string,
-    integrations? : string[]
+    bitrix_id? : string,
+    integrations? : number[]
 }
 export interface IWebformPost{
     contract_id : number,
@@ -212,4 +218,17 @@ export interface IWebformPost{
     price : number,
     title : string,
     integrations : number[]
+}
+
+export interface IMessengers{
+    id : number,
+    name : string
+}
+export interface Integrations{
+    id : number,
+    name  : string
+}
+export interface ITarrifs {
+    id : number,
+    name : string
 }

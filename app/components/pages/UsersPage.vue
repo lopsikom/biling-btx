@@ -46,78 +46,18 @@ const search = ref<string>()
                     </div>
                     
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                 </div> 
                 <div class="flex mt-[15px] gap-5">
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                       <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
 
                 </div>
@@ -153,52 +93,12 @@ const search = ref<string>()
     border-radius: 10px;
     margin-left: auto;
     height: fit-content;
-
 }
 .add-user-btn:hover{
     background: #5899d7;
     transition: background 0.15s ease;
 }
 
-.select-menu{
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 15px;
-    background-color: #edf2f7;
-    border-radius: 5px;
-    border: 1px solid rgba(255, 0, 0, 0);
-    width: 200px;
-}
-.select-menu:focus{
-    outline: none;
-}
-
-.select-content{
-    overflow: hidden;
-    background: white;
-    border-radius: 6px;
-
-}
-.select-item{
-    font-size: 13px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    height: 30px;
-    min-width: 190px;
-    padding: 0 10px 0 10px;
-    position: relative;
-    user-select: none;
-}
-.select-item[data-highlighted]{
-    outline: none;
-    background-color: #ebf8ff;
-    transition: background-color 0.05s ease;
-}
-.select-item[data-highlighted] .select-title{
-    color: #437db4;
-    transition: color 0.05s ease;
-}
 .search-box{
     padding: 7px 10px;
     background-color: #edf2f7;

@@ -24,7 +24,7 @@ const error = useErrorStateStore()
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999999999;
+  z-index: 99999999999999999999;
 }
 
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import initBitrix, { Bitrix } from '~/services/bitrix'
+import initBitrix from '~/services/bitrix'
 import ArrowLeftSIcon from '@bitrix24/b24icons-vue/outline/ArrowLeftSIcon'
 import Plus30Icon from '@bitrix24/b24icons-vue/actions/Plus30Icon'
 import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
@@ -15,16 +15,18 @@ import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
 import { pagesEnum } from '~/components/pages'
-import { modalsEnum } from '~/components/models'
-import ErrorModal from '~/components/models/ErrorModal.vue'
+import { modalsEnum } from '~/components/modals'
+import ErrorModal from '~/components/modals/ErrorModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
+import usebillingStateStore from '~/services/stores/billingStateStore'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
+const billingStateStore = usebillingStateStore();
 const modalStore = useModalStore();
 const errorModal = useErrorStateStore();
 
-
+const {$axios} = useNuxtApp()
 
 const selectPage = ref<string>(bilingPagesEnum.Main);
 
@@ -34,6 +36,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
     try{
         const bitrix = await initBitrix();
         bitrixStateStore.setBitrixClient(bitrix);
+        $axios.setBitrixFrame = bitrix.bitrixFrame;
         bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
         bitrixStateStore.companyContacts = await bitrix.companyContacts();
         bitrixStateStore.companyRequisite = await bitrix.companyRequisite();
@@ -41,6 +44,20 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.companyAddress = await bitrix.companyAdress();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
         bitrixStateStore.companyInvoice = await bitrix.getInvoice();
+        billingStateStore.messengers = await $axios.getMessengers();
+        billingStateStore.integrations = await $axios.getIntegrations();
+        billingStateStore.tariff = await $axios.getTariff();
+        billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : bitrix.bitrixFrame.placement.options.ID});
+            const vats = await $axios.getVats({bitrix_id : bitrix.bitrixFrame.placement.options.ID})
+            billingStateStore.vats.push(...vats);
+            const voiceRobot = await $axios.getVoiceRobots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+            billingStateStore.voiceRobots.push(...voiceRobot);
+            const chatBot = await $axios.getChatBots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+            billingStateStore.chatBots.push(...chatBot);
+            const autoinfo = await $axios.getAutoInfos({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+            billingStateStore.autoinformations.push(...autoinfo);
+            const webForm = await $axios.getWebforms({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+            billingStateStore.webform.push(...webForm)
         return {bitrix, Company}
     }catch(e){
         console.error(e)
@@ -52,6 +69,20 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrixStateStore.addresTypes = mockAddressTypes;
             bitrixStateStore.companyAddress = mockAddress;
             bitrixStateStore.companyInvoice = mockInvoice;
+            billingStateStore.messengers = await $axios.getMessengers();
+            billingStateStore.integrations = await $axios.getIntegrations();
+            billingStateStore.tariff = await $axios.getTariff();
+            billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : "2"});
+            const vats = await $axios.getVats({bitrix_id : "2"})
+            billingStateStore.vats.push(...vats);
+            const voiceRobot = await $axios.getVoiceRobots({bitrix_id : "2"});
+            billingStateStore.voiceRobots.push(...voiceRobot);
+            const chatBot = await $axios.getChatBots({bitrix_id : "2"});
+            billingStateStore.chatBots.push(...chatBot);
+            const autoinfo = await $axios.getAutoInfos({bitrix_id : "2"});
+            billingStateStore.autoinformations.push(...autoinfo);
+            const webForm = await $axios.getWebforms({bitrix_id : "2"});
+            billingStateStore.webform.push(...webForm)
         }
         else{
             errorModal.showError({message : 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e}, "Ошибка Bitrix");

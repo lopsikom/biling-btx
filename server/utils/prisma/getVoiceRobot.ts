@@ -6,16 +6,20 @@ export async function getVoiceRobotListPrisma(data : {portal_id? : number, filte
     const response = await prisma.voice_robot.findMany({
         where : {
             lines : filter?.lines,
-            acitve : filter?.active,
+            active : filter?.active,
             price : filter?.price,
             title : filter?.title,
             tariff : {id : filter?.tarrif_id},
             contract : {
                 id : filter?.contract_id,
                 company : {
-                    portal_id : portal_id
+                    portal_id : portal_id,
+                    bitrix_id : filter?.bitrix_id
                 }
             }
+        },
+        orderBy : {
+            id : 'asc'
         }
     })
     return response

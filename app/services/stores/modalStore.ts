@@ -2,7 +2,7 @@ import { ModalEnum } from "../models/enums/billing/ModalsEnum";
 
 const useModalStore = defineStore('modal', () => {
         const openModal = ref(false);
-        const modalID = ref<ModalEnum | null>(null);
+        const modalID = ref<ModalEnum | null>();
 
         function showModal(id : ModalEnum){
             modalID.value = id;

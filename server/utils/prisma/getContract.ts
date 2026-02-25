@@ -16,11 +16,15 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             date_close : filter?.date_close,
             org_name : filter?.org_name,
             company : {
-                portal_id : portal_id
+                portal_id : portal_id,
+                bitrix_id : filter?.bitrxi_company_id
             }
         },
         include : {
             contract_status : true
+        },
+        orderBy : {
+            id : 'asc'
         }
         
     })

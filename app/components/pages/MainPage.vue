@@ -14,7 +14,7 @@ const modalStore = useModalStore()
 <template>
 <div class="main-page-container">
     <div class="main-info-grid">
-        <div class="main-info-item any-white-container blue-hover">
+        <div class="main-info-item any-white-container blue-hover" @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)">
             <div>
                 <span class="font-semibold select-none">Тариф</span>
             </div>

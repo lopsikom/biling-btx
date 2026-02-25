@@ -18,14 +18,14 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "Invalid id"
             });
         }
-        const webform = await patchWebformPrisma(parseId, data);
+        const webform = await patchWebformPrisma(parseId, data, body.integrations);
             if(!webform){
                 throw createError({
                     statusCode : 404,
                     statusMessage : "no found contract"
                 })
             }
-            return webform
+            return webformGetMapPrisma(webform);
     }
     else{
         throw createError({

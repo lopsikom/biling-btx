@@ -5,7 +5,7 @@ export async function getVatsList(data : {portal_id? : number, filter? : IVatsFi
     const {portal_id, filter} = data
     const response = await prisma.vats.findMany({
         where : {
-            additional_users : filter?.additional_user,
+            additional_users : filter?.additional_users,
             duration : filter?.duration,
             active : filter?.active,
             price : filter?.price,
@@ -13,13 +13,17 @@ export async function getVatsList(data : {portal_id? : number, filter? : IVatsFi
             contract : {
                 id : filter?.contract_id,
                 company : {
-                    portal_id : portal_id
+                    portal_id : portal_id,
+                    bitrix_id : filter?.bitrix_id
                 }
             },
             tariff : {
                 id : filter?.tarrif_id
             }
             
+        },
+        orderBy : {
+            id : 'asc'
         }
     })
     return response

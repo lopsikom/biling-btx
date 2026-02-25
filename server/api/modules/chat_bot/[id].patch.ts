@@ -3,6 +3,7 @@ import { chat_botUpdateInput } from "~~/server/services/models/generated/prisma/
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
     const body = await readBody(event);
+    console.log(body)
     let parseId : number;
     let data : chat_botUpdateInput;
     if(id){
@@ -16,14 +17,15 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "Invalid id"
             });
         }
-        const chatBot = await patchChatBot(parseId, data);
-            if(!chatBot){
-                throw createError({
-                    statusCode : 404,
-                    statusMessage : "no found contract"
-                })
-            }
-            return chatBot
+        const chatBot = await patchChatBot(parseId, data, body.messengers);
+        if(!chatBot){
+            throw createError({
+                statusCode : 404,
+                statusMessage : "no found contract"
+            })
+        }
+        
+        return chatBotGetMapPrisma(chatBot)
     }
     else{
         throw createError({

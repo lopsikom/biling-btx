@@ -12,11 +12,15 @@ export async function getAutoinformationListPrisma(data : {portal_id? : number, 
             contract : {
                 id : filter?.contract_id,
                 company : {
-                    portal_id : portal_id
+                    portal_id : portal_id,
+                    bitrix_id : filter?.bitrix_id
                 }
             },
             tariff : { id : filter?.tarrif_id},
             autoinformation_type : {id : filter?.type_id}
+        },
+        orderBy : {
+            id : 'asc'
         }
     });
     return response;

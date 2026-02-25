@@ -8,7 +8,8 @@ export async function getWebformListPrisma(data : {portal_id? : number, filter? 
             contract : {
                 id : filter?.contract_id,
                 company : {
-                    portal_id : portal_id
+                    portal_id : portal_id,
+                    bitrix_id : filter?.bitrix_id
                 }
             },
             tariff : {id : filter?.tarrif_id},
@@ -26,6 +27,9 @@ export async function getWebformListPrisma(data : {portal_id? : number, filter? 
                     }
                 }
             }
+        },
+        orderBy : {
+            id : 'asc'
         }
     })
     return response;

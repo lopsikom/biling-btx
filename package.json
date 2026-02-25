@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "set NUXT_PUBLIC_DEV=true && nuxt dev --host",
+    "dev": "nuxt dev --host",
+    "predev" : "set NUXT_PUBLIC_DEV=true && nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

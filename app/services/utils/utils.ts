@@ -8,7 +8,8 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 export function diffObject<T>(
     oldObj : T,
-    newObj : T
+    newObj : T,
+    withID = true
 ) : Partial<T> {
     const diff : Partial<T> ={};
     for(const key in newObj){
@@ -23,7 +24,9 @@ export function diffObject<T>(
 
         }
         else if (Array.isArray(oldData) && Array.isArray(newData)){
-            const arrDiff = diffArray(oldData, newData, "ID");
+            let arrDiff;
+            if(withID) arrDiff = diffArray(oldData, newData, "ID");
+            else arrDiff = diffArray(oldData, newData);
             if(arrDiff.length > 0) {
                 console.log(key)
                 diff[key] = arrDiff as T[typeof key];
@@ -71,6 +74,27 @@ export function diffArray<T, K extends keyof T>(
     })
     return diff;
 }
+
+export function isDiffArraySimple<T>(oldArray : T[], newArray : T[]) {
+    
+    if (oldArray.length !== newArray.length) {
+        
+        return true;
+    }
+
+    const sorted1 = [...oldArray].sort();
+    const sorted2 = [...newArray].sort();
+
+    for (let i = 0; i < sorted1.length; i++) {
+        
+        if (sorted1[i] !== sorted2[i]) {
+            
+            return true;
+        }
+    }
+
+    return false;
+}
 const {copy} = useClipboard()
 export async function copyToClipboard(text : string) {
   try{
@@ -84,7 +108,26 @@ export async function copyToClipboard(text : string) {
 export function makeKey(...args : string[]){
     return args.join("::")
 }
+export function isDefined<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+export function isValidData(obj: Record<string, any>): boolean {
+    for (const key in obj) {
+        const value = obj[key];
+        console.log(key)
 
-// export function normalizeDate(date : Date){
-//     return `${date[2]}-${date[1]}-${date[0]}`
-// }
+        if (value === null || value === undefined) {
+            return false;
+        }
+
+        if (typeof value === "string" && value.trim() === "") {
+            return false;
+        }
+
+        if (typeof value === "number" && value <= 0) {
+            if(key !== "id" && key !== "contract_id") return false;
+        }
+    }
+
+    return true;
+}

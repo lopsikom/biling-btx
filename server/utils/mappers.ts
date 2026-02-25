@@ -177,6 +177,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 company_id : c.company_id,
                 status : c.contract_status.name,
                 active : c.active,
+                index : c.index,
                 temporary : c.temporary,
                 date_begin : c.date_begin.toString(),
                 date_close : c.date_close.toString(),
@@ -229,7 +230,7 @@ export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdate
 
 export function vatsInputMapPrisma(data : IVatsPost) : vatsCreateInput{
     return {
-        additional_users : data.additional_user,
+        additional_users : data.additional_users,
         active : data.active,
         price : data.price,
         duration : data.duration,
@@ -241,7 +242,7 @@ export function vatsInputMapPrisma(data : IVatsPost) : vatsCreateInput{
 
 export function vatsUpdateMapPrisma(data : IVatsUpdate) : vatsUpdateInput{
     const vats = {
-        additional_users : data.additional_user,
+        additional_users : data.additional_users,
         active : data.active,
         price : data.price,
         duration : data.duration,
@@ -256,7 +257,7 @@ export function vatsUpdateMapPrisma(data : IVatsUpdate) : vatsUpdateInput{
 export function voiceRobotInputMapPrisma(data : IVoiceRobotPost) : voice_robotCreateInput{
     const robot = {
         lines : data.lines,
-        acitve : data.active,
+        active : data.active,
         price : data.price,
         title : data.title,
     } as voice_robotCreateInput
