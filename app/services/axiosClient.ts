@@ -13,6 +13,7 @@ export class axiosClient{
         }});
         this.AxiosClient.interceptors.request.use(async (config) => {
             console.log(config.baseURL, config.url)
+            console.log(config.params)
             if(!config.headers.Authorization){
                 if(this.BitrixFrame){
                     const auth = this.BitrixFrame.auth.getAuthData();
@@ -54,7 +55,9 @@ export class axiosClient{
 
     async getContracts(filter? : IContractFilter) {
         const response = await this.AxiosClient.get("modules/contract.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IContract[]
     }
@@ -68,7 +71,9 @@ export class axiosClient{
     }
     async getVats(filter? : IVatsFilter) {
         const response = await this.AxiosClient.get("modules/vats.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IVats[]
     }
@@ -92,7 +97,9 @@ export class axiosClient{
 
     async getVoiceRobots(filter? : IVoiceRobotFilter) {
         const response = await this.AxiosClient.get("modules/voice_robot.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IVoiceRobot[]
     }
@@ -114,7 +121,9 @@ export class axiosClient{
     }
     async getChatBots(filter? : IChatBotFilter) {
         const response = await this.AxiosClient.get("modules/chat_bot.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IChatBot[]
     }
@@ -136,7 +145,9 @@ export class axiosClient{
     }
     async getAutoInfos(filter? : IAutoinformationFilterUpdate) {
         const response = await this.AxiosClient.get("modules/autoinformation.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IAutoinformation[]
     }
@@ -158,7 +169,9 @@ export class axiosClient{
     }
     async getWebforms(filter? : IWebFormFilterUpdate) {
         const response = await this.AxiosClient.get("modules/webform.list", {
-            params : filter
+            params : {
+                filter : JSON.stringify(filter)
+            }
         })
         return response.data as IWebform[]
     }

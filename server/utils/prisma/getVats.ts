@@ -3,6 +3,7 @@ import { IVatsFilter } from "~~/shared/models/APIModels";
 
 export async function getVatsList(data : {portal_id? : number, filter? : IVatsFilter}){
     const {portal_id, filter} = data
+    console.log(filter)
     const response = await prisma.vats.findMany({
         where : {
             additional_users : filter?.additional_users,
@@ -15,6 +16,7 @@ export async function getVatsList(data : {portal_id? : number, filter? : IVatsFi
                 company : {
                     portal_id : portal_id,
                     bitrix_id : filter?.bitrix_id
+
                 }
             },
             tariff : {
