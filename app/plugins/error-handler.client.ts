@@ -1,4 +1,4 @@
-import useErrorStateStore from "../services/stores/errorStateStore"
+import useErrorStateStore from "~/services/stores/errorStateStore"
 
 export default defineNuxtPlugin((nuxtApp) => {
   const errorStore = useErrorStateStore()

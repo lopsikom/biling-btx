@@ -1,0 +1,98 @@
+import axios, {AxiosInstance} from "axios"
+import { IAppInfo, IBitrixToken, ICompnany, IUser } from "../models"
+import { bitrixTokens } from "~~/server/utils/getBitrixToken"
+
+export interface bitrixResponse<T>{
+    result : T,
+    time : {
+        start : number,
+        finish : number,
+        duration : number,
+        processing : number,
+        date_start : string,
+        date_finish : string
+    }
+}
+
+export class bitrixAPI {
+    private AxiosClient : AxiosInstance
+    private AuthURI : string
+    constructor(){
+        this.AuthURI = useRuntimeConfig().AuthUri + "rest/";
+        console.log(this.AuthURI);
+        this.AxiosClient = axios.create({headers: {
+            'Content-Type': 'application/json'
+        }});
+    }
+    async getPortalData(token : string) : Promise<bitrixResponse<IAppInfo>>{
+        const response = await this.AxiosClient.get(this.AuthURI + "app.info", {
+            params: {
+                auth : token
+            }
+        });
+        return response.data as bitrixResponse<IAppInfo>;
+    }
+    async getAccesToken(client_id : string, client_secret : string, refresh_token : string){
+        const response = await this.AxiosClient.get(`https://oauth.bitrix24.tech/oauth/token/`,{
+        params: {
+            grant_type : "refresh_token",
+            client_id : client_id,
+            client_secret : client_secret,
+            refresh_token : refresh_token
+            }
+            
+            
+        });
+        return response.data as IBitrixToken;
+    }
+    async getPortalToken(code : string, client_id : string, client_secret : string, url : string) : Promise<IBitrixToken>{
+        const response = await this.AxiosClient.get(`https://${url}/oauth/token/`,{
+        params: {
+            grant_type : "authorization_code",
+            client_id : client_id,
+            client_secret : client_secret,
+            code : code
+            }
+            
+            
+        });
+        return response.data as IBitrixToken;
+    }
+    async enterHandler(domain : string, client_id : string){
+        const response = await this.AxiosClient.get(`https://${domain}/oauth/authorize`,{
+            params : {
+                client_id : client_id
+            }
+        })
+        return response.data as bitrixTokens;
+    }
+    async getCompanies(domain : string, token : string){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.list`, {
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<ICompnany[]>
+    }
+    async getCompany(id : number, token : string, domain : string){
+        console.log(id)
+        console.log(domain)
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.get`, {
+            params : {
+                auth : token,
+                ID : id
+            }
+        })
+        return response.data as bitrixResponse<ICompnany>
+    }
+    async getBitrixUsers(domain : string, token : string){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/user.get`,{
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<IUser[]>;
+    }
+}
+
+export default new bitrixAPI();

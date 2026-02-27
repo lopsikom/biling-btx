@@ -24,3 +24,9 @@ logs
 .env.*
 !.env.example
 public.zip
+
+/generated/prisma
+
+/server/services/models/generated/prisma
+
+/app/generated/prisma

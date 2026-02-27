@@ -3,24 +3,27 @@ import UserIcon from '@bitrix24/b24icons-vue/common-b24/UserIcon'
 import SearchIcon from '@bitrix24/b24icons-vue/outline/SearchIcon'
 import { SelectItem } from 'reka-ui'
 import { Icon } from '@iconify/vue'
+import usebillingStateStore from '~/services/stores/billingStateStore'
+import type { SelectorObject } from '~/services/models'
+import useModalStore from '~/services/stores/modalStore'
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
+import type { IContract } from '~~/shared/models/APIModels'
 
-const RoleItems = ref<string[]>(['Все роли', 'Администратор', 'Сотрудник', 'Менеджер'])
-const RoleMenuValue = ref<string>('Все роли')
 
-const Users = ref([{
-    name : 'Иванов Иван',
-    email : 'ivanov@yandex.ru',
-    role : 'Администратор',
-    status : 'active',
-    date : '03.11.2025 14:30'
-},
-{
-    name : 'Петрова Мария',
-    email : 'petrova@technosfera.ru',
-    role : 'Менеджер',
-    status : 'active',
-    date : '03.11.2026 14:30'
-}])
+const billingStateStore = usebillingStateStore()
+const modalStore = useModalStore()
+
+const RoleItems = computed(() => {
+    const a = billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject})
+    a.push({label : 0, value : "Все Статусы"})
+    return a
+})
+const RoleMenuValue = ref<SelectorObject>({label : 0, value : "Все Статусы"})
+
+function openEdit(item : IContract){
+    modalStore.EditContract = item;
+    modalStore.showModal(ModalEnum.EDIT_CONTRACT)
+}
 
 const search = ref<string>()
 
@@ -30,115 +33,59 @@ const search = ref<string>()
         <div class="any-white-container px-5 py-4 flex flex-col">
             <div class="flex">
                 <div class="flex flex-col gap-1">
-                    <span class="select-none font-semibold">Пользователи и доступы</span>
-                    <span class="text-gray-500">Управление пользователями организации</span>
+                    <span class="select-none font-semibold">Договора</span>
+                    <span class="text-gray-500">Управление договорами организации</span>
                 </div>
-                <div class="add-user-btn items-center flex px-2 py-2 gap-1">
-                    <UserIcon class="w-6 h-6 text-slate-50" />
-                    <span class="select-none text-sm text-slate-50 font-semibold">Добавить пользователя</span>
+                <div class="add-user-btn items-center flex px-2 py-2 gap-1" @click="modalStore.showModal(ModalEnum.ADD_CONTRACT)">
+                    <Icon icon="basil:document-solid" class="w-5 h-5 text-slate-50" />
+                    <span class="select-none text-sm text-slate-50 font-semibold">Добавить договор</span>
                 </div>
             </div>
             <div class="flex flex-col">
                 <div class="flex mt-5 gap-5">
                     <div class="search-box flex gap-3">
                         <SearchIcon class="w-5.5 h-5.5 text-gray-400" />
-                        <textarea type="text" v-model="search" rows="1" placeholder="Поиск по имени или email..." class="search-input text-sm"></textarea>
+                        <textarea type="text" v-model="search" rows="1" placeholder="Поиск по названию..." class="search-input text-sm"></textarea>
                     </div>
                     
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                 </div> 
                 <div class="flex mt-[15px] gap-5">
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                     <div class="flex">
-                        <SelectRoot v-model="RoleMenuValue">
-                        <SelectTrigger class="select-menu text-gray-600 text-sm" >
-                            <SelectValue />
-                            <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
-                        </SelectTrigger>
-                        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-                                <SelectViewport>
-                                    <SelectItem v-for="(value, index) in RoleItems" :key="index" :value="value" class="select-item">
-                                        <SelectItemText class="text-gray-700 select-title">{{ value }}</SelectItemText>
-                                        <SelectItemIndicator style="margin-left: auto; ">
-                                            <Icon icon="radix-icons:check" class="text-gray-600"/>
-                                        </SelectItemIndicator>
-                                    </SelectItem>
-                                </SelectViewport>
-                            </SelectContent>
-                    </SelectRoot>
+                       <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
 
                 </div>
                     <div class="users-list-grid mt-[30px]">
                         <div class="users-list-row" style="border-width: 0;">
-                            <div class="font-semibold">Имя</div>
-                            <div class="font-semibold">Email</div>
-                            <div class="font-semibold">Роль</div>
+                            <div class="font-semibold"  >Имя</div>
+                            <div class="font-semibold">Организация</div>
                             <div class="font-semibold">Статус</div>
-                            <div class="font-semibold">Дата последнего посещения</div>
+                            <div class="font-semibold">Активность</div>
+                            <div class="font-semibold">Дата начала</div>
+                            <div class="font-semibold">Дата конца</div>
                         </div>
-                        <div class="users-list-row users-item" v-for="(value, index) in Users" :key="index">
-                            <div>{{ value.name }}</div>
-                            <div>{{ value.email }}</div>
-                            <div>
-                                <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.role }}</div>
+                        <div  v-for="(value, index) in billingStateStore.contracts" :key="index" >
+                            <div class="users-list-row users-item" @click="openEdit(value)">
+                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.name }} {{value.index }}</p>
+                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
+                                <div >
+                                    <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
+                                </div>
+                                <div>
+                                    <div class="status-box text-slate-50 text-sm select-none" :class="`status-box-${value.active ? 'active': 'disable'}`">{{ value.active ? 'Активный': 'Неактивный' }}</div>
+                                </div>
+                                <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
+                                <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
                             </div>
-                            <div>
-                                <div class="status-box text-slate-50 text-sm">{{ value.status }}</div>
-                            </div>
-                            <div>{{ value.date }}</div>
                         </div>
                     </div>
             </div>
@@ -153,52 +100,12 @@ const search = ref<string>()
     border-radius: 10px;
     margin-left: auto;
     height: fit-content;
-
 }
 .add-user-btn:hover{
     background: #5899d7;
     transition: background 0.15s ease;
 }
 
-.select-menu{
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 15px;
-    background-color: #edf2f7;
-    border-radius: 5px;
-    border: 1px solid rgba(255, 0, 0, 0);
-    width: 200px;
-}
-.select-menu:focus{
-    outline: none;
-}
-
-.select-content{
-    overflow: hidden;
-    background: white;
-    border-radius: 6px;
-
-}
-.select-item{
-    font-size: 13px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    height: 30px;
-    min-width: 190px;
-    padding: 0 10px 0 10px;
-    position: relative;
-    user-select: none;
-}
-.select-item[data-highlighted]{
-    outline: none;
-    background-color: #ebf8ff;
-    transition: background-color 0.05s ease;
-}
-.select-item[data-highlighted] .select-title{
-    color: #437db4;
-    transition: color 0.05s ease;
-}
 .search-box{
     padding: 7px 10px;
     background-color: #edf2f7;
@@ -227,7 +134,8 @@ const search = ref<string>()
 }
 .users-list-row{
     display: grid;
-    grid-template-columns: repeat(5, minmax(max-content, 1fr));
+    grid-template-columns: repeat(6, minmax(200px, 1fr));
+    align-items: center;
     gap: 10px;
     border-top: 1px solid #d1d5db;
     padding: 10px 5px 10px 5px;
@@ -238,12 +146,19 @@ const search = ref<string>()
     justify-content: center;
     display: flex;
     flex-direction: row;
-    background-color: #3989d1;
     padding: 2px 8px;
     height: 22px;
     gap: 3px;
     border-radius: 5px;
     width: fit-content;
+}
+.status-box-active{
+    background-color: #3989d1;
+    -webkit-text-fill-color: white;
+}
+.status-box-disable{
+     background-color: #fd3d3d;
+    -webkit-text-fill-color: white;
 }
 .users-item:hover{
     background-color: #ebf8ff;

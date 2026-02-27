@@ -6,18 +6,22 @@ export default defineNuxtConfig({
   },
   ssr : false,
 
+  nitro : {
+    plugins : [
+      './plugins/prisma-check.ts',
+    ],
+    serveStatic : false
+  },
+
   plugins : [
-    '~/plugins/error-handler.client.ts'
+    '~/plugins/error-handler.client.ts',
+    '~/plugins/axios.client.ts'
   ],
 
   css: ['~/assets/css/main.css'],
 
   app: {
-    baseURL: '/biling/'
-  },
-
-  devServer : {
-    port : 3000
+    baseURL: process.env.NUXT_PUBLIC_BASE_URL ?? '/billing/'
   },
   typescript: {
     tsConfig: {
@@ -27,8 +31,12 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    AuthUri : "https://oauth.bitrix.info/",
+    DatabaseUrl : "",
     public : {
-      dev : process.env.DEV ?? false
+      dev : process.env.DEV ?? false,
+      BaseUri : "http://localhost:3000",
+      BaseUrl : "/billing"
     }
   },
 

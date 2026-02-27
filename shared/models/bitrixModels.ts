@@ -32,7 +32,7 @@ export interface IUserField{
 }
 
 export interface ICompnany {
-  ID: number;
+  ID: string;
   COMPANY_TYPE: string;
   TITLE: string;
 
@@ -43,9 +43,9 @@ export interface ICompnany {
   HAS_EMAIL: 'Y' | 'N';
   HAS_IMOL: 'Y' | 'N';
 
-  ASSIGNED_BY_ID: number;
-  CREATED_BY_ID: number;
-  MODIFY_BY_ID: number;
+  ASSIGNED_BY_ID: string;
+  CREATED_BY_ID: string;
+  MODIFY_BY_ID: string;
 
   BANKING_DETAILS: string | undefined;
   INDUSTRY: string | undefined;
@@ -94,19 +94,21 @@ export interface ICompnany {
   UTM_CONTENT: string | undefined;
   UTM_TERM: string | undefined;
 
-  LAST_ACTIVITY_BY: number;
+  LAST_ACTIVITY_BY: string;
   LAST_ACTIVITY_TIME: string;
   LAST_COMMUNICATION_TIME: string | undefined;
 
   USER_FIELDS? : IField[]
 }
 export interface IRequisite{
-    ID : number,
+    ID : string,
     ENTITY_TYPE_ID : number,
     ENTITY_ID : number,
     PRESET_ID : number,
     NAME : string,
     CODE? : string,
+    SORT : number,
+    ACTIVE : "Y" | "N",
     RQ_INN? : string,
     RQ_KPP? : string,
     RQ_IFNS? : string,
@@ -116,29 +118,32 @@ export interface IRequisite{
 }
 
 export interface IContact{
-    ID : number,
+    ID : string,
     POST? : string,
-    NAME? : string,
+    NAME : string,
     SECOND_NAME? : string,
+    OPENED? : "Y" | "N",
     LAST_NAME? : string,
     LEAD_ID? : number,
     TYPE_ID? : string,
     SOURSCE_ID? : string,
     COMPANY_ID? : number,
-    DATE_CREATE? : string
-    ASSIGNED_BY_ID? : number,
-    CREATED_BY_ID? : number,
+    DATE_CREATE : string
+    ASSIGNED_BY_ID? : string,
+    CREATED_BY_ID? : string,
+    MODIFY_BY_ID? : string,
+    DATE_MODIFY : string,
     PHONE? : Array<IContactInfo>,
     EMAIL? : Array<IContactInfo>
 }
 export interface IContactInfo{
-    ID? : number,
+    ID? : string,
     VALUE_TYPE? : string,
     VALUE ?: string,
     TYPE_ID? : string
 }
 export interface IUser{
-    ID : number,
+    ID : string,
     NAME? : string,
     LAST_NAME? : string,
     SECOND_NAME? : string,
@@ -153,7 +158,7 @@ export interface IUser{
 }
 export interface IAddress{
     TYPE_ID : number,
-    ENTITY_TYPE_ID : number,
+    ENTITY_TYPE_ID : string,
     ENTITY_ID : number,
     ADDRESS_1? : string,
     ADDRESS_2? : string,
@@ -165,7 +170,7 @@ export interface IAddress{
 }
 
 export interface IAddresType {
-    ID : number,
+    ID : string,
     NAME : string
 }
 export interface IEditContacts extends IContact {
@@ -178,11 +183,11 @@ export interface Invoice {
 
   createdTime: string | null;
   updatedTime: string | null;
-  createdBy: number | null;
-  updatedBy: number | null;
-  assignedById: number | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  assignedById: string | null;
 
-  opened: boolean;
+  opened: string;
   webformId: number | null;
 
   lastCommunicationTime: string | null;
@@ -211,7 +216,7 @@ export interface Invoice {
   taxValue: number | null;
 
   mycompanyId: number | null;
-  lastActivityBy: number | null;
+  lastActivityBy: string | null;
   lastActivityTime: string | null;
 
   isRecurring: boolean;
@@ -227,4 +232,32 @@ export interface Invoice {
   lastCommunicationEmailTime: string | null;
   lastCommunicationImolTime: string | null;
   lastCommunicationWebformTime: string | null;
+}
+
+export interface IAppInfo {
+    client_id : string,
+    scope : string,
+    expires: string,
+    install : {
+        installed : boolean,
+        version : string,
+        status : string,
+        scope : string,
+        domain : string,
+        uri: string,
+        client_endpoint : string,
+        member_id : string,
+        member_type : string
+    }
+} 
+export interface IBitrixToken{
+    access_token : string,
+    client_endpoint : string,
+    domain : string,
+    expires_in : number,
+    member_id : string,
+    refresh_token : string,
+    scope : string,
+    server_endpoint : string,
+    status : string
 }

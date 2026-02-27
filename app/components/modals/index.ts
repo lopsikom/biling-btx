@@ -1,0 +1,14 @@
+import { ModalEnum } from "~/services/models/enums/billing/ModalsEnum";
+import AssignUserModal from "./AssignUserModal.vue";
+import TariffModal from "./tariffModal.vue";
+import AddContract from "./AddContract.vue";
+import EditContract from "./EditContract.vue";
+
+export * from "./AssignUserModal.vue";
+
+export const modalsEnum = {
+    [ModalEnum.ASSIGN_MODAL] : AssignUserModal,
+    [ModalEnum.TARIFF_MODAL] : TariffModal,
+    [ModalEnum.ADD_CONTRACT] : AddContract,
+    [ModalEnum.EDIT_CONTRACT] : EditContract
+}
