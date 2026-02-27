@@ -80,4 +80,4 @@ export class syncService{
     }
 }
 
-export default new syncService({"b24-sxsxo9.bitrix24.ru" : 4, "b24-shukt8.bitrix24.ru": 6}) //Занести в плагин
+export default new syncService({"b24-sxsxo9.bitrix24.ru" : 4, "b24-shukt8.bitrix24.ru": 6, "crm.minta24.ru" : 7}) //Занести в плагин
