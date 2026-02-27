@@ -5,9 +5,10 @@ export default defineEventHandler(async (event) => {
     const code = query.code;
     const domain = query.domain;
     const server_domain = query.server_domain;
+    console.log(query)
     if(code && domain && server_domain){
         try{
-            const data = getBitrixTokenByCode(code.toString(), domain.toString(), server_domain.toString());
+            const data = await getBitrixTokenByCode(code.toString(), domain.toString(), server_domain.toString());
             if(!data) {
                 throw createError({
                     status : 400,
