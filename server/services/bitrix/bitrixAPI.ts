@@ -1,6 +1,7 @@
 import axios, {AxiosInstance} from "axios"
 import { IAppInfo, IBitrixToken, ICompnany, IUser } from "../models"
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
+import { config } from "process"
 
 export interface bitrixResponse<T>{
     result : T,
@@ -75,8 +76,6 @@ export class bitrixAPI {
         return response.data as bitrixResponse<ICompnany[]>
     }
     async getCompany(id : number, token : string, domain : string){
-        console.log(id)
-        console.log(domain)
         const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.get`, {
             params : {
                 auth : token,

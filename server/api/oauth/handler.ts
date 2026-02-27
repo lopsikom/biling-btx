@@ -1,11 +1,9 @@
 
 export default defineEventHandler(async (event) => {
-    console.log("adaawdawdawdawdwd")
     const query = getQuery(event);
     const code = query.code;
     const domain = query.domain;
     const server_domain = query.server_domain;
-    console.log(query)
     if(code && domain && server_domain){
         try{
             const data = await getBitrixTokenByCode(code.toString(), domain.toString(), server_domain.toString());
