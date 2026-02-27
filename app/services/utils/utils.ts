@@ -114,7 +114,6 @@ export function isDefined<T>(value: T | null | undefined): value is T {
 export function isValidData(obj: Record<string, any>): boolean {
     for (const key in obj) {
         const value = obj[key];
-        console.log(key)
 
         if (value === null || value === undefined) {
             return false;
@@ -125,7 +124,7 @@ export function isValidData(obj: Record<string, any>): boolean {
         }
 
         if (typeof value === "number" && value <= 0) {
-            if(key !== "id" && key !== "contract_id") return false;
+            if(key !== "id" && key !== "contract_id" && key !== "index" && key !=="company_id") return false;
         }
     }
 

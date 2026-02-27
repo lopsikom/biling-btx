@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
                 });
             }
             const contract = await patchContractPrisma(parseId, data);
+            console.log(contract)
                 if(!contract){
                     throw createError({
                         statusCode : 404,

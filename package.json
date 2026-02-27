@@ -5,18 +5,19 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --host",
-    "predev" : "set NUXT_PUBLIC_DEV=true && nuxt dev --host",
+    "predev": "set NUXT_PUBLIC_DEV=true && nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
-    "updateDB" : "npx prisma db pull && npx prisma generate"
+    "updateDB": "npx prisma db pull && npx prisma generate"
   },
   "dependencies": {
     "@bitrix24/b24jssdk-nuxt": "^0.5.1",
     "@bitrix24/b24ui-nuxt": "^2.2.1",
     "@iconify/vue": "^5.0.0",
+    "@internationalized/date": "^3.11.0",
     "@nuxtjs/google-fonts": "^3.2.0",
     "@pinia/nuxt": "^0.11.3",
     "@prisma/adapter-pg": "^7.3.0",

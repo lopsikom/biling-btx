@@ -16,13 +16,13 @@ const model = defineModel<T>()
 <div class="flex flex-col gap-[5px]">
     <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
     <SelectRoot v-model="model">
-    <SelectTrigger class="select-menu  text-sm" :style="width ? `width:${width}px`:''">
-        <SelectValue />
+    <SelectTrigger class="select-menu text-sm gap-[10px]" :style="width ? `width:${width}px`:''">
+        <SelectValue  style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 80%; text-align: start;" />
         <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
     </SelectTrigger>
     <SelectPortal >
-        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;" position="popper">
-        <SelectViewport>
+        <SelectContent  :side-offset="2" class="p-[5px]" style="background:  white;  z-index: 999; border-color: #e7eaee;  border-width: 1.5px; border-radius: 10px;" position="popper">
+        <SelectViewport style="max-height: 200px; overflow-y: auto; scrollbar-width: thin;">
             <SelectItem v-for="(value, index) in items" :key="index"  :value="value!" class="select-item" v-if="items">
                 <SelectItemText class="select-title">{{ isObject(value) && value.value ? value.value : value }}</SelectItemText>
                 <SelectItemIndicator style="margin-left: auto; ">

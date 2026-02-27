@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IContract, IContractFilter, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 
 
 export class axiosClient{
@@ -39,6 +39,10 @@ export class axiosClient{
         })
         return response.data as boolean;
     }
+    async getContractStatuses(){
+        const response = await this.AxiosClient.get("modules/contract.statuses.list")
+        return response.data as IContractStatus[]
+    }
     async getMessengers(){
         const response = await this.AxiosClient.get("modules/messengers.list")
         return response.data as IMessengers[]
@@ -65,9 +69,22 @@ export class axiosClient{
         const response = await  this.AxiosClient.get(`modules/contract/${id}`)
         return response.data as IContract
     }
+    
     async deleteContract(id : number){
         const response = await  this.AxiosClient.delete(`modules/contract/${id}`)
         return response.data as boolean
+    }
+    async postContract(data : IContractPost) {
+        if(!data.company_id) {
+            if(useNuxtApp().$config.public.dev) data.bitrix_id = this.BitrixFrame?.placement.options.ID ?? "2"
+            else data.bitrix_id = this.BitrixFrame?.placement.options.ID
+        }
+        const response = await this.AxiosClient.post('modules/contract.add', data)
+        return response.data as IContract
+    }
+    async patchContract(data : IContractUpdate, id : number) {
+        const response = await this.AxiosClient.patch(`modules/contract/${id}`, data)
+        return response.data as IContract
     }
     async getVats(filter? : IVatsFilter) {
         const response = await this.AxiosClient.get("modules/vats.list", {

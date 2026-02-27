@@ -190,6 +190,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         company_id : data.company_id,
         status : data.contract_status.name,
         active : data.active,
+        index : data.index,
         temporary : data.temporary,
         date_begin : data.date_begin.toString(),
         date_close : data.date_close.toString(),
@@ -199,11 +200,11 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
 
 
 
-export function contractInputMapPrisma(data : IContractPost) : contractCreateInput {
-    return {
+export function contractInputMapPrisma(data : IContractPost, portal_id : number) : contractCreateInput {
+    const data2 = {
         name : data.name,
-        company : {connect : {id : data.company_id}},
         contract_status : {connect : {id : data.status}},
+        company :{connect : {id : data.company_id, bitrix_id_portal_id : {bitrix_id : data.bitrix_id , portal_id : portal_id}}},
         active : data.active,
         index : data.index,
         temporary : data.temporary,
@@ -211,6 +212,9 @@ export function contractInputMapPrisma(data : IContractPost) : contractCreateInp
         date_close : data.date_close,
         org_name : data.org_name
     } as contractCreateInput
+    if(!data.bitrix_id || !portal_id) delete data2.company.connect?.bitrix_id_portal_id
+    if(!data.company_id) delete data2.company.connect?.id;
+    return data2
 }
 
 export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdateInput{
@@ -278,7 +282,7 @@ export function voiceRobotPatchMapPrimsa(data : IVoiceRobotUpdate) : voice_robot
     return robot
 }
 export function chatBotInputUpdateMapPrisma(data : IChatBotUpdate) : chat_botUpdateInput;
-export function chatBotInputUpdateMapPrisma(data : IChatBotPost) : chat_botCreateInput
+export function chatBotInputUpdateMapPrisma(data : IChatBotPost) : chat_botCreateInput;
 export function chatBotInputUpdateMapPrisma(data : IChatBotPost | IChatBotUpdate) : chat_botCreateInput | chat_botUpdateInput{
     const chat = {
         lines_count : data.lines_count,
@@ -304,7 +308,7 @@ export type chatBotGetPrisma = {
     active: boolean;
     price: number;
     title : string
-    contract_id: number;
+    contract_id: number | null;
     lines_count: number;
     tariff_id: number | null;
 }
@@ -392,7 +396,7 @@ export type webformGetPrisma = {
     }[];
 } & {
     id: number;
-    contract_id: number;
+    contract_id: number | null;
     tarrif_id: number;
     active: boolean | null;
     price: number;

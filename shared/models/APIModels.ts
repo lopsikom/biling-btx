@@ -26,7 +26,8 @@ export interface IContractFilter {
 
 export interface IContractPost{
     name : string,
-    company_id : number,
+    company_id? : number,
+    bitrix_id? : string,
     status? : number,
     active? : boolean,
     index? : string,
@@ -224,11 +225,6 @@ export interface IMessengers{
     id : number,
     name : string
 }
-export interface Integrations{
-    id : number,
-    name  : string
-}
-export interface ITarrifs {
-    id : number,
-    name : string,
-}
+export interface Integrations extends IMessengers {}
+export interface ITarrifs extends IMessengers {}
+export interface IContractStatus extends IMessengers {}

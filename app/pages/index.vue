@@ -19,6 +19,7 @@ import { modalsEnum } from '~/components/modals'
 import ErrorModal from '~/components/modals/ErrorModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
 import usebillingStateStore from '~/services/stores/billingStateStore'
+import AddContract from '~/components/modals/AddContract.vue'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -45,6 +46,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
         bitrixStateStore.companyInvoice = await bitrix.getInvoice();
         billingStateStore.messengers = await $axios.getMessengers();
+        billingStateStore.contractStatuses = await $axios.getContractStatuses();
         billingStateStore.integrations = await $axios.getIntegrations();
         billingStateStore.tariff = await $axios.getTariff();
         billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : bitrix.bitrixFrame.placement.options.ID});
@@ -71,6 +73,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrixStateStore.companyInvoice = mockInvoice;
             billingStateStore.messengers = await $axios.getMessengers();
             billingStateStore.integrations = await $axios.getIntegrations();
+            billingStateStore.contractStatuses = await $axios.getContractStatuses();
             billingStateStore.tariff = await $axios.getTariff();
             billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : "2"});
             const vats = await $axios.getVats({bitrix_id : "2"})
@@ -104,7 +107,7 @@ function switchPage(page : string){
 
 </script>
 <template>
-        <DialogRoot  :open="modalStore.openModal">
+    <DialogRoot  :open="modalStore.openModal">
         <DialogPortal>
             <DialogOverlay class="modal-overlay" />
             <DialogContent v-if="modalStore.openModal" class="modal-content any-white-container">
@@ -113,6 +116,18 @@ function switchPage(page : string){
                     <DialogDescription></DialogDescription>
                 </VisuallyHidden>
                 <component v-if="modalStore.modalID" :is="modalsEnum[modalStore.modalID]"></component>
+            </DialogContent>
+        </DialogPortal>
+    </DialogRoot>
+    <DialogRoot  :open="modalStore.openModalHigher">
+        <DialogPortal>
+            <DialogOverlay class="modal-overlay" style="z-index: 200;" />
+            <DialogContent v-if="modalStore.openModalHigher" class="modal-content any-white-container" style="z-index: 200;">
+                <VisuallyHidden as-child>
+                    <DialogTitle></DialogTitle>
+                    <DialogDescription></DialogDescription>
+                </VisuallyHidden>
+                <component v-if="modalStore.modalHigherID" :is="modalsEnum[modalStore.modalHigherID]"></component>
             </DialogContent>
         </DialogPortal>
     </DialogRoot>
@@ -194,6 +209,7 @@ function switchPage(page : string){
     background-color: rgba(91, 91, 91, 0.545);
     position: fixed;
     inset: 0;
+    z-index: 100;
 
 }
 .modal-content{
@@ -209,6 +225,7 @@ function switchPage(page : string){
   max-height: 85vh;
   padding: 25px;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
 }
 
 .modal-content[data-state="open"] {

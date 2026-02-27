@@ -13,7 +13,8 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "Invalid id"
             });
         }
-        const data = await deleteContractPrisma(parseId);
+        // const data = await deleteContractPrisma(parseId);
+        const data = true
             if(!data){
                 return false;
             }

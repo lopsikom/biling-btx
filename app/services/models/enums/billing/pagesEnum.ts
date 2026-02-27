@@ -1,7 +1,7 @@
 export enum bilingPagesEnum  {
     Main = 'Обзор',
     Profile = 'Профиль',
-    Users = 'Пользователи',
+    Users = 'Договора',
     Billing = 'Биллинг',
     Events = 'События',
     Fields = 'Поля'

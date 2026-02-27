@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
         }
     }
     try{
-        console.log("Dadaw")
         const portal = await getPortalByUserBitrix(token)
         if(!portal) throw createError({
             statusCode : 404,

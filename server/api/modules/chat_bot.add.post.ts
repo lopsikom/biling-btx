@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
         if(!chat_bot) { setResponseStatus(event, 400); return; }
         const messengers = await postChatBotMessengersPrisma(chat_bot.id, body.messengers)
         setResponseStatus(event, 201);
-        return {...chat_bot, messengers : messengers}
+        return {...chat_bot, tarrif_id : chat_bot.tariff_id, messengers : messengers}
     }catch(e){
         console.error(e);
         throw createError({

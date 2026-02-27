@@ -8,6 +8,7 @@ import usebillingStateStore from '~/services/stores/billingStateStore';
 import useModalStore from '~/services/stores/modalStore';
 import { diffObject, isDiffArraySimple, isValidData } from '~/services/utils/utils';
 import useToastStore from '~/services/stores/toastStore';
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
 const openModulsMenu = ref({
     vats : false,
     voiceRobot : false,
@@ -243,16 +244,34 @@ function closeEditName(item : {item : {title : string}, isEditName : boolean}){
     if(item.item.title.trim() !== "") item.isEditName = false
 }
 
+
+onMounted(() => {
+    console.log(chatBotComputed.value)
+    console.log(tarrifsSelect)
+    chatBotComputed.value.forEach(c => {
+        console.log(c.item)
+        console.log(tarrifsSelect.value.find(t => t.label === c.item.tarrif_id))
+    })
+})
+
+function addContract(item : {item : any, 
+selected_contract : {
+    label: number;
+    value: string;
+} | undefined}){
+    modalStore.addContractTariff = item
+    modalStore.showHigherModal(ModalEnum.ADD_CONTRACT)
+}
+
 async function saveData(){ //Дальнейший рефактор получения различий
 try{
     
     const allModules = [...vats.value, ...voiceRobotComputed.value, ...autoInfoComputed.value, ...chatBotComputed.value, ...webFormsComputed.value]
 
     for(const i of allModules.filter(m => !m.isDeleted)){
-        if(!i.selected_tarrif) throw new Error("Validation Error")
-        if(!i.selected_contract) throw new Error("Validation Error")
-        console.log(i.item)
-        if(!isValidData(i.item)) throw new Error("Validation Error")
+        if(!i.selected_tarrif) throw new Error("Validation Error1")
+        if(!i.selected_contract) throw new Error("Validation Error2")
+        if(!isValidData(i.item)) throw new Error("Validation Error3")
     }
 
     const delVats = vats.value.filter(v => v.item.id != 0 && v.isDeleted).map(m => m.item.id)
@@ -264,40 +283,49 @@ try{
     const vat = (await Promise.all(vats.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
         v.item.price = parseInt(v.item.price.toString());
         v.item.additional_users = parseInt(v.item.additional_users.toString())
+        if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
-        v.item.contract_id = v.selected_contract?.label
+        v.item.contract_id = v.selected_contract?.label;
+        v.item.tarrif_id = v.selected_tarrif?.label;
         return await $axios.postVats(v.item);
     })))
     const voiceRobot = await Promise.all(voiceRobotComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
         v.item.price = parseInt(v.item.price.toString());
-        v.item.lines = parseInt(v.item.lines.toString())
+        v.item.lines = parseInt(v.item.lines.toString())        
         if(!v.selected_contract) throw new Error("Contract not selected")
-        v.item.contract_id = v.selected_contract?.label
+        if(!v.selected_tarrif) throw new Error("Contract not selected")
+        v.item.contract_id = v.selected_contract?.label;
+        v.item.tarrif_id = v.selected_tarrif?.label;
         return await $axios.postVoiceRobot(v.item);
     }))
     const chatBot = await Promise.all(chatBotComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
         v.item.price = parseInt(v.item.price.toString());
-        v.item.lines_count = parseInt(v.item.lines_count.toString())
+        v.item.lines_count = parseInt(v.item.lines_count.toString());
         if(!v.selected_contract) throw new Error("Contract not selected")
-        v.item.contract_id = v.selected_contract?.label
+        if(!v.selected_tarrif) throw new Error("Contract not selected")
+        v.item.contract_id = v.selected_contract?.label;
+        v.item.tarrif_id = v.selected_tarrif?.label;
         const data = {
             ...v.item,
             messengers : v.messengers.filter(m => m.active).map(m => m.item.id)
         } as IChatBotPost
-        console.log(data);
         return await $axios.postChatBots(data);
     }))
     const autoinfo = await Promise.all(autoInfoComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
         v.item.price = parseInt(v.item.price.toString());
         v.item.quantity = parseInt(v.item.quantity.toString())
+        if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
-        v.item.contract_id = v.selected_contract?.label
+        v.item.contract_id = v.selected_contract?.label;
+        v.item.tarrif_id = v.selected_tarrif?.label;
         return await $axios.postAutoInfo(v.item);
     }))
     const webForm = await Promise.all(webFormsComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
         v.item.price = parseInt(v.item.price.toString());
+        if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
-        v.item.contract_id = v.selected_contract?.label
+        v.item.contract_id = v.selected_contract?.label;
+        v.item.tarrif_id = v.selected_tarrif?.label;
         const data = {
             ...v.item,
             integrations : v.integrations.filter(m => m.active).map(m => m.item.id)
@@ -460,9 +488,11 @@ try{
 
 }catch(e) {
     console.log(e)
-    if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно или заполнены некорректно")
+    if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно заполнены или заполнены некорректно")
 }
 }
+
+
 
 </script>
 <template>
@@ -488,10 +518,10 @@ try{
                         </CheckboxIndicator>
                     </CheckboxRoot>
                         </div>
-                    <span v-if="!item.isEditName">{{ item.item.title }}</span>
+                    <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 300px;" v-if="!item.isEditName">{{ item.item.title }}</p>
                     <InputBox @keyup.enter="closeEditName(item)" v-model="item.item.title" :resize="false" v-else @click.stop/>
                     </div>
-                    <div style="display: flex; flex-direction: row-reverse; margin-left: auto; gap: 10px;">
+                    <div style="display: flex; flex-direction: row-reverse; margin-left: auto; gap: 10px; flex: 1">
                         <div>
                             <Icon @click.stop="item.isEditMenu = !item.isEditMenu" icon="material-symbols:more-vert"/>
                             <Transition name="openEditSelector">
@@ -500,7 +530,7 @@ try{
                                     <Icon icon="mdi:edit" class="text-gray-500 w-4 h-4 hover-item" />
                                     <span class="text-gray-500 text-sm select-none hover-item">Изменить</span>
                                 </div>
-                                <div class="flex gap-2 py-1 px-2 blue-hover p-[2px] h-8 items-center"  @click.stop="item.isDeleted = true">
+                                <div class="flex gap-2 py-1 px-2 blue-hover p-[2px] h-8 items-center"@click.stop="item.isDeleted = true">
                                     <Icon icon="mdi:trash-outline" class="text-red-500 w-4 h-4" />
                                     <span class="text-red-500 text-sm select-none">Удалить</span>
                                 </div>
@@ -520,8 +550,11 @@ try{
                         <Selector style="width: 50%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
                         <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
-                    <div class="flex">
-                        <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                    <div class="flex gap-[10px] " style="align-items: end;">
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                            <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -578,8 +611,11 @@ try{
                     <div class="flex">
                         <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
-                    <div class="flex">
-                        <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                    <div class="flex gap-[10px] " style="align-items: end;">
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                            <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -662,8 +698,11 @@ try{
                     <div class="flex">
                         <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
-                    <div class="flex">
-                        <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                    <div class="flex gap-[10px] " style="align-items: end;">
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                            <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
+                        </div>
                     </div>
                     </div>
                 </div>
@@ -726,9 +765,12 @@ try{
                                     <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                     <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                                 </div>
-                                <div class="flex">
-                                    <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                            <div class="flex gap-[10px] " style="align-items: end;">
+                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                                <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                                    <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                                 </div>
+                            </div>
                             </div>
                         </div>
                         <div class="flex justify-center blue-hover items-center close-btn gap-[10px] mt-[10px] cursor-pointer h-[35px]" @click="addModuleAutoInfromation(1)">
@@ -783,9 +825,12 @@ try{
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
-                            <div class="flex">
-                                <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <div class="flex gap-[10px] " style="align-items: end;">
+                            <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                            <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                                <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                             </div>
+                        </div>
                         </div>
                     </div>
                     <div class="flex justify-center blue-hover items-center close-btn gap-[10px] mt-[10px] cursor-pointer h-[35px]" @click="addModuleAutoInfromation(2)">
@@ -840,8 +885,11 @@ try{
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
-                            <div class="flex">
-                                <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                            <div class="flex gap-[10px] " style="align-items: end;">
+                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                                <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                                    <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -922,9 +970,12 @@ try{
                         <Icon  icon="maki:cross" class="w-2.5 h-2.5 hover-red" @click="mess.active = false"/>
                     </div>
                 </div>
-                <div class="flex">
-                    <Selector style="width: 100%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
-                </div>
+                    <div class="flex gap-[10px] " style="align-items: end;">
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
+                            <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-center blue-hover items-center close-btn gap-[10px] mt-[10px] cursor-pointer h-[35px]" @click="addModuleWebForm()">
@@ -958,6 +1009,31 @@ try{
     display: flex;
     flex-wrap: wrap;
     gap: 10px
+}
+
+.add-tag-box{
+
+    display: flex;
+    align-items: center;
+    height: 25px;
+    width: 25px;
+    justify-content: center;
+    border-radius: 6px;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+}
+
+.changeable-icon{
+    color: rgb(94, 94, 94);
+}
+
+.add-tag-box:hover {
+    background-color: #ebf8ff;
+    transition: background-color 0.15s ease;
+}
+.add-tag-box:hover .changeable-icon{
+    color: #437db4;
+    transition: color 0.15s ease;
 }
 
 .tag-box{
