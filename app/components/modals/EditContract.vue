@@ -42,8 +42,8 @@ async function saveData(){
             active : contract.value.active,
             index : contract.value.index?.toString(),
             temporary : contract.value.temporary,
-            date_begin : dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day).toISOString() : undefined,
-            date_close : dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day).toISOString() : undefined,
+            date_begin : dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day + 1).toISOString() : undefined,
+            date_close : dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day + 1).toISOString() : undefined,
             org_name : contract.value.org_name
         } as IContractUpdate
         if(!isValidData(data)) throw new Error("Validation Error")
