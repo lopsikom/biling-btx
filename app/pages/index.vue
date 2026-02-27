@@ -149,7 +149,7 @@ function switchPage(page : string){
                             <p class="status-title select-none">Активна</p>
                         </div>
                     </div>
-                    <div class="any-contaier-row" style="gap: 15px">
+                    <!-- <div class="any-contaier-row" style="gap: 15px">
                         <div class="tag-box">
                             <span style="font-size: 0.7em;" class="cursor-default font-semibold">VIP</span>
                         </div>
@@ -159,7 +159,7 @@ function switchPage(page : string){
                         <div class="add-tag-box">
                             <Plus30Icon class="w-4 h-4 changeable-icon" />
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <div class="any-contaier-row" style="width: 100%; gap: 12px;">

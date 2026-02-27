@@ -244,16 +244,6 @@ function closeEditName(item : {item : {title : string}, isEditName : boolean}){
     if(item.item.title.trim() !== "") item.isEditName = false
 }
 
-
-onMounted(() => {
-    console.log(chatBotComputed.value)
-    console.log(tarrifsSelect)
-    chatBotComputed.value.forEach(c => {
-        console.log(c.item)
-        console.log(tarrifsSelect.value.find(t => t.label === c.item.tarrif_id))
-    })
-})
-
 function addContract(item : {item : any, 
 selected_contract : {
     label: number;
@@ -269,9 +259,9 @@ try{
     const allModules = [...vats.value, ...voiceRobotComputed.value, ...autoInfoComputed.value, ...chatBotComputed.value, ...webFormsComputed.value]
 
     for(const i of allModules.filter(m => !m.isDeleted)){
-        if(!i.selected_tarrif) throw new Error("Validation Error1")
-        if(!i.selected_contract) throw new Error("Validation Error2")
-        if(!isValidData(i.item)) throw new Error("Validation Error3")
+        if(!i.selected_tarrif) throw new Error("Validation Error")
+        if(!i.selected_contract) throw new Error("Validation Error")
+        if(!isValidData(i.item)) throw new Error("Validation Error")
     }
 
     const delVats = vats.value.filter(v => v.item.id != 0 && v.isDeleted).map(m => m.item.id)
@@ -281,7 +271,7 @@ try{
     const delWebForm = webFormsComputed.value.filter(v => v.item.id != 0 && v.isDeleted).map(m => m.item.id)
 
     const vat = (await Promise.all(vats.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.additional_users = parseInt(v.item.additional_users.toString())
         if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
@@ -290,7 +280,7 @@ try{
         return await $axios.postVats(v.item);
     })))
     const voiceRobot = await Promise.all(voiceRobotComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.lines = parseInt(v.item.lines.toString())        
         if(!v.selected_contract) throw new Error("Contract not selected")
         if(!v.selected_tarrif) throw new Error("Contract not selected")
@@ -299,7 +289,7 @@ try{
         return await $axios.postVoiceRobot(v.item);
     }))
     const chatBot = await Promise.all(chatBotComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.lines_count = parseInt(v.item.lines_count.toString());
         if(!v.selected_contract) throw new Error("Contract not selected")
         if(!v.selected_tarrif) throw new Error("Contract not selected")
@@ -312,7 +302,7 @@ try{
         return await $axios.postChatBots(data);
     }))
     const autoinfo = await Promise.all(autoInfoComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.quantity = parseInt(v.item.quantity.toString())
         if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
@@ -321,7 +311,7 @@ try{
         return await $axios.postAutoInfo(v.item);
     }))
     const webForm = await Promise.all(webFormsComputed.value.filter(v => v.item.id === 0 && !v.isDeleted).map(async v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         if(!v.selected_tarrif) throw new Error("Contract not selected")
         if(!v.selected_contract) throw new Error("Contract not selected")
         v.item.contract_id = v.selected_contract?.label;
@@ -337,15 +327,18 @@ try{
 
  
     const diffVats = vats.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.additional_users = parseInt(v.item.additional_users.toString())
+        console.log(v.item.price)
         const diff = diffObject(v.old_item, v.item, false);
+        console.log(diff)
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
         if(v.selected_tarrif?.label !== v.item.tarrif_id) diff.tarrif_id = v.selected_tarrif?.label
         return {id : v.item.id, item : diff}
     })
+    console.log(diffVats)
     const diffVoiceRobot = voiceRobotComputed.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.lines = parseInt(v.item.lines.toString())
         const diff = diffObject(v.old_item, v.item, false);
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
@@ -353,7 +346,7 @@ try{
         return {id : v.item.id, item : diff}
     })
     const diffChatBot = chatBotComputed.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.lines_count = parseInt(v.item.lines_count.toString())
         const diff = diffObject(v.old_item, v.item, false);
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
@@ -363,7 +356,7 @@ try{
         return {id : v.item.id, item : diff}
     })
     const diffAutoinfo = autoInfoComputed.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         v.item.quantity = parseInt(v.item.quantity.toString())
         const diff = diffObject(v.old_item, v.item, false);
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
@@ -371,7 +364,7 @@ try{
         return {id : v.item.id, item : diff}
     })
     const diffWebForm = webFormsComputed.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
-        v.item.price = parseInt(v.item.price.toString());
+        
         const diff = diffObject(v.old_item, v.item, false);
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
         if(v.selected_tarrif?.label !== v.item.tarrif_id) diff.tarrif_id = v.selected_tarrif?.label
@@ -548,7 +541,7 @@ try{
                     </div>
                     <div class="flex gap-[15px]">
                         <Selector style="width: 50%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
                         <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
@@ -609,7 +602,7 @@ try{
                         <InputBox style="width: 50%; margin-top: auto;" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.lines" title="Количество линий" />
                     </div>
                     <div class="flex">
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
                         <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
@@ -696,7 +689,7 @@ try{
                         </div>
                     </div>
                     <div class="flex">
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
                         <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
@@ -762,7 +755,7 @@ try{
                             <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted" >
                                 <div class="flex gap-[15px]">
                                     <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                    <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                    <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                     <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                                 </div>
                             <div class="flex gap-[10px] " style="align-items: end;">
@@ -822,7 +815,7 @@ try{
                         <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                             <div class="flex gap-[15px]">
                                 <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
                         <div class="flex gap-[10px] " style="align-items: end;">
@@ -882,7 +875,7 @@ try{
                         <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                             <div class="flex gap-[15px]">
                                 <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                                 <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
                             <div class="flex gap-[10px] " style="align-items: end;">
@@ -941,7 +934,7 @@ try{
                 <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                 <div class="flex gap-[15px]">
                     <Selector style="width: 33%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                    <InputBox style="width: 33%; margin-top: auto;" type="number" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                    <InputBox style="width: 33%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     <div class="flex flex-col gap-[5px]" style="width: 33%; position: relative;">
                         <span class="select-none font-semibold text-sm">Интеграции</span>
                         <div>

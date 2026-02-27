@@ -16,15 +16,17 @@ export function diffObject<T>(
         const newData = newObj[key];
         const oldData = oldObj[key];
         if(isObject(newData) && isObject(oldData)){
-            const nestDiff = diffObject(newData, oldData)
+            
+            const nestDiff = diffObject(oldData, newData)
+            console.log("WWWW")
             if(Object.keys(nestDiff).length > 0){
-                console.log(key)
                 diff[key] = nestDiff as T[typeof key];
             }
 
         }
         else if (Array.isArray(oldData) && Array.isArray(newData)){
             let arrDiff;
+            console.log("WW")
             if(withID) arrDiff = diffArray(oldData, newData, "ID");
             else arrDiff = diffArray(oldData, newData);
             if(arrDiff.length > 0) {
@@ -32,12 +34,11 @@ export function diffObject<T>(
                 diff[key] = arrDiff as T[typeof key];
             }
         }
-        else if(!Object.is(oldObj[key], newObj[key])){
+        else if(!Object.is(oldObj[key], newObj[key])){    
             diff[key] = newObj[key];
-            console.log(key)
         }
     }
-
+    
     return diff;
 }
 export function diffArray<T>(
@@ -114,7 +115,6 @@ export function isDefined<T>(value: T | null | undefined): value is T {
 export function isValidData(obj: Record<string, any>): boolean {
     for (const key in obj) {
         const value = obj[key];
-
         if (value === null || value === undefined) {
             return false;
         }

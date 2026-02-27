@@ -60,7 +60,10 @@ const modalStore = useModalStore()
             <span class="select-none font-semibold">Подключенния</span>
             <span class="text-gray-500 select-none">Подключенные аккаунты и сервисы</span>
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="h-[100px] flex flex-col justify-center items-center">
+            <span class="text-gray-500 select-none">Нет активных подключенний</span>
+        </div>
+        <!-- <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm select-none">Мессенджеры</span>
             <div class="flex flex-col gap-2">
                 <div class="any-white-container connected-item-box">
@@ -162,7 +165,7 @@ const modalStore = useModalStore()
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 </template>

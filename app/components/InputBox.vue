@@ -21,21 +21,23 @@ const props = withDefaults(defineProps<{
     placeholder? : string,
     title? : string,
     resize? : boolean,
-    type? : "text" | "number"
+    type? : "text" | "number",
+    step? : number
 }>(), {
     title : undefined,
     rows : 1,
     placeholder : '',
     resize : true,
-    type : "text"
+    type : "text",
+    step : 1
 })
 
 </script>
 <template>
     <div class="flex flex-col gap-[5px]" v-bind="wrapperAttrs">
         <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
-        <textarea v-if="resize" v-bind="inputAttrs":type="type" v-model="model" :rows="rows" :placeholder="placeholder" class="edit-input"/>
-        <input v-else :type="type" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" class="edit-input"/>
+        <textarea v-if="resize" v-bind="inputAttrs":type="type" :step="step" v-model="model" :rows="rows" :placeholder="placeholder" class="edit-input"/>
+        <input v-else :type="type" :step="step" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" class="edit-input"/>
     </div>
 </template>
 <style scoped>
