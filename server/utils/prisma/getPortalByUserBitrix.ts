@@ -10,3 +10,4 @@ export default async function getPortalByUserBitrix(token : string){
         });
         return portal
 }
+export type PortalType = Awaited<ReturnType<typeof getPortalByUserBitrix>>

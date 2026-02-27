@@ -39,6 +39,10 @@ export class axiosClient{
         })
         return response.data as boolean;
     }
+    async getCheckCompany(){
+        const response = await this.AxiosClient.get(`bitrix/company.check/${this.BitrixFrame?.placement.options.ID ?? "2"}`)
+        return response.data as boolean
+    }
     async getContractStatuses(){
         const response = await this.AxiosClient.get("modules/contract.statuses.list")
         return response.data as IContractStatus[]

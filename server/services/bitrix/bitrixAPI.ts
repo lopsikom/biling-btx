@@ -74,6 +74,17 @@ export class bitrixAPI {
         })
         return response.data as bitrixResponse<ICompnany[]>
     }
+    async getCompany(id : number, token : string, domain : string){
+        console.log(id)
+        console.log(domain)
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.get`, {
+            params : {
+                auth : token,
+                ID : id
+            }
+        })
+        return response.data as bitrixResponse<ICompnany>
+    }
     async getBitrixUsers(domain : string, token : string){
         const response = await this.AxiosClient.get(`https://${domain}/rest/user.get`,{
             params : {
