@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   app: {
-    baseURL: process.env.NUXT_PUBLIC_BASE_URL ?? '/billing'
+    baseURL: process.env.NUXT_PUBLIC_BASE_URL ?? '/billing/'
   },
   typescript: {
     tsConfig: {

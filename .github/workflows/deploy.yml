@@ -1,8 +1,9 @@
-name: billing-main
+name: billing
 
 on:
     push:
-        branches:  [main , master ]
+        branches:
+            - 'main'
 jobs:
 
     build-and-push:
@@ -21,7 +22,7 @@ jobs:
                 password: ${{secrets.GHCR_TOKEN}}
             - name: Build Docker image
               run: |
-                  docker build -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }} .
+                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL}}" --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL}}" --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI}}" -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }} .
                   docker push ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }}
 
     deploy:
@@ -39,4 +40,4 @@ jobs:
                         docker pull ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
                         docker stop ${{secrets.DOCKER_CONTAINER_NAME}};
                         docker rm ${{secrets.DOCKER_CONTAINER_NAME}};
-                        docker run -p 5000:3000 -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
+                        docker run -p 5050:3000 -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
