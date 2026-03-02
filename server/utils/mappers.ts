@@ -263,7 +263,7 @@ export function voiceRobotInputMapPrisma(data : IVoiceRobotPost) : voice_robotCr
 export function voiceRobotPatchMapPrimsa(data : IVoiceRobotUpdate) : voice_robotUpdateInput{
     const robot = {
         lines : data.lines,
-        acitve : data.active,
+        active : data.active,
         price : data.price,
         title : data.title,
     } as voice_robotUpdateInput

@@ -5,9 +5,52 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
 import useModalStore from '~/services/stores/modalStore';
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
+import usebillingStateStore from '~/services/stores/billingStateStore';
+import { Icon } from '@iconify/vue';
 
-const bitrixStateStore = useBitrixStateStore()
-const modalStore = useModalStore()
+const bitrixStateStore = useBitrixStateStore();
+const billingStateStore = usebillingStateStore();
+const modalStore = useModalStore();
+
+type ModuleType = {
+    title : string,
+    count : number,
+}
+
+const modulesComputed = computed(() => {
+    const data : ModuleType[] = []
+    if(billingStateStore.vats.filter(v => v.active).length > 0) {
+        data.push({
+            title : "ВАТС",
+            count : billingStateStore.vats.filter(v => v.active).length
+        })
+    }
+    if(billingStateStore.voiceRobots.filter(v => v.active).length > 0) {
+        data.push({
+            title : "Голосовой робот",
+            count : billingStateStore.voiceRobots.filter(v => v.active).length
+        })
+    }
+    if(billingStateStore.chatBots.filter(c => c.active).length > 0) {
+        data.push({
+            title : "Чат-бот",
+            count : billingStateStore.chatBots.filter(c => c.active).length
+        })
+    }
+    if(billingStateStore.autoinformations.filter(a => a.active).length > 0){
+        data.push({
+            title : "Автоинформирование",
+            count : billingStateStore.autoinformations.filter(a => a.active).length
+        })
+    }
+    if(billingStateStore.webform.filter(w => w.active).length > 0){
+        data.push({
+            title : "Web-форма",
+            count : billingStateStore.webform.filter(w => w.active).length
+        })
+    }
+    return data
+})
 
 
 </script>
@@ -51,7 +94,23 @@ const modalStore = useModalStore()
             <span class="text-lg select-none">Подключенные модули</span>
             <span class="text-gray-500 text-sm select-none">Активные модули организации</span>
         </div>
-        <div class="connected-empty-box">
+        <div class="connected-modules-box" v-if="modulesComputed.length > 0">
+            <div class="flex flex-col p-[12px] any-white-container gap-[10px]" v-for="value in modulesComputed">
+                <div class="flex items-center gap-[12px]">
+                    <Icon class="text-sky-600 w-5 h-5" icon="solar:box-linear" />
+                    <div class="flex flex-col">
+                        <span>{{ value.title }}</span>
+                        <span class="text-gray-500 text-xs select-none">Активный</span>
+                    </div>
+                </div>
+                <div class="tags-container">
+                    <div class="tag-box">
+                        <span class="text-xs font-semibold">Количество проектов: {{ value.count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="connected-empty-box" v-else>
             <span class="text-gray-500 select-none">Нет активных модулей</span>
         </div>
     </div>
@@ -191,6 +250,23 @@ const modalStore = useModalStore()
     padding: 24px 24px 0px;
     gap: 16px;
 }
+.tags-container{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px
+}
+.tag-box{
+    padding: 3px 8px;
+    display: flex;
+    height: fit-content;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: #edf2f7;
+    border-color: #eaeff5;
+    gap: 5px;
+    border-width: 1.5px;
+} 
 .connected-container{
     min-height: 240px;
     height: fit-content;
@@ -199,8 +275,11 @@ const modalStore = useModalStore()
     padding: 25px 20px;
 }
 .connected-modules-box{
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    
 
 }
 .connected-empty-box{
