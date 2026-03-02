@@ -160,8 +160,6 @@ export type contractPrismaGet = {
     name: string;
     company_id: number;
     status: number;
-    active: boolean | null;
-    temporary: boolean | null;
     index: string | null;
     date_begin: Date;
     date_close: Date;
@@ -176,9 +174,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 name : c.name,
                 company_id : c.company_id,
                 status : c.contract_status.name,
-                active : c.active,
                 index : c.index,
-                temporary : c.temporary,
                 date_begin : c.date_begin.toString(),
                 date_close : c.date_close.toString(),
                 org_name : c.org_name
@@ -189,9 +185,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         name : data.name,
         company_id : data.company_id,
         status : data.contract_status.name,
-        active : data.active,
         index : data.index,
-        temporary : data.temporary,
         date_begin : data.date_begin.toString(),
         date_close : data.date_close.toString(),
         org_name : data.org_name
@@ -205,9 +199,7 @@ export function contractInputMapPrisma(data : IContractPost, portal_id : number)
         name : data.name,
         contract_status : {connect : {id : data.status}},
         company :{connect : {id : data.company_id, bitrix_id_portal_id : {bitrix_id : data.bitrix_id , portal_id : portal_id}}},
-        active : data.active,
         index : data.index,
-        temporary : data.temporary,
         date_begin : data.date_begin,
         date_close : data.date_close,
         org_name : data.org_name
@@ -220,9 +212,7 @@ export function contractInputMapPrisma(data : IContractPost, portal_id : number)
 export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdateInput{
     const contract = {
         name : data.name,
-        active : data.active,
         index : data.index,
-        temporary : data.temporary,
         date_begin : data.date_begin,
         date_close : data.date_close,
         org_name : data.org_name

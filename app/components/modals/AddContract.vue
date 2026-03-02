@@ -15,33 +15,54 @@ const toastStore = useToastStore();
 const bitrixStateStore = useBitrixStateStore()
 const {$axios} = useNuxtApp()
 
-const contract = ref<Partial<IContractPost>>({active : false, temporary : false})
+const contract = ref<Partial<IContractPost>>({})
 
 const dateBegin = ref<CalendarDate>()
 const dateClose = ref<CalendarDate>()
 const SelectStatus = ref<SelectorObject>()
 const selectStatusItems = computed(() => billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
 
+watch(() => dateBegin.value, () => {
+    if(!dateBegin.value || !dateClose.value) return
+    if(dateBegin.value.year.toString().length < 4 || dateClose.value.year.toString().length < 4) return
+    const begin = new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day)
+    const close =new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day)
+    if(begin.getTime() > close.getTime()) {
+        toastStore.openToast("Неверно введенны даты");
+    }
+})
+watch(() => dateClose.value, () => {
+    if(!dateBegin.value || !dateClose.value) return
+    if(dateBegin.value.year.toString().length < 4 || dateClose.value.year.toString().length < 4) return
+    const begin = new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day)
+    const close =new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day)
+    if(begin.getTime() > close.getTime()) {
+        toastStore.openToast("Неверно введенны даты");
+    }
+})
+
+
 async function saveData(){
     try{
-        
+        const begin = dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day) : undefined
+        const close = dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day) : undefined
+        if(!begin || !close) throw new Error("Validation Error")
         const data = {
             name : contract.value.name,
             status : SelectStatus.value?.label,
-            active : contract.value.active,
             index : contract.value.index?.toString(),
-            temporary : contract.value.temporary,
-            date_begin : dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day).toISOString() : undefined,
-            date_close : dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day).toISOString() : undefined,
+            date_begin : begin?.toISOString(),
+            date_close : close?.toISOString(),
             org_name : contract.value.org_name
         } as IContractPost
+        if(begin.getTime() > close.getTime()) throw new Error("Validation Error")
         if(!isValidData(data)) throw new Error("Validation Error")
         const newContract = await $axios.postContract(data)
         
         billingStateStore.contracts.push(newContract)
         
         if(modalStore.addContractTariff){
-            modalStore.addContractTariff.selected_contract = {label : newContract.id, value :`${newContract.name} ${newContract.index ?? ''} ${newContract.org_name} ${newContract.active ? 'Активный' : 'Не активынй'} ${newContract.temporary ? 'Временный' : ''} от ${new Date(newContract.date_begin).toLocaleDateString()}`}
+            modalStore.addContractTariff.selected_contract = {label : newContract.id, value :`${newContract.name} ${newContract.index ?? ''} ${newContract.org_name} ${newContract.status} от ${new Date(newContract.date_begin).toLocaleDateString()}`}
             
         }
         toastStore.openToast("Данные сохраненны")
@@ -67,24 +88,6 @@ async function saveData(){
         <div class="any-white-container p-5 gap-2 flex flex-col" style="width: 100%;">
             <div class="flex">
                 <span class="font-semibold mb-[20px] select-none">Поля договора</span>
-                <div class="flex gap-[50px]" style="margin-left: auto;">
-                    <div class="flex gap-[10px]">
-                        <CheckboxRoot v-model="contract.active" :class="contract.active ? 'checkbox-active' : 'checkbox-disable'" style="margin-top: 1.4px;">
-                        <CheckboxIndicator>
-                            <Icon icon="radix-icons:check" style="color: white;"/>
-                        </CheckboxIndicator>
-                    </CheckboxRoot>
-                    <span class="select-none">Активный</span>
-                    </div>
-                    <div class="flex gap-[10px]">
-                        <CheckboxRoot v-model="contract.temporary" :class="contract.temporary ? 'checkbox-active' : 'checkbox-disable'" style="margin-top: 1.4px;">
-                        <CheckboxIndicator>
-                            <Icon icon="radix-icons:check" style="color: white;"/>
-                        </CheckboxIndicator>
-                    </CheckboxRoot>
-                    <span class="select-none">Временный</span>
-                    </div>
-                </div>
             </div>
             <div class="flex flex-col gap-3">
                 <div class="flex gap-[10px]">

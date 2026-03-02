@@ -69,7 +69,6 @@ const search = ref<string>()
                             <div class="font-semibold"  >Имя</div>
                             <div class="font-semibold">Организация</div>
                             <div class="font-semibold">Статус</div>
-                            <div class="font-semibold">Активность</div>
                             <div class="font-semibold">Дата начала</div>
                             <div class="font-semibold">Дата конца</div>
                         </div>
@@ -79,9 +78,6 @@ const search = ref<string>()
                                 <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
                                 <div >
                                     <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
-                                </div>
-                                <div>
-                                    <div class="status-box text-slate-50 text-sm select-none" :class="`status-box-${value.active ? 'active': 'disable'}`">{{ value.active ? 'Активный': 'Неактивный' }}</div>
                                 </div>
                                 <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
                                 <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
@@ -134,7 +130,7 @@ const search = ref<string>()
 }
 .users-list-row{
     display: grid;
-    grid-template-columns: repeat(6, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
     align-items: center;
     gap: 10px;
     border-top: 1px solid #d1d5db;

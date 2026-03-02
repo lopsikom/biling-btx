@@ -3,9 +3,7 @@ export interface IContract {
     name : string,
     company_id : number,
     status : string,
-    active : boolean,
     index : string,
-    temporary : boolean,
     date_begin : string,
     date_close : string,
     org_name : string
@@ -16,9 +14,7 @@ export interface IContractFilter {
     company_id? : number,
     bitrxi_company_id : string,
     status? : string,
-    active? : boolean,
     index? : string,
-    temporary? : boolean,
     date_begin? : string,
     date_close? : string,
     org_name? : string
@@ -29,9 +25,7 @@ export interface IContractPost{
     company_id? : number,
     bitrix_id? : string,
     status? : number,
-    active? : boolean,
     index? : string,
-    temporary? : boolean,
     date_begin : string,
     date_close : string,
     org_name? : string
@@ -40,9 +34,7 @@ export interface IContractUpdate{
     name? : string,
     company_id? : number,
     status? : number,
-    active? : boolean,
     index? : string,
-    temporary? : boolean,
     date_begin? : string,
     date_close? : string,
     org_name? : string

@@ -162,8 +162,6 @@ model contract {
   name                   String
   company_id             Int
   status                 Int
-  active                 Boolean?
-  temporary              Boolean?
   index                  String?
   date_begin             DateTime                 @db.Date
   date_close             DateTime                 @db.Date

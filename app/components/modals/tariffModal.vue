@@ -35,7 +35,7 @@ const durationList = [1, 3, 6, 12]
 
 const contracts = ref(billingStateStore.contracts)
 
-const ContractsSelect = computed(() => contracts.value.map(c => {if(c.active) return {label : c.id, value : `${c.name} ${c.index ?? ''} ${c.org_name} ${c.active ? 'Активный' : 'Не активынй'} ${c.temporary ? 'Временный' : ''} от ${new Date(c.date_begin).toLocaleDateString()}`}}).filter(Boolean))
+const ContractsSelect = computed(() => contracts.value.map(c => { if(c.status !== "Завершен" && c.status !== "Приостановлен")  return {label : c.id, value : `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`}}).filter(Boolean))
 const tarrifsSelect = computed(() => tarrifs.value.map(c => {return {label : c.id, value : c.name}}))
 
 const voiceRobotComputed = ref(billingStateStore.voiceRobots.map(v => {
