@@ -1,4 +1,4 @@
-import getPortalPrisma from "../utils/prisma/getPortal";
+import getPortalPrisma, { portalPrisma } from "../utils/prisma/getPortal";
 import postCompanyPrisma from "../utils/prisma/postCompany";
 import upsertRequisites from "../utils/prisma/postRequisites";
 import postRequisites from "../utils/prisma/postRequisites";
@@ -24,7 +24,6 @@ export class syncService{
         try{
             let id : number;
             let domain : string;
-            console.log("sync 0")
             if(typeof portal === "string"){
                 id = this.portals[portal];
                 domain = portal;
@@ -33,18 +32,14 @@ export class syncService{
                 id = portal;
                 const data = Object.entries(this.portals)
                 .find(([_, v]) => v === portal)?.[0];
-                console.log("sync 1")
                 if(!data) return false;
                 domain = data;
             }
             const token = await getBitrixTokenByRefresh(id)
-            console.log("sync 2")
             if(!token) return false
-            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.acessToken)).result
-            const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.acessToken)).result
-            console.log("sync 3")
+            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
+            const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
             if(usersBitrix.length < 0) return false
-            console.log("sync 4")
             const mappedUsers = await upsertUserPrisma(id, ...userMapUpsertPrisma(id, ...usersBitrix));
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
@@ -62,7 +57,6 @@ export class syncService{
                 const i = await company.getInvoice()
                 const ii = await upsertInvoice(id, ...invocieMapUpsertPrisma(id, com.id, mappedUsers, ...i.result.items))
                 ii.forEach(iii => console.log("Added invoice " + iii.title))
-                console.log("sync 5")
                 }catch(e){
                     console.error(`Error added company '${b.TITLE}\nError:\n${e}`)
                     return false
@@ -78,6 +72,10 @@ export class syncService{
             return false
         }
     }
+    set setPortals(data : Record<string, number>){
+        this.portals = data;
+    }
 }
+const syncServiceObj = new syncService()
 
-export default new syncService({"b24-sxsxo9.bitrix24.ru" : 4, "b24-shukt8.bitrix24.ru": 6, "crm.minta24.ru" : 7}) //Занести в плагин
+export default syncServiceObj

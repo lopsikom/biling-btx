@@ -213,6 +213,24 @@ export interface IWebformPost{
     integrations : number[]
 }
 
+export interface IConnection {
+    id : number,
+    company_id : number,
+    title : string,
+    status_id : number,
+    type_id : number,
+    source : string
+}
+
+export interface IConnectionPost {
+    company_id? : number | string,
+    title : string,
+    status_id : number,
+    type_id : number,
+    source : string
+}
+export interface IConnectionPatch extends Partial<IConnectionPost>{}
+
 export interface IMessengers{
     id : number,
     name : string
@@ -220,3 +238,12 @@ export interface IMessengers{
 export interface Integrations extends IMessengers {}
 export interface ITarrifs extends IMessengers {}
 export interface IContractStatus extends IMessengers {}
+export interface IConnectionStatus extends IMessengers {}
+export interface IConnectionType extends IMessengers {type : connectionTypesEnum}
+
+export enum connectionTypesEnum {
+    MESSENGERS = "messenger",
+    SMS = "sms",
+    VATS = "vats",
+    ANOTHER = "another"
+}

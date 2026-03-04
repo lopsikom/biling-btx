@@ -12,3 +12,5 @@ export async function getPortalsPrisma(data? : portalWhereInput){
         where : data
     })
 } 
+
+export type portalPrisma = ReturnType<typeof getPortalPrisma>

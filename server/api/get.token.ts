@@ -1,4 +1,3 @@
-import getPortalPrisma from "../utils/prisma/getPortal";
 
 export default defineEventHandler(async (event) => {
     const portal_id = event.context.portal;

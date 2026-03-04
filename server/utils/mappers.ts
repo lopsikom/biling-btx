@@ -1,8 +1,9 @@
-import { IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotPost, IChatBotUpdate, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import { IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 import { IAddress, ICompnany, IContact, IContactInfo, Invoice, IRequisite, IUser } from "../services/models";
 import { contract, user_bitrix } from "../services/models/generated/prisma/client";
-import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
+import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, connectionCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
 import { ContactWithData } from "./prisma/postContact";
+import { connectionPrisma } from "./prisma/Connection";
 
 export function userMapUpsertPrisma(portal_id : number, ...user : IUser[]) : user_bitrixCreateInput[]{
     return user.map( (u) => {
@@ -416,4 +417,17 @@ export function webformGetMapPrisma(data : webformGetPrisma | webformGetPrisma[]
                 tarrif_id : data.tarrif_id,
                 integrations : data.webform_webform_type.map(m => m.webform_type.name)
     } as IWebform
+}
+
+
+export function connectionMapPostPrisma(data : IConnectionPost, portal_id : number) : connectionCreateInput{
+    const con =  {
+        title : data.title,
+        source : data.source,
+        connection_status : {connect : {id : data.status_id}},
+        connection_type : {connect : {id : data.type_id}}
+    } as connectionCreateInput
+    if(typeof data.company_id === "string") con.company = {connect : {bitrix_id_portal_id : {bitrix_id : data.company_id , portal_id : portal_id}}};
+    else con.company = {connect : {id : data.company_id}};
+    return con
 }

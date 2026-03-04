@@ -10,8 +10,6 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             contract_status : {
                 name : filter?.status
             },
-            temporary : filter?.temporary,
-            active : filter?.active,
             date_begin : filter?.date_begin,
             date_close : filter?.date_close,
             org_name : filter?.org_name,

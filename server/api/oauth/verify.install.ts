@@ -16,13 +16,13 @@ export default defineEventHandler(async (event) =>{
             return false
         }
         if(!portal.refresh_token) {
-            await bitrixAPI.enterHandler(portal.domain, portal.client_id); 
+            return false
         }
         const sync = await syncService.installSync(portal.id);
-        console.log(sync)
+        if(!sync) return false
         return true
     }catch(e){
-        console.log(e)
+        console.error(e)
         throw createError({
             statusCode: 500,
             statusMessage: "Error"

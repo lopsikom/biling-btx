@@ -1,4 +1,4 @@
-import type { IContract, IContractUpdate } from "~~/shared/models/APIModels";
+import type { IConnection, IContract, IContractUpdate } from "~~/shared/models/APIModels";
 import { ModalEnum } from "../models/enums/billing/ModalsEnum";
 import type { SelectorObject } from "../models";
 
@@ -8,6 +8,7 @@ const useModalStore = defineStore('modal', () => {
         const openModalHigher = ref(false);
         const modalHigherID = ref<ModalEnum | null>();
         const EditContract = ref<IContract | null>(null);
+        const EditConnection = ref<IConnection | null>(null);
         const addContractTariff = ref<{item : any, selected_contract : {
     label: number;
     value: string;
@@ -42,6 +43,7 @@ const useModalStore = defineStore('modal', () => {
             modalHigherID,
             EditContract,
             addContractTariff,
+            EditConnection,
             showModal,
             hideModal,
             showHigherModal,
