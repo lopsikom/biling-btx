@@ -21,6 +21,7 @@ import useErrorStateStore from '~/services/stores/errorStateStore'
 import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
 import { defaultWindow } from '@vueuse/core'
+import { reloadFrame } from '~/services/utils/utils'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -175,7 +176,7 @@ function switchPage(page : string){
                         </div>
                     </div> -->
                 </div>
-                <div class="flex any-white-container items-center blue-hover justify-center w-10 h-10" style="margin-left: auto;" @click="() => {defaultWindow?.parent.location.reload()}">
+                <div class="flex any-white-container items-center blue-hover justify-center w-10 h-10" style="margin-left: auto;" @click="reloadFrame()">
                     <Icon icon="mdi:reload" class="hover-item"/>
                 </div>
             </div>
