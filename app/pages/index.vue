@@ -48,7 +48,6 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
         bitrixStateStore.companyAddress = await bitrix.companyAdress();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
-        bitrixStateStore.companyInvoice = await bitrix.getInvoice();
         billingStateStore.messengers = await $axios.getMessengers();
         billingStateStore.contractStatuses = await $axios.getContractStatuses();
         billingStateStore.integrations = await $axios.getIntegrations();

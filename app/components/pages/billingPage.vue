@@ -27,7 +27,7 @@ enum currencyEnum{
 }
 const bitrixStateStore = useBitrixStateStore();
 
-const {companyInvoice} = storeToRefs(bitrixStateStore)
+const isLoad = ref<boolean>(false);
 
 const InvoiceGridList = ref<InvoiceGrid[]>([]);
 
@@ -40,8 +40,11 @@ const statusSelector : SelectorObject[] = Object.entries(invoiceStage).map(([key
 statusSelector.unshift(toRaw(statusFilter.value));
 
 onMounted(async () => {
-    const client = bitrixStateStore.getBitrixClient();
-    if(client && bitrixStateStore.companyInvoice){
+   try{
+     const client = bitrixStateStore.getBitrixClient();
+    if(client && !bitrixStateStore.companyInvoice){
+        console.log("invoice")
+        bitrixStateStore.companyInvoice = await client.getInvoice();
         const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
             const assign = await client.getUser(i.assignedById!);
             let assignName : string;
@@ -73,12 +76,16 @@ onMounted(async () => {
                 Assign: "Иванов Иван",
                 oppuration: i.opportunity ?? 0,
                 currencyId : i.currencyId,
-                status: i.stageId,
+                status: i.stageId![i.stageId!.length - 1],
                 beginDate: i.begindate,
                 closeDate: i.closedate
             }   as InvoiceGrid
         })
     }
+   }catch(e) {
+    console.log(e)
+
+   }
 });
 
 </script>
@@ -101,7 +108,11 @@ onMounted(async () => {
                     </div>
                </div>
         </div>
-        <div class="users-list-grid mt-[30px]" v-if="InvoiceGridList.length > 0">
+        <div class="flex items-center font-semibold text-lg
+             justify-center h-[200px] select-none" v-if="isLoad">
+            <Icon icon="line-md:loading-loop" width="60"/>
+        </div>
+        <div class="users-list-grid mt-[30px]" v-else-if="InvoiceGridList.length > 0">
                         <div class="users-list-row" style="border-width: 0;">
                             <div class="font-semibold">Имя</div>
                             <div class="font-semibold">Отвественный</div>
@@ -115,7 +126,7 @@ onMounted(async () => {
                             <div>{{ value.Assign }}</div>
                             <div>{{ value.oppuration }} {{ currencyEnum[value.currencyId! as keyof typeof currencyEnum] }}</div>
                             <div>
-                                <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm select-none" :class="`status-box-${invoiceStageEnum[value.status! as keyof typeof invoiceStageEnum]}`" style="width: fit-content;" >{{ invoiceStage[value.status!] }}</div>
+                                <div class="role-box px-[10px] py-[5px] flex justify-center align-center text-sm select-none status-box" :class="`status-box-${invoiceStageEnum[value.status! as keyof typeof invoiceStageEnum]}`" style="width: fit-content;" >{{ invoiceStage[value.status!] }}</div>
                             </div>
                             <div>{{ new Date(value.beginDate!).toLocaleDateString() }}</div>
                             <div>{{ new Date(value.closeDate!).toLocaleDateString() }}</div>
@@ -129,7 +140,7 @@ onMounted(async () => {
 
     </div>
 </template>
-<style>
+<style scoped>
     @import '~/assets/css/any-container.css';
 
 .search-box{
@@ -172,8 +183,10 @@ onMounted(async () => {
     display: flex;
     flex-direction: row;
     background-color: #3989d1;
-    padding: 2px 8px;
-    height: 22px;
+    border-color: #e7eaee;
+    border-width: 1.5px;
+    border-radius: 10px;
+    height: 25px;
     gap: 3px;
     border-radius: 5px;
     width: fit-content;
