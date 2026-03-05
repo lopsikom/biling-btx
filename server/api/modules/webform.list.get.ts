@@ -1,6 +1,6 @@
 import { portal } from "~~/server/services/models/generated/prisma/client";
 import { webformGetMapPrisma } from "~~/server/utils/mappers";
-import { getWebformListPrisma } from "~~/server/utils/prisma/getWebform";
+import { getWebformListPrisma } from "~~/server/utils/prisma/modules/WebForm";
 import { IWebFormFilterUpdate } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

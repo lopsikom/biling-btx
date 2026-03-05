@@ -1,3 +1,5 @@
+import { getVoiceRobotByIdPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
+
 export default defineEventHandler(async (event) => {
      const id = getRouterParams(event).id;
     let parseId : number;

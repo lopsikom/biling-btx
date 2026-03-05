@@ -1,6 +1,6 @@
 import { contractUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { contractUpdateMapPrisma } from "~~/server/utils/mappers";
-import patchContractPrisma from "~~/server/utils/prisma/patchContract";
+import { patchContractPrisma } from "~~/server/utils/prisma/modules/Contract";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

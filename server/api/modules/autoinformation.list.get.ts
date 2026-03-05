@@ -1,5 +1,5 @@
 import { portal } from "~~/server/services/models/generated/prisma/client";
-import { getAutoinformationListPrisma } from "~~/server/utils/prisma/getAutoinformation";
+import { getAutoinformationListPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 import { IAutoinformationFilterUpdate } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

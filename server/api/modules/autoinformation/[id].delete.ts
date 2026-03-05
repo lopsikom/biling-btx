@@ -1,4 +1,4 @@
-import deleteAutoInforPrisma from "~~/server/utils/prisma/deleteAutoinfo";
+import { deleteAutoInforPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

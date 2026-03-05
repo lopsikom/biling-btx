@@ -1,5 +1,5 @@
 import { contractInputMapPrisma } from "~~/server/utils/mappers";
-import addContractPrisma from "~~/server/utils/prisma/postContract";
+import { addContractPrisma } from "~~/server/utils/prisma/modules/Contract";
 
 export default defineEventHandler(async (event) => {
     const portal_id = event.context.portal;

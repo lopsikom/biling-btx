@@ -1,4 +1,5 @@
 import { portal } from "~~/server/services/models/generated/prisma/client"
+import { getChatBotListPrisma } from "~~/server/utils/prisma/modules/ChatBot";
 import { IChatBotFilter } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

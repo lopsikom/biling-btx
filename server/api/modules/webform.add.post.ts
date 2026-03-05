@@ -1,5 +1,5 @@
 import { webformInputUpdateMapPrisma } from "~~/server/utils/mappers";
-import { postWebFormPrisma } from "~~/server/utils/prisma/postWebform";
+import { postWebFormPrisma, postWebFormTypePrisma } from "~~/server/utils/prisma/modules/WebForm";
 import { IWebformPost } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) =>{

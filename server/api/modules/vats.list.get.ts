@@ -1,5 +1,5 @@
 import { portal } from "~~/server/services/models/generated/prisma/client"
-import { getVatsList } from "~~/server/utils/prisma/getVats";
+import { getVatsList } from "~~/server/utils/prisma/modules/Vats";
 import { IVatsFilter } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

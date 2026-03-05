@@ -1,5 +1,5 @@
 import { portal } from "~~/server/services/models/generated/prisma/client";
-import { getVoiceRobotListPrisma } from "~~/server/utils/prisma/getVoiceRobot";
+import { getVoiceRobotListPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
 import { IVoiceRobotFilter } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

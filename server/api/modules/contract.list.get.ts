@@ -1,7 +1,7 @@
 import { portal } from "~~/server/services/models/generated/prisma/client"
 import {IContract, IContractFilter} from "~~/shared/models/APIModels"
-import { getContractList } from "~~/server/utils/prisma/getContract"
 import { contractGetMapPrisma } from "~~/server/utils/mappers"
+import { getContractList } from "~~/server/utils/prisma/modules/Contract"
 
 
 export default  defineEventHandler(async (event) =>{

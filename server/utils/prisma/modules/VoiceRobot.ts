@@ -1,3 +1,4 @@
+import { voice_robotCreateInput, voice_robotUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IVoiceRobotFilter } from "~~/shared/models/APIModels";
 
@@ -30,6 +31,27 @@ export async function getVoiceRobotByIdPrisma(id : number){
         where : {
             id : id
         }
+    })
+    return response
+}
+export async function deleteVoiceRobotPrisma(id : number){
+    const response = await prisma.voice_robot.delete({
+        where : {id : id}
+    })
+    return response
+}
+export async function patchVoiceRobotPrisma(id : number, data : voice_robotUpdateInput){
+    const response = prisma.voice_robot.update({
+        where : {
+            id : id
+        },
+        data : data
+    })
+    return response
+}
+export async function postVoiceRobotPrisma(data : voice_robotCreateInput){
+    const response = prisma.voice_robot.create({
+        data : data
     })
     return response
 }

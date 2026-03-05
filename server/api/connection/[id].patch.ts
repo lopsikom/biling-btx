@@ -1,6 +1,4 @@
-import { vatsUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { connectionPatchPrisma } from "~~/server/utils/prisma/Connection";
-import patchVatsPrisma from "~~/server/utils/prisma/patchVats";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

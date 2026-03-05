@@ -1,3 +1,4 @@
+import { postChatBotMessengersPrisma, postChatBotPrisma } from "~~/server/utils/prisma/modules/ChatBot";
 import { IChatBotPost } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

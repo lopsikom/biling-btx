@@ -1,5 +1,5 @@
-import deleteContractPrisma from "~~/server/utils/prisma/deleteContract";
-import deleteVoiceRobotPrisma from "~~/server/utils/prisma/deleteVoiceRobot";
+import { deleteVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
+
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

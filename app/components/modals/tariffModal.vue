@@ -979,11 +979,11 @@ try{
     </div>
     <div>
         <div class="flex mt-[35px] gap-[20px]" style="margin-left: auto; width: 50%; flex-direction: row-reverse;">
-            <div class="save-btn blue-hover justify-center items-center px-[10px] py-[8px]">
-                <p class="select-none hover-item text-sm" style="color: white;" @click="saveData()">Сохранить измения</p>
+            <div class="save-btn blue-hover justify-center items-center px-[10px] py-[8px]"  @click="saveData()">
+                <p class="select-none hover-item text-sm" style="color: white;">Сохранить измения</p>
             </div>
-            <div class="close-btn blue-hover justify-center items-center px-[10px] py-[8px]">
-                <p class="select-none hover-item text-sm" @click="modalStore.hideModal()">Отмена</p>
+            <div class="close-btn blue-hover justify-center items-center px-[10px] py-[8px]" @click="modalStore.hideModal()">
+                <p class="select-none hover-item text-sm">Отмена</p>
             </div>
         </div>
     </div>

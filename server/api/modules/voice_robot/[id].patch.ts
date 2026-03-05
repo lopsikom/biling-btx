@@ -1,6 +1,6 @@
 import { voice_robotUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { voiceRobotPatchMapPrimsa } from "~~/server/utils/mappers";
-import patchVoiceRobotPrisma from "~~/server/utils/prisma/patchVoiceRobot";
+import { patchVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

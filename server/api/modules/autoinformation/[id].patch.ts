@@ -1,5 +1,5 @@
 import { autoinformation_moduleUpdateInput } from "~~/server/services/models/generated/prisma/models";
-import patchAutoinfromationPrisma from "~~/server/utils/prisma/patchAutoinformation";
+import { patchAutoinfromationPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

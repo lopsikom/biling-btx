@@ -1,3 +1,5 @@
+import { getChatBotById } from "~~/server/utils/prisma/modules/ChatBot";
+
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
         let parseId : number;

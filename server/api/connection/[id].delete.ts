@@ -1,6 +1,4 @@
 import { connectionDeletePrisma } from "~~/server/utils/prisma/Connection";
-import deleteContractPrisma from "~~/server/utils/prisma/deleteContract";
-import deleteVatsPrisma from "~~/server/utils/prisma/deleteVats";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

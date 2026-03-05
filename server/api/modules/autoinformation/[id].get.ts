@@ -1,4 +1,4 @@
-import { getAutoinformationByIdPrisma } from "~~/server/utils/prisma/getAutoinformation";
+import { getAutoinformationByIdPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

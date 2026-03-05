@@ -1,4 +1,3 @@
-import deleteContractPrisma from "~~/server/utils/prisma/deleteContract";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

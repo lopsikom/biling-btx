@@ -1,5 +1,5 @@
 import { vatsInputMapPrisma } from "~~/server/utils/mappers";
-import postVatsPrisma from "~~/server/utils/prisma/postVats";
+import { postVatsPrisma } from "~~/server/utils/prisma/modules/Vats";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);

@@ -1,5 +1,5 @@
 import { voiceRobotInputMapPrisma } from "~~/server/utils/mappers";
-import postVoiceRobotPrisma from "~~/server/utils/prisma/postVoiceRobot";
+import { postVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);

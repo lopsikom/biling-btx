@@ -1,4 +1,4 @@
-import deleteChatBotPrisma from "~~/server/utils/prisma/deleteChatBot";
+import { deleteChatBotPrisma } from "~~/server/utils/prisma/modules/ChatBot";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

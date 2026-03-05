@@ -1,3 +1,4 @@
+import { webform_webform_typeCreateManyInput, webformCreateInput, webformUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IWebFormFilterUpdate } from "~~/shared/models/APIModels";
 
@@ -69,4 +70,51 @@ export async function getWebformTypeWebformPrisma(id : number){
         }
     })
     return response
+}
+export  async function deleteWebForm(id : number){
+    const response = await prisma.webform.delete({
+        where : {id : id}
+    })
+    return response
+}
+
+export  async function getIntegrations(){
+    const response = await prisma.webform_type.findMany();
+    return response
+}
+export function patchWebformPrisma(id : number, data : webformUpdateInput, integrations? : number[]){
+    if(integrations) data.webform_webform_type = {deleteMany: {}, create : integrations.map(i => {return {type_id : i}})}
+    const response = prisma.webform.update({
+        where : {
+            id : id
+        },
+        data : data,
+        include : {
+            webform_webform_type : {
+                select : {
+                    webform_type : {
+                        select : {
+                            name : true
+                        }
+                    }
+                }
+            }
+        }
+    })
+    return response
+}
+export async function postWebFormPrisma(data : webformCreateInput){
+    const response = prisma.webform.create({
+        data : data
+    })
+    return response
+}
+
+export async function postWebFormTypePrisma(id : number, types : number[]){
+    const data = types.map(t => {return {webform_id : id, type_id : t} as webform_webform_typeCreateManyInput})
+    await prisma.webform_webform_type.createMany({
+        data : data
+    })
+    const  webformData = await getWebformTypeWebformPrisma(id);
+    return webformData
 }

@@ -1,4 +1,5 @@
 import { chat_botUpdateInput } from "~~/server/services/models/generated/prisma/models";
+import { patchChatBotPrisma } from "~~/server/utils/prisma/modules/ChatBot";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "Invalid id"
             });
         }
-        const chatBot = await patchChatBot(parseId, data, body.messengers);
+        const chatBot = await patchChatBotPrisma(parseId, data, body.messengers);
         if(!chatBot){
             throw createError({
                 statusCode : 404,

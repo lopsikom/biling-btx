@@ -1,5 +1,5 @@
 import { autoinformationInputMapPrisma } from "~~/server/utils/mappers";
-import postAutoinformationPrisma from "~~/server/utils/prisma/postAutoinformation";
+import { postAutoinformationPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 import { IAutoinformationPost } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {

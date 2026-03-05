@@ -1,6 +1,6 @@
 import { chat_botUpdateInput, webformUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { webformInputUpdateMapPrisma } from "~~/server/utils/mappers";
-import patchWebformPrisma from "~~/server/utils/prisma/patchWebform";
+import { patchWebformPrisma } from "~~/server/utils/prisma/modules/WebForm";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
