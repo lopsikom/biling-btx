@@ -20,6 +20,7 @@ import ErrorModal from '~/components/modals/ErrorModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
 import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
+import { defaultWindow } from '@vueuse/core'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -150,12 +151,12 @@ function switchPage(page : string){
     <ErrorModal></ErrorModal>
     <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
-            <div class="title-container">
+            <div class="title-container" style="width: 100%;">
                 <div class="back-arrow-box">
                     <ArrowLeftSIcon class="w-6 h-6 back-arrow-svg" />
                 </div>
                 <div class="any-contaier-column" style="gap: 15px;">
-                    <div class="any-contaier-row" style="gap: 10px">
+                    <div class="any-contaier-row" style="gap: 10px; width: 100%;">
                         <p class="company-title">{{ Company?.TITLE }}</p>
                         <div class="status-box">
                             <SuccessIcon class="w-4 h-4" style="color: white;" />
@@ -173,6 +174,9 @@ function switchPage(page : string){
                             <Plus30Icon class="w-4 h-4 changeable-icon" />
                         </div>
                     </div> -->
+                </div>
+                <div class="flex any-white-container items-center blue-hover justify-center w-10 h-10" style="margin-left: auto;" @click="() => {defaultWindow?.parent.location.reload()}">
+                    <Icon icon="mdi:reload" class="hover-item"/>
                 </div>
             </div>
             <div class="any-contaier-row" style="width: 100%; gap: 12px;">
@@ -372,6 +376,14 @@ function switchPage(page : string){
     justify-content: center;
     align-items: center;
     border-radius: 10px;
+}
+.blue-hover:hover{
+    background-color: #ebf8ff;
+    transition: background-color 0.15s ease;
+}
+.blue-hover:hover .hover-item{
+    color: #437db4;
+    transition: color 0.15s cubic-bezier(0.16, 1, 0.3,);
 }
 .page-item-selected{
     background-color: white;
