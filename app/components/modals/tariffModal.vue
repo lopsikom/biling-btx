@@ -1051,6 +1051,7 @@ finally{
     position: absolute;
     bottom: 1;
     right: 3%;
+    z-index: 10;
     height: fit-content;
     width: fit-content;
 }
