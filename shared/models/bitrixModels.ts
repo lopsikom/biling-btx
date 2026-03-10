@@ -261,3 +261,14 @@ export interface IBitrixToken{
     server_endpoint : string,
     status : string
 }
+
+export type InvoiceGrid = {
+    id : string
+    name : string,
+    assign : string,
+    oppuration : number,
+    currencyId : string,
+    status? : string,
+    beginDate? : string,
+    closeDate? : string
+}
