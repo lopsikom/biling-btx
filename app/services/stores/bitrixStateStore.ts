@@ -1,6 +1,6 @@
 import { Bitrix } from "../bitrix"
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice } from "../models"
+import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice, type InvoiceGrid } from "../models"
 
 const useBitrixStateStore = defineStore('bitrixState', () => {
 
@@ -14,6 +14,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     const companyInvoice = ref<Invoice[]>();
     
     const addresTypes = ref<IAddresType[]>();
+    const InvoiceGridList = ref<InvoiceGrid[]>();
 
 
     const addressesNormalized = computed<AddressType[]>(() =>{
@@ -100,6 +101,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         companyInvoice,
         addresTypes,
         addressesNormalized,
+        InvoiceGridList,
         getDateCreate,
         getShortName,
         lastActivityCompany,

@@ -5,20 +5,7 @@ import SearchIcon from '@bitrix24/b24icons-vue/outline/SearchIcon'
 import { mockInvoice } from '~/services/mock';
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
 import Selector from '../Selector.vue';
-import type { SelectorObject } from '~/services/models';
-
-
-
-type InvoiceGrid = {
-    id : string
-    name : string,
-    Assign : string,
-    oppuration : number,
-    currencyId : string,
-    status? : string,
-    beginDate? : string,
-    closeDate? : string
-}
+import type { InvoiceGrid, SelectorObject } from '~/services/models';
 
 enum currencyEnum{
     "RUB" = "руб.",
@@ -28,8 +15,6 @@ enum currencyEnum{
 const bitrixStateStore = useBitrixStateStore();
 
 const isLoad = ref<boolean>(false);
-
-const InvoiceGridList = ref<InvoiceGrid[]>([]);
 
 
 const statusFilter = ref({label : 'none', value : 'Все статусы'})
@@ -42,8 +27,7 @@ statusSelector.unshift(toRaw(statusFilter.value));
 onMounted(async () => {
    try{
      const client = bitrixStateStore.getBitrixClient();
-    if(client && !bitrixStateStore.companyInvoice){
-        console.log("invoice")
+    if(client && !bitrixStateStore.InvoiceGridList){
         bitrixStateStore.companyInvoice = await client.getInvoice();
         const list = await Promise.all(bitrixStateStore.companyInvoice.map(async i =>{
             const assign = await client.getUser(i.assignedById!);
@@ -58,7 +42,7 @@ onMounted(async () => {
             return {
                 id: i.id.toString(),
                 name: i.title,
-                Assign: assignName,
+                assign: assignName,
                 oppuration: i.opportunity ?? 0,
                 currencyId : i.currencyId,
                 status: i.stageId![i.stageId!.length - 1],
@@ -66,14 +50,15 @@ onMounted(async () => {
                 closeDate: i.closedate
             }   as InvoiceGrid
         }))
-        InvoiceGridList.value = list;
+        bitrixStateStore.InvoiceGridList = list;
     }
     else{
-        InvoiceGridList.value = mockInvoice.map(i => {
+        if(!bitrixStateStore.InvoiceGridList){
+            bitrixStateStore.InvoiceGridList = mockInvoice.map(i => {
             return {
                 id: i.id.toString(),
                 name: i.title,
-                Assign: "Иванов Иван",
+                assign: "Иванов Иван",
                 oppuration: i.opportunity ?? 0,
                 currencyId : i.currencyId,
                 status: i.stageId![i.stageId!.length - 1],
@@ -81,6 +66,7 @@ onMounted(async () => {
                 closeDate: i.closedate
             }   as InvoiceGrid
         })
+        }
     }
    }catch(e) {
     console.log(e)
@@ -112,7 +98,7 @@ onMounted(async () => {
              justify-center h-[200px] select-none" v-if="isLoad">
             <Icon icon="line-md:loading-loop" width="60"/>
         </div>
-        <div class="users-list-grid mt-[30px]" v-else-if="InvoiceGridList.length > 0">
+        <div class="users-list-grid mt-[30px]" v-else-if="bitrixStateStore.InvoiceGridList && bitrixStateStore.InvoiceGridList.length > 0">
                         <div class="users-list-row" style="border-width: 0;">
                             <div class="font-semibold">Имя</div>
                             <div class="font-semibold">Отвественный</div>
@@ -121,9 +107,9 @@ onMounted(async () => {
                             <div class="font-semibold">Дата выставления</div>
                             <div class="font-semibold">Срок оплаты</div>
                         </div>
-                        <div class="users-list-row users-item" v-for="(value, index) in InvoiceGridList" :key="index">
+                        <div class="users-list-row users-item" v-for="(value, index) in bitrixStateStore.InvoiceGridList" :key="index">
                             <div>{{ value.name }}</div>
-                            <div>{{ value.Assign }}</div>
+                            <div>{{ value.assign }}</div>
                             <div>{{ value.oppuration }} {{ currencyEnum[value.currencyId! as keyof typeof currencyEnum] }}</div>
                             <div>
                                 <div class="role-box px-[10px] py-[5px] flex justify-center align-center text-sm select-none status-box" :class="`status-box-${invoiceStageEnum[value.status! as keyof typeof invoiceStageEnum]}`" style="width: fit-content;" >{{ invoiceStage[value.status!] }}</div>
