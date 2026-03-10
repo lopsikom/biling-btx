@@ -1,3 +1,4 @@
+import { vatsCreateInput, vatsUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IVatsFilter } from "~~/shared/models/APIModels";
 
@@ -36,6 +37,30 @@ export async function getVatsById(id : number){
         where : {
             id : id
         }
+    })
+    return response
+}
+
+export  async function deleteVatsPrisma(id : number){
+    const response = await prisma.vats.delete({
+        where : {id : id}
+    })
+    return response
+}
+
+export  async function patchVatsPrisma(id :number, data : vatsUpdateInput ){
+    const response = await prisma.vats.update({
+        where : {
+            id : id
+        },
+        data : data
+    })
+    return response
+}
+
+export async function postVatsPrisma(data : vatsCreateInput){
+    const response = prisma.vats.create({
+        data : data
     })
     return response
 }

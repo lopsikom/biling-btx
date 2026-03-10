@@ -130,3 +130,7 @@ export function isValidData(obj: Record<string, any>): boolean {
 
     return true;
 }
+
+export function reloadFrame(){
+    window.location.reload()
+}

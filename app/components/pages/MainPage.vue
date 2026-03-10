@@ -5,10 +5,102 @@ import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
 import useModalStore from '~/services/stores/modalStore';
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
+import usebillingStateStore from '~/services/stores/billingStateStore';
+import { Icon } from '@iconify/vue';
+import  { connectionTypesEnum, type IConnection, type IConnectionStatus, type IConnectionType } from '~~/shared/models/APIModels';
+import useToastStore from '~/services/stores/toastStore';
 
-const bitrixStateStore = useBitrixStateStore()
-const modalStore = useModalStore()
+const bitrixStateStore = useBitrixStateStore();
+const billingStateStore = usebillingStateStore();
+const modalStore = useModalStore();
+const toastStore = useToastStore();
+const {$axios} = useNuxtApp();
 
+type ModuleType = {
+    title : string,
+    count : number,
+}
+
+const modulesComputed = computed(() => {
+    const data : ModuleType[] = []
+    if(billingStateStore.vats.filter(v => v.active).length > 0) {
+        data.push({
+            title : "ВАТС",
+            count : billingStateStore.vats.filter(v => v.active).length
+        })
+    }
+    if(billingStateStore.voiceRobots.filter(v => v.active).length > 0) {
+        data.push({
+            title : "Голосовой робот",
+            count : billingStateStore.voiceRobots.filter(v => v.active).length
+        })
+    }
+    if(billingStateStore.chatBots.filter(c => c.active).length > 0) {
+        data.push({
+            title : "Чат-бот",
+            count : billingStateStore.chatBots.filter(c => c.active).length
+        })
+    }
+    if(billingStateStore.autoinformations.filter(a => a.active).length > 0){
+        data.push({
+            title : "Автоинформирование",
+            count : billingStateStore.autoinformations.filter(a => a.active).length
+        })
+    }
+    if(billingStateStore.webform.filter(w => w.active).length > 0){
+        data.push({
+            title : "Web-форма",
+            count : billingStateStore.webform.filter(w => w.active).length
+        })
+    }
+    return data
+})
+
+interface IConnectionWithType extends IConnection {
+    typeData : IConnectionType
+    statusData : IConnectionStatus,
+    isOpen : boolean
+}
+
+const connectionsComputed = computed(() => {
+    const data : Record<connectionTypesEnum, IConnectionWithType[]> = {
+        [connectionTypesEnum.MESSENGERS] : [],
+        [connectionTypesEnum.SMS] : [],
+        [connectionTypesEnum.VATS] : [],
+        [connectionTypesEnum.ANOTHER] : []
+    }
+    billingStateStore.connections.forEach(c => {
+        const type = billingStateStore.connection_types.find(t => t.id === c.type_id);
+        const status = billingStateStore.connection_statuses.find(s => s.id === c.status_id)
+        if(type && status){
+            const _c : IConnectionWithType = {
+                ...c,
+                typeData : toRaw(type),
+                statusData : toRaw(status),
+                isOpen : false
+            }
+            data[type.type].push(_c)
+        }
+    })
+    console.log(data)
+    return data
+})
+
+function openEdit(item : IConnection){
+    modalStore.EditConnection = item;
+    modalStore.showModal(ModalEnum.EDIT_CONNECTION)
+}
+
+async function deleteConnection(item : IConnection) {
+    const data = await $axios.deleteConnection(item.id);
+    if(data) {
+        const index = billingStateStore.connections.findIndex(c => c.id === item.id);
+        if(index > -1) {
+            billingStateStore.connections.splice(index, 1);
+            toastStore.openToast("Подключение удаленно")
+        }
+    }
+}
 
 </script>
 <template>
@@ -51,127 +143,217 @@ const modalStore = useModalStore()
             <span class="text-lg select-none">Подключенные модули</span>
             <span class="text-gray-500 text-sm select-none">Активные модули организации</span>
         </div>
-        <div class="connected-empty-box">
+        <div class="connected-modules-box" v-if="modulesComputed.length > 0">
+            <div class="flex flex-col p-[12px] any-white-container gap-[10px]" v-for="value in modulesComputed">
+                <div class="flex items-center gap-[12px]">
+                    <Icon class="text-sky-600 w-5 h-5" icon="solar:box-linear" />
+                    <div class="flex flex-col">
+                        <span>{{ value.title }}</span>
+                        <span class="text-gray-500 text-xs select-none">Активный</span>
+                    </div>
+                </div>
+                <div class="tags-container">
+                    <div class="tag-box">
+                        <span class="text-xs font-semibold">Количество проектов: {{ value.count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="connected-empty-box" v-else>
             <span class="text-gray-500 select-none">Нет активных модулей</span>
         </div>
     </div>
     <div class="connected-container any-white-container gap-5">
+        <div class="flex">
         <div class="flex flex-col gap-1 mb-2">
             <span class="select-none font-semibold">Подключенния</span>
             <span class="text-gray-500 select-none">Подключенные аккаунты и сервисы</span>
         </div>
-        <div class="h-[100px] flex flex-col justify-center items-center">
-            <span class="text-gray-500 select-none">Нет активных подключенний</span>
+        <div class="add-user-btn items-center flex px-3 py-2 gap-1" @click="modalStore.showModal(ModalEnum.ADD_CONNECTION)">
+            <span class="select-none text-sm text-slate-50 font-semibold">Добавить подключенние</span>
         </div>
-        <!-- <div class="flex flex-col gap-1">
+        </div>
+        <div class="flex flex-col gap-[10px] mb-2" v-if="billingStateStore.connections.length > 0">
+        <div class="flex flex-col gap-1" v-if="connectionsComputed.messenger.length > 0">
             <span class="text-gray-500 text-sm select-none">Мессенджеры</span>
             <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box">
-                    <div class="messenger-whatsap-container mr-2">
-                        <div class="messenger-whatsapp-char-logo">W</div>
+                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.messenger">
+                    <div class="messenger-whatsap-container mr-2" :class="`messenger-${value.typeData.name}-container`">
+                        <div :class="`messenger-${value.typeData.name}-char-logo`" class="select-none">{{ value.typeData.name.length > 2  ? value.typeData.name[0]?.toUpperCase() : value.typeData.name }}</div>
                     </div>
                     <div class="flex flex-col gap-2">
-                            <span class="text-sm">WhatsApp Business</span>
-                            <span class="text-gray-500 text-xs ">+7 (495) 123-45-67</span>
+                            <span class="text-sm">{{ value.title }}</span>
+                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
                     </div>
                     <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-green-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <SuccessIcon class="green-container-item w-4 h-4" />
-                            <span class="green-container-item text-xs">Подключен</span>
+                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
+                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
+                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
                         </div>
-                        <MoreBox/>
+                            <DropdownMenuRoot v-model="value.isOpen">
+                                <DropdownMenuTrigger>
+                                    <MoreBox/>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
+                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
+                                           <span class="select-none hover-item text-sm">Изменить</span> 
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
+                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
+                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuRoot>
                     </div>
                     
                 </div>
-                <div class="any-white-container connected-item-box">
-                    <div class="messenger-telegram-container mr-2">
-                        <div class="messenger-telegram-char-logo">T</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">Telegram Bot</span>
-                            <span class="text-gray-500 text-xs ">@technosfera_bot</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-red-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <Cross25Icon class="red-container-item w-4 h-4" />
-                            <span class="red-container-item text-xs">Ошибка соединения</span>
-                        </div>
-                        <MoreBox/>
-                    </div>
-                </div>
-                <div class="any-white-container connected-item-box">
-                    <div class="messenger-telegram-container mr-2">
-                        <div class="messenger-telegram-char-logo">VK</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">VK Сообщества</span>
-                            <span class="text-gray-500 text-xs ">vk.com/technosfera</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-green-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <SuccessIcon class="green-container-item w-4 h-4" />
-                            <span class="green-container-item text-xs">Подключен</span>
-                        </div>
-                        <MoreBox/>
-                    </div>
-                </div>
             </div>
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" v-if="connectionsComputed.vats.length > 0">
             <span class="text-gray-500 text-sm select-none">ВАТС</span>
             <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box">
+                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.vats">
                     <div class="flex flex-col gap-2">
-                            <span class="text-sm">Основной номер</span>
-                            <span class="text-gray-500 text-xs ">+7 (495) 123-45-67</span>
+                            <span class="text-sm">{{ value.title }}</span>
+                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
                     </div>
                     <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-red-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <Cross25Icon class="red-container-item w-4 h-4" />
-                            <span class="red-container-item text-xs">Ошибка соединения</span>
+                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
+                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
+                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
                         </div>
-                        <MoreBox/>
-                    </div>
-                </div>
-                <div class="any-white-container connected-item-box">
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">Дополнительный номер</span>
-                            <span class="text-gray-500 text-xs ">+7 (495) 987-65-43</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-green-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <SuccessIcon class="green-container-item w-4 h-4" />
-                            <span class="green-container-item text-xs">Подключен</span>
-                        </div>
-                        <MoreBox/>
+                        <DropdownMenuRoot v-model="value.isOpen">
+                                <DropdownMenuTrigger>
+                                    <MoreBox/>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
+                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
+                                           <span class="select-none hover-item text-sm">Изменить</span> 
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
+                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
+                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuRoot>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" v-if="connectionsComputed.sms.length > 0">
             <span class="text-gray-500 text-sm select-none">SMS</span>
             <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box">
+                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.sms">
                     <div class="flex flex-col gap-2">
-                            <span class="text-sm">SMS-шлюз</span>
-                            <span class="text-gray-500 text-xs ">TECHNOSFERA</span>
+                            <span class="text-sm">{{ value.title }}</span>
+                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
                     </div>
                     <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div class="flex any-green-container gap-1 py-0.5 px-1.5" style="height: fit-content;">
-                            <SuccessIcon class="green-container-item w-4 h-4" />
-                            <span class="green-container-item text-xs">Подключен</span>
+                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
+                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
+                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
                         </div>
-                        <MoreBox/>
+                        <DropdownMenuRoot v-model="value.isOpen">
+                                <DropdownMenuTrigger>
+                                    <MoreBox/>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
+                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
+                                           <span class="select-none hover-item text-sm">Изменить</span> 
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
+                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
+                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuRoot>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
+        <div class="flex flex-col gap-1" v-if="connectionsComputed.another.length > 0">
+            <span class="text-gray-500 text-sm select-none">Иное</span>
+            <div class="flex flex-col gap-2">
+                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.another">
+                    <div class="flex flex-col gap-2">
+                            <span class="text-sm">{{ value.title }}</span>
+                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
+                    </div>
+                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
+                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
+                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
+                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
+                        </div>
+                        <DropdownMenuRoot v-model="value.isOpen">
+                                <DropdownMenuTrigger>
+                                    <MoreBox/>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
+                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
+                                           <span class="select-none hover-item text-sm">Изменить</span> 
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
+                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
+                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuRoot>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="h-[100px] flex flex-col justify-center items-center" v-else>
+            <span class="text-gray-500 select-none">Нет активных подключенний</span>
+        </div>
     </div>
 </div>
 </template>
-<style scoped>
+<style>
 
 @import '~/assets/css/any-container.css';
+
+.DropdownMenuContent{
+  min-width: 120px;
+  background-color: white;
+  border-radius: 6px;
+  padding: 5px;
+  box-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.drop-down-item{
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+    border-radius: 3px;
+    align-items: center;
+}
+
+.add-user-btn{
+    background: #3182ce;
+    border-radius: 10px;
+    margin-left: auto;
+    height: fit-content;
+}
+.add-user-btn:hover{
+    background: #5899d7;
+    transition: background 0.15s ease;
+}
 
 .main-page-container{
     display: flex;
@@ -191,6 +373,23 @@ const modalStore = useModalStore()
     padding: 24px 24px 0px;
     gap: 16px;
 }
+.tags-container{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px
+}
+.tag-box{
+    padding: 3px 8px;
+    display: flex;
+    height: fit-content;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: #edf2f7;
+    border-color: #eaeff5;
+    gap: 5px;
+    border-width: 1.5px;
+} 
 .connected-container{
     min-height: 240px;
     height: fit-content;
@@ -199,10 +398,14 @@ const modalStore = useModalStore()
     padding: 25px 20px;
 }
 .connected-modules-box{
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    
 
 }
+
 .connected-empty-box{
     display: flex;
     flex-direction: column;
@@ -210,7 +413,7 @@ const modalStore = useModalStore()
     align-items: center;
     flex: 1;
 }
-.messenger-whatsap-container{
+.messenger-WhatsApp-container{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -220,7 +423,8 @@ const modalStore = useModalStore()
     height: 32px;
     width: 32px;
 }
-.messenger-telegram-container{
+.messenger-VK-container,
+.messenger-Max-container{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -230,10 +434,23 @@ const modalStore = useModalStore()
     height: 32px;
     width: 32px;
 }
-.messenger-telegram-char-logo{
+.messenger-Telegram-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: rgba(197, 231, 244, 0.443);
+    height: 32px;
+    width: 32px;
+}
+.messenger-VK-char-logo,
+.messenger-Max-container{
     color: color-mix(in srgb, currentColor 20%, blue);
 }
-.messenger-whatsapp-char-logo{
+.messenger-Telegram-char-logo{
+    color: color-mix(in srgb, currentColor 20%, rgb(0, 119, 255));
+}
+.messenger-WhatsApp-char-logo{
     color: color-mix(in srgb, currentColor 15%, green);
 }
 .connected-item-box{
@@ -254,5 +471,9 @@ const modalStore = useModalStore()
 .blue-hover:hover{
     background-color: #ebf8ff;
     transition: background-color 0.15s ease;
+}
+.blue-hover:hover .hover-item{
+    color: #437db4;
+    transition: color 0.15s cubic-bezier(0.16, 1, 0.3,);
 }
 </style>

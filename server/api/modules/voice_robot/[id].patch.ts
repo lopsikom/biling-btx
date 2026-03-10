@@ -1,31 +1,41 @@
 import { voice_robotUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { voiceRobotPatchMapPrimsa } from "~~/server/utils/mappers";
-import patchVoiceRobotPrisma from "~~/server/utils/prisma/patchVoiceRobot";
+import { patchVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
+import { VoiceRobotUpdate } from "~~/shared/models/APIModels";
+import * as z from "zod"
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
     const body = await readBody(event);
-        let parseId : number;
-        let data : voice_robotUpdateInput;
         if(id){
             try{
-                parseId = parseInt(id);
-                data = voiceRobotPatchMapPrimsa(body);
-            }catch(e){
-                console.error(e);
-                throw createError({
-                    statusCode : 400,
-                    statusMessage : "Invalid id"
-                });
-            }
-            const vats = await patchVoiceRobotPrisma(parseId, data);
-                if(!vats){
+                const data = await VoiceRobotUpdate.transform(val => voiceRobotPatchMapPrimsa(val)).parseAsync(body)
+                const voice_robot = await patchVoiceRobotPrisma(z.coerce.number().parse(id), data);
+                if(!voice_robot){
                     throw createError({
                         statusCode : 404,
-                        statusMessage : "no found vats"
+                        statusMessage : "no found voice robot"
                     })
                 }
-                return vats
+                return voice_robot
+            }catch(e){
+                console.error(e);
+                if(e instanceof z.ZodError){
+                    console.error(e.issues);
+                    const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(", ")
+                    throw createError({
+                        statusCode : 400,
+                        statusMessage : "Vallidation Error",
+                        message : mess
+                    })
+                }
+                else {
+                    throw createError({
+                        statusCode: 500,
+                        statusMessage : "Server Error"
+                    })
+                }
+            }
         }
         else{
             throw createError({

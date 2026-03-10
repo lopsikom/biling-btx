@@ -62,7 +62,6 @@ const search = ref<string>()
                     <div class="flex">
                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
-
                 </div>
                     <div class="users-list-grid mt-[30px]">
                         <div class="users-list-row" style="border-width: 0;">

@@ -351,11 +351,26 @@ model webform_webform_type {
 }
 
 model connection {
-  id         Int     @id @default(autoincrement())
-  company_id Int
-  title      String
-  status     String
-  source     String
-  type       String
-  company    company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                Int               @id @default(autoincrement())
+  title             String
+  company_id        Int
+  type_id           Int
+  status_id         Int
+  source            String
+  company           company           @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  connection_status connection_status @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  connection_type   connection_type   @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model connection_status {
+  id         Int          @id @default(autoincrement())
+  name       String
+  connection connection[]
+}
+
+model connection_type {
+  id         Int          @id @default(autoincrement())
+  name       String
+  type       String?
+  connection connection[]
 }

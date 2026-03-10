@@ -1,4 +1,5 @@
-import { getVatsById } from "~~/server/utils/prisma/getVats";
+import { getVatsById } from "~~/server/utils/prisma/modules/Vats";
+
 
 export default defineEventHandler(async (event) =>{
     const id = getRouterParams(event).id;

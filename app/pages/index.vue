@@ -20,6 +20,8 @@ import ErrorModal from '~/components/modals/ErrorModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
 import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
+import { defaultWindow } from '@vueuse/core'
+import { reloadFrame } from '~/services/utils/utils'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -46,22 +48,27 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
         bitrixStateStore.companyAddress = await bitrix.companyAdress();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
-        bitrixStateStore.companyInvoice = await bitrix.getInvoice();
         billingStateStore.messengers = await $axios.getMessengers();
         billingStateStore.contractStatuses = await $axios.getContractStatuses();
         billingStateStore.integrations = await $axios.getIntegrations();
         billingStateStore.tariff = await $axios.getTariff();
         billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : bitrix.bitrixFrame.placement.options.ID});
-            const vats = await $axios.getVats({bitrix_id : bitrix.bitrixFrame.placement.options.ID})
-            billingStateStore.vats.push(...vats);
-            const voiceRobot = await $axios.getVoiceRobots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-            billingStateStore.voiceRobots.push(...voiceRobot);
-            const chatBot = await $axios.getChatBots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-            billingStateStore.chatBots.push(...chatBot);
-            const autoinfo = await $axios.getAutoInfos({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-            billingStateStore.autoinformations.push(...autoinfo);
-            const webForm = await $axios.getWebforms({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-            billingStateStore.webform.push(...webForm)
+        const vats = await $axios.getVats({bitrix_id : bitrix.bitrixFrame.placement.options.ID})
+        billingStateStore.vats.push(...vats);
+        const voiceRobot = await $axios.getVoiceRobots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+        billingStateStore.voiceRobots.push(...voiceRobot);
+        const chatBot = await $axios.getChatBots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+        billingStateStore.chatBots.push(...chatBot);
+        const autoinfo = await $axios.getAutoInfos({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+        billingStateStore.autoinformations.push(...autoinfo);
+        const webForm = await $axios.getWebforms({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
+        billingStateStore.webform.push(...webForm)
+        const connection_statuses = await $axios.getConnectionStatus();
+        billingStateStore.connection_statuses = connection_statuses;
+        const connection_type = await $axios.getConnectionType();
+        billingStateStore.connection_types = connection_type;
+        const connections = await $axios.getConnectionList({company_id : bitrix.bitrixFrame.placement.options.ID});
+        billingStateStore.connections = connections
         return {bitrix, Company}
     }catch(e){
         console.error(e)
@@ -88,6 +95,13 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             billingStateStore.autoinformations.push(...autoinfo);
             const webForm = await $axios.getWebforms({bitrix_id : "2"});
             billingStateStore.webform.push(...webForm)
+            const connection_statuses = await $axios.getConnectionStatus();
+            billingStateStore.connection_statuses = connection_statuses;
+            const connection_type = await $axios.getConnectionType();
+            billingStateStore.connection_types = connection_type;
+            const connections = await $axios.getConnectionList({company_id : "2"});
+            billingStateStore.connections = connections
+            console.log(connections)
         }
         else{
             errorModal.showError({message : 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e}, "Ошибка Bitrix");
@@ -137,12 +151,12 @@ function switchPage(page : string){
     <ErrorModal></ErrorModal>
     <div class="app-container" @click="menuStore.closeAllMenu">
         <div class="billing-container">
-            <div class="title-container">
+            <div class="title-container" style="width: 100%;">
                 <div class="back-arrow-box">
                     <ArrowLeftSIcon class="w-6 h-6 back-arrow-svg" />
                 </div>
                 <div class="any-contaier-column" style="gap: 15px;">
-                    <div class="any-contaier-row" style="gap: 10px">
+                    <div class="any-contaier-row" style="gap: 10px; width: 100%;">
                         <p class="company-title">{{ Company?.TITLE }}</p>
                         <div class="status-box">
                             <SuccessIcon class="w-4 h-4" style="color: white;" />
@@ -161,16 +175,19 @@ function switchPage(page : string){
                         </div>
                     </div> -->
                 </div>
+                <div class="flex any-white-container items-center blue-hover justify-center w-10 h-10" style="margin-left: auto;" @click="reloadFrame()">
+                    <Icon icon="mdi:reload" class="hover-item"/>
+                </div>
             </div>
             <div class="any-contaier-row" style="width: 100%; gap: 12px;">
                 <div class="transparent-box">
                     <OpenIn40Icon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Открыть в контексте</p>
-                </div> 
+                </div>
                 <div class="transparent-box">
                     <BoxIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Модули</p>
-                </div> 
+                </div>
                 <div class="transparent-box">
                     <KeyIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">API</p>
@@ -178,7 +195,7 @@ function switchPage(page : string){
                 <div class="transparent-box">
                     <EditPencilIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Редактирование</p>
-                </div>         
+                </div>
             </div>
             <div class="page-selector-grid">
                 <div class="page-item" v-for="page in Object.keys(pagesEnum)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
@@ -189,7 +206,7 @@ function switchPage(page : string){
         </div>
     </div>
     <div class="load-container" v-if="menuStore.fetchDataLoad">
-        <Icon icon="line-md:loading-loop" width="120"/>
+        <Icon icon="line-md:loading-loop" class="text-blue-600" width="120"/>
     </div>
 </template>
 <style scoped>
@@ -207,7 +224,7 @@ function switchPage(page : string){
 
 
 .modal-overlay{
-    animation: modal-overlay-show 0.15s ease-out; 
+    animation: modal-overlay-show 0.15s ease-out;
     background-color: rgba(91, 91, 91, 0.545);
     position: fixed;
     inset: 0;
@@ -289,7 +306,7 @@ function switchPage(page : string){
     border-radius: 5px;
     width: fit-content;
 }
-.status-title{  
+.status-title{
     font-size: 0.75em;
     font-weight: 500;
     color: white;
@@ -311,7 +328,7 @@ function switchPage(page : string){
     border-color: #e7eaee;
     border-width: 1.5px;
 
-}   
+}
 .add-tag-box{
 
     display: flex;
@@ -341,7 +358,7 @@ function switchPage(page : string){
     font-size: 1em;
     cursor: default;
     user-select: none;
-    
+
 }
 .page-selector-grid{
     display: grid;
@@ -359,6 +376,14 @@ function switchPage(page : string){
     justify-content: center;
     align-items: center;
     border-radius: 10px;
+}
+.blue-hover:hover{
+    background-color: #ebf8ff;
+    transition: background-color 0.15s ease;
+}
+.blue-hover:hover .hover-item{
+    color: #437db4;
+    transition: color 0.15s cubic-bezier(0.16, 1, 0.3,);
 }
 .page-item-selected{
     background-color: white;

@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 
 
 export class axiosClient{
@@ -19,12 +19,11 @@ export class axiosClient{
                     const auth = this.BitrixFrame.auth.getAuthData();
                     if(auth) config.headers.Authorization = auth.access_token;
                 }
-                console.log("Bad Token");
             }
             return config
         })
         this.AxiosClient.interceptors.response.use(async (response) => {
-            console.log(response.data)
+            if(useNuxtApp().$config.public.dev) console.log(response.data)
             return response
         })
     }
@@ -211,6 +210,39 @@ export class axiosClient{
     async deleteWebform(id : number) {
         const response = await this.AxiosClient.delete(`modules/webform/${id}`)
         return response.data as boolean;
+    }
+
+    async getConnectionStatus(){
+        const response = await this.AxiosClient.get(`connection.status`);
+        return response.data as IConnectionStatus[]
+    }
+    async getConnectionType(){
+        const response = await this.AxiosClient.get(`connection.type`);
+        return response.data as IConnectionType[];
+    }
+    async getConnectionList(data? : IConnectionPatch){
+        const response = await this.AxiosClient.get(`connection.list`,{
+            params : {
+                filter : JSON.stringify(data)
+            }
+        })
+        return response.data as IConnection[]
+    }
+    async postConnection(data : IConnectionPost){
+        if(!data.company_id) {
+            if(useNuxtApp().$config.public.dev) data.company_id = this.BitrixFrame?.placement.options.ID ?? "2"
+            else data.company_id = this.BitrixFrame?.placement.options.ID
+        }
+        const response = await this.AxiosClient.post(`connection.add`, data)
+        return response.data as IConnection
+    }
+    async  patchConnection(data : IConnectionPatch,id : number){
+        const response = await this.AxiosClient.patch(`connection/${id}`, data)
+        return response.data as IConnection
+    }
+    async deleteConnection(id : number){
+        const response = await this.AxiosClient.delete(`connection/${id}`);
+        return response.data as boolean
     }
     
 

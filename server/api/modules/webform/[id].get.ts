@@ -1,5 +1,5 @@
 import { webformGetMapPrisma } from "~~/server/utils/mappers";
-import { getWebformByIdPrisma } from "~~/server/utils/prisma/getWebform";
+import { getWebformByIdPrisma } from "~~/server/utils/prisma/modules/WebForm";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

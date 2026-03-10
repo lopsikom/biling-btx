@@ -1,5 +1,4 @@
-import deleteContractPrisma from "~~/server/utils/prisma/deleteContract";
-import deleteWebForm from "~~/server/utils/prisma/deleteWebForm";
+import { deleteWebForm } from "~~/server/utils/prisma/modules/WebForm";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;

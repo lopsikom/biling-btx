@@ -1,4 +1,5 @@
 import { contractGetMapPrisma } from "~~/server/utils/mappers";
+import { getContractById } from "~~/server/utils/prisma/modules/Contract";
 
 export default defineEventHandler(async (event) =>{
 

@@ -1,3 +1,4 @@
+import { autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IAutoinformationFilterUpdate } from "~~/shared/models/APIModels";
 
@@ -33,4 +34,30 @@ export async function getAutoinformationByIdPrisma(id : number){
         }
     })
     return response;
+}
+
+
+
+export  async function deleteAutoInforPrisma(id : number){
+    const response = await prisma.autoinformation_module.delete({
+        where : {id : id}
+    })
+    return response
+}
+
+export async function patchAutoinfromationPrisma(id : number, data : autoinformation_moduleUpdateInput) {
+    const response = prisma.autoinformation_module.update({
+        where : {
+            id : id
+        },
+        data : data
+    })
+    return response;
+}
+
+export async function postAutoinformationPrisma(data : autoinformation_moduleCreateInput){
+    const response = await prisma.autoinformation_module.create({
+        data : data
+    })
+    return response
 }
