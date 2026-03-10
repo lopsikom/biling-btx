@@ -1,9 +1,11 @@
-import { IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import { Contract, ContractPost, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 import { IAddress, ICompnany, IContact, IContactInfo, Invoice, IRequisite, IUser } from "../services/models";
 import { contract, user_bitrix } from "../services/models/generated/prisma/client";
 import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, connectionCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
 import { ContactWithData } from "./prisma/postContact";
 import { connectionPrisma } from "./prisma/Connection";
+import { contractPrismaGet } from "./prisma/modules/Contract";
+import * as z from "zod"
 
 export function userMapUpsertPrisma(portal_id : number, ...user : IUser[]) : user_bitrixCreateInput[]{
     return user.map( (u) => {
@@ -151,26 +153,11 @@ export function invocieMapUpsertPrisma(portal_id : number, company_id : number, 
     })
 }
 
-export type contractPrismaGet = {
-    contract_status: {
-        id: number;
-        name: string;
-    };
-} & {
-    id: number;
-    name: string;
-    company_id: number;
-    status: number;
-    index: string | null;
-    date_begin: Date;
-    date_close: Date;
-    org_name: string;
-}
 export function contractGetMapPrisma(data : contractPrismaGet) : IContract;
 export function contractGetMapPrisma(data : contractPrismaGet[]) : IContract[]
 export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet[]): IContract | IContract[] {
     if(Array.isArray(data)){
-        return data.map(c => {return{
+        return data.map(c => {return Contract.parse({
                 id : c.id,
                 name : c.name,
                 company_id : c.company_id,
@@ -179,9 +166,9 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 date_begin : c.date_begin.toString(),
                 date_close : c.date_close.toString(),
                 org_name : c.org_name
-            } as IContract} )
+            } as IContract)} )
     }
-    else return {
+    else return Contract.parse({
         id : data.id,
         name : data.name,
         company_id : data.company_id,
@@ -190,9 +177,8 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         date_begin : data.date_begin.toString(),
         date_close : data.date_close.toString(),
         org_name : data.org_name
-    } as IContract
+    } as IContract)
 }
-
 
 
 export function contractInputMapPrisma(data : IContractPost, portal_id : number) : contractCreateInput {

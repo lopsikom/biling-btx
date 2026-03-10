@@ -4,6 +4,7 @@ import { CalendarDate } from '@internationalized/date';
 import type { SelectorObject } from '~/services/models';
 import usebillingStateStore from '~/services/stores/billingStateStore';
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
+import useMenuStore from '~/services/stores/menuStores';
 import useModalStore from '~/services/stores/modalStore';
 import useToastStore from '~/services/stores/toastStore';
 import { copyToClipboard, isValidData } from '~/services/utils/utils';
@@ -11,6 +12,7 @@ import type { IContract, IContractPost, IContractUpdate } from '~~/shared/models
 
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore();
+const menuStore = useMenuStore()
 const toastStore = useToastStore();
 const bitrixStateStore = useBitrixStateStore()
 const {$axios} = useNuxtApp()
@@ -55,6 +57,7 @@ watch(() => dateClose.value, () => {
 })
 
 async function saveData(){
+    menuStore.fetchDataLoad = true
     try{
         const begin = dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day) : undefined
         const close = dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day) : undefined
@@ -78,7 +81,7 @@ async function saveData(){
     }catch(e){
         console.error(e);
         if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно заполнены или заполнены некорректно")
-    }
+    }finally {menuStore.fetchDataLoad = false}
 }
 
 async function deleteData(){
@@ -123,11 +126,11 @@ async function deleteData(){
         </div>
     </div>
     <div class="flex mt-[35px] gap-[20px]" style="margin-left: auto; width: 50%; flex-direction: row-reverse;">
-            <div class="save-btn justify-center items-center px-[10px] py-[8px]">
-                <p class="select-none text-sm" style="color: white;" @click="saveData()">Сохранить</p>
+            <div class="save-btn justify-center items-center px-[10px] py-[8px]" @click="saveData()">
+                <p class="select-none text-sm" style="color: white;">Сохранить</p>
             </div>
-            <div class="close-btn blue-hover justify-center items-center px-[10px] py-[8px]">
-                <p class="select-none hover-item text-sm" @click="modalStore.hideModal()">Отмена</p>
+            <div class="close-btn blue-hover justify-center items-center px-[10px] py-[8px]" @click="modalStore.hideModal()">
+                <p class="select-none hover-item text-sm">Отмена</p>
             </div>
         </div>
 </template>
@@ -138,7 +141,6 @@ async function deleteData(){
     border-radius: 5px;
 }
 .close-btn{
-    background-color: white ;
     border-color: #e7eaee;
     border-width: 1.5px;
     border-radius: 5px;

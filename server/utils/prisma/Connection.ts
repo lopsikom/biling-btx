@@ -33,7 +33,7 @@ export async function connectionGetByIdPrisma(id : number){
     return response;
 }
 
-export async function connectionPatchPrisma(data : IConnectionPatch, id : number) {
+export async function connectionPatchPrisma(id : number, data : IConnectionPatch) {
     const updateData = {
         title : data.title,
         source : data.source,

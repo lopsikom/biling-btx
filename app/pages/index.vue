@@ -183,11 +183,11 @@ function switchPage(page : string){
                 <div class="transparent-box">
                     <OpenIn40Icon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Открыть в контексте</p>
-                </div> 
+                </div>
                 <div class="transparent-box">
                     <BoxIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Модули</p>
-                </div> 
+                </div>
                 <div class="transparent-box">
                     <KeyIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">API</p>
@@ -195,7 +195,7 @@ function switchPage(page : string){
                 <div class="transparent-box">
                     <EditPencilIcon class="w-6 h-6 changeable-icon"/>
                     <p class="transparent-box-title font-semibold">Редактирование</p>
-                </div>         
+                </div>
             </div>
             <div class="page-selector-grid">
                 <div class="page-item" v-for="page in Object.keys(pagesEnum)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
@@ -206,7 +206,7 @@ function switchPage(page : string){
         </div>
     </div>
     <div class="load-container" v-if="menuStore.fetchDataLoad">
-        <Icon icon="line-md:loading-loop" width="120"/>
+        <Icon icon="line-md:loading-loop" class="text-blue-600" width="120"/>
     </div>
 </template>
 <style scoped>
@@ -224,7 +224,7 @@ function switchPage(page : string){
 
 
 .modal-overlay{
-    animation: modal-overlay-show 0.15s ease-out; 
+    animation: modal-overlay-show 0.15s ease-out;
     background-color: rgba(91, 91, 91, 0.545);
     position: fixed;
     inset: 0;
@@ -306,7 +306,7 @@ function switchPage(page : string){
     border-radius: 5px;
     width: fit-content;
 }
-.status-title{  
+.status-title{
     font-size: 0.75em;
     font-weight: 500;
     color: white;
@@ -328,7 +328,7 @@ function switchPage(page : string){
     border-color: #e7eaee;
     border-width: 1.5px;
 
-}   
+}
 .add-tag-box{
 
     display: flex;
@@ -358,7 +358,7 @@ function switchPage(page : string){
     font-size: 1em;
     cursor: default;
     user-select: none;
-    
+
 }
 .page-selector-grid{
     display: grid;

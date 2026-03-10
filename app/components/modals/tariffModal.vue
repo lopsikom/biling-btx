@@ -9,6 +9,7 @@ import useModalStore from '~/services/stores/modalStore';
 import { diffObject, isDiffArraySimple, isValidData } from '~/services/utils/utils';
 import useToastStore from '~/services/stores/toastStore';
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
+import useMenuStore from '~/services/stores/menuStores';
 const openModulsMenu = ref({
     vats : false,
     voiceRobot : false,
@@ -26,6 +27,8 @@ const toastStore = useToastStore()
 const {$axios} = useNuxtApp()
 
 const modalStore = useModalStore()
+
+const menuStore = useMenuStore();
 
 const billingStateStore = usebillingStateStore();
 
@@ -254,8 +257,9 @@ selected_contract : {
 }
 
 async function saveData(){ //Дальнейший рефактор получения различий
-try{
-    
+    menuStore.fetchDataLoad = true;
+    try{
+        
     const allModules = [...vats.value, ...voiceRobotComputed.value, ...autoInfoComputed.value, ...chatBotComputed.value, ...webFormsComputed.value]
 
     for(const i of allModules.filter(m => !m.isDeleted)){
@@ -372,7 +376,6 @@ try{
         if(isDiffArraySimple(integrations, v.item.integrations)) diff.integrations = integrations
         return {id : v.item.id, item : diff}
     })
-
     const vat2 = await Promise.all(await diffVats.filter(i => Object.keys(i.item).length !== 0).map(async v => {
         return await $axios.patchVats(v.id, v.item);
     }))
@@ -482,6 +485,9 @@ try{
 }catch(e) {
     console.log(e)
     if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно заполнены или заполнены некорректно")
+}
+finally{
+    menuStore.fetchDataLoad = false;
 }
 }
 

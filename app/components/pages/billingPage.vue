@@ -61,7 +61,7 @@ onMounted(async () => {
                 Assign: assignName,
                 oppuration: i.opportunity ?? 0,
                 currencyId : i.currencyId,
-                status: i.stageId,
+                status: i.stageId![i.stageId!.length - 1],
                 beginDate: i.begindate,
                 closeDate: i.closedate
             }   as InvoiceGrid

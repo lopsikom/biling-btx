@@ -1,32 +1,44 @@
-import { connectionPatchPrisma } from "~~/server/utils/prisma/Connection";
+import * as z from "zod"
+import { ConnectionPatch } from "~~/shared/models/APIModels";
+
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
     const body = await readBody(event);
-        let parseId : number;
-        if(id){
-            try{
-                parseId = parseInt(id);
-            }catch(e){
-                console.error(e);
+    if(id){
+        try{
+            const data = await ConnectionPatch.parseAsync(body)
+            const connection = await connectionPatchPrisma(z.coerce.number().parse(id), data);
+            if(!connection){
+                throw createError({
+                    statusCode : 404,
+                    statusMessage : "no found connection"
+                })
+            }
+            return connection
+        }catch(e){
+            console.error(e);
+            if(e instanceof z.ZodError){
+                console.error(e.issues);
+                const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(", ")
                 throw createError({
                     statusCode : 400,
-                    statusMessage : "Invalid id"
-                });
+                    statusMessage : "Vallidation Error",
+                    message : mess
+                })
             }
-            const vats = await connectionPatchPrisma(body, parseId);
-                if(!vats){
-                    throw createError({
-                        statusCode : 404,
-                        statusMessage : "no found vats"
-                    })
-                }
-                return vats
+            else {
+                throw createError({
+                    statusCode: 500,
+                    statusMessage : "Server Error"
+                })
+            }
         }
-        else{
-            throw createError({
-                statusCode : 404,
-                statusMessage : "none id"
-            })
-        }
+    }
+    else{
+        throw createError({
+            statusCode : 404,
+            statusMessage : "none id"
+        })
+    }
 })

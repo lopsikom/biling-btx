@@ -79,7 +79,7 @@ export async function patchContractPrisma(id : number, data : contractUpdateInpu
             id : id
         },
         data : data,
-        include : {
+        include : { 
             contract_status : true
         }
     })
@@ -104,3 +104,4 @@ export async function getTariffs(){
     const response = await prisma.tariff.findMany();
     return response
 }
+export type contractPrismaGet = Awaited<ReturnType<typeof addContractPrisma>>
