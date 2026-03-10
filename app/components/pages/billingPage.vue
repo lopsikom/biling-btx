@@ -69,7 +69,8 @@ onMounted(async () => {
         InvoiceGridList.value = list;
     }
     else{
-        InvoiceGridList.value = mockInvoice.map(i => {
+        if(!bitrixStateStore.companyInvoice){
+            InvoiceGridList.value = mockInvoice.map(i => {
             return {
                 id: i.id.toString(),
                 name: i.title,
@@ -81,6 +82,7 @@ onMounted(async () => {
                 closeDate: i.closedate
             }   as InvoiceGrid
         })
+        }
     }
    }catch(e) {
     console.log(e)
