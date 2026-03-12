@@ -283,6 +283,7 @@ model user_bitrix {
   contact_contact_assigned_by_idTouser_bitrix  contact[] @relation("contact_assigned_by_idTouser_bitrix")
   contact_contact_created_by_idTouser_bitrix   contact[] @relation("contact_created_by_idTouser_bitrix")
   contact_contact_modify_by_idTouser_bitrix    contact[] @relation("contact_modify_by_idTouser_bitrix")
+  events                                       events[]
   invoice_invoice_assigned_by_idTouser_bitrix  invoice[] @relation("invoice_assigned_by_idTouser_bitrix")
   invoice_invoice_created_byTouser_bitrix      invoice[] @relation("invoice_created_byTouser_bitrix")
   invoice_invoice_last_activty_byTouser_bitrix invoice[] @relation("invoice_last_activty_byTouser_bitrix")
@@ -373,4 +374,14 @@ model connection_type {
   name       String
   type       String?
   connection connection[]
+}
+
+model events {
+  id          Int         @id @default(autoincrement())
+  userid      Int
+  action      String
+  entity      String
+  entityName  String?
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  user_bitrix user_bitrix @relation(fields: [userid], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

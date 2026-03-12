@@ -248,7 +248,8 @@ export interface IAppInfo {
         client_endpoint : string,
         member_id : string,
         member_type : string
-    }
+    },
+    user_id : number
 } 
 export interface IBitrixToken{
     access_token : string,

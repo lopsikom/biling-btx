@@ -1,11 +1,13 @@
 import { voice_robotUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { voiceRobotPatchMapPrimsa } from "~~/server/utils/mappers";
 import { patchVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
-import { VoiceRobotUpdate } from "~~/shared/models/APIModels";
+import { entityType, VoiceRobotUpdate } from "~~/shared/models/APIModels";
 import * as z from "zod"
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal;
     const body = await readBody(event);
         if(id){
             try{
@@ -17,6 +19,11 @@ export default defineEventHandler(async (event) => {
                         statusMessage : "no found voice robot"
                     })
                 }
+                eventsAudit.emit("entity.update", {
+                    userid : portal?.user_id,
+                    entity : entityType.VOICE_ROBOT,
+                    entityName : voice_robot.title
+                } as EventEntity) 
                 return voice_robot
             }catch(e){
                 console.error(e);

@@ -300,3 +300,12 @@ export enum connectionTypesEnum {
     VATS = "vats",
     ANOTHER = "another"
 }
+export enum entityType {
+    CONNECTION = "connection",
+    AUTOINFORMATION = "autoinformation",
+    CHAT_BOT = "chat_bot",
+    CONTRACT = "contract",
+    VATS = "vats",
+    VOICE_ROBOT = "voice_robot",
+    WEBFORM = "webform"
+}

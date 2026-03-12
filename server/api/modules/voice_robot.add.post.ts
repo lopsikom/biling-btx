@@ -1,14 +1,21 @@
 import { ZodError } from "zod";
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { voiceRobotInputMapPrisma } from "~~/server/utils/mappers";
 import { postVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
-import { VoiceRobotPost } from "~~/shared/models/APIModels";
+import { entityType, VoiceRobotPost } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
+    const portal = event.context.portal;
     try{
         const ZBody = await VoiceRobotPost.transform(val => voiceRobotInputMapPrisma(val)).parse(body)
         const voice_robot = await postVoiceRobotPrisma(ZBody);
         setResponseStatus(event, 201);
+        eventsAudit.emit("entity.create", {
+            userid : portal?.user_id,
+            entity : entityType.CONTRACT,
+            entityName : voice_robot.title
+        } as EventEntity)
         return voice_robot
     }catch(e){
         console.error(e);

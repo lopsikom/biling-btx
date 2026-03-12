@@ -1,10 +1,12 @@
 import { autoinformation_moduleUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { patchAutoinfromationPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
 import * as z from "zod"
-import { AutoInformationFilterUpdate } from "~~/shared/models/APIModels";
+import { AutoInformationFilterUpdate, entityType } from "~~/shared/models/APIModels";
+import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal;
     const body = await readBody(event);
     if(id){
         try{
@@ -16,6 +18,11 @@ export default defineEventHandler(async (event) => {
                     statusMessage : "no found autoinformation module"
                 })
             }
+            eventsAudit.emit("entity.update", {
+                userid : portal?.user_id,
+                entity : entityType.AUTOINFORMATION,
+                entityName : autoinformation.title
+            } as EventEntity)
             return autoinformation;
         }catch(e){
             console.error(e);

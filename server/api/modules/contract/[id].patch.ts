@@ -2,10 +2,13 @@ import { contractUpdateInput } from "~~/server/services/models/generated/prisma/
 import { contractUpdateMapPrisma } from "~~/server/utils/mappers";
 import { patchContractPrisma } from "~~/server/utils/prisma/modules/Contract";
 import * as z from "zod"
-import { ContractUpdate } from "~~/shared/models/APIModels";
+import { ContractUpdate, entityType } from "~~/shared/models/APIModels";
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal as PortalDataType
     const body = await readBody(event);
         if(id){
             try{
@@ -17,6 +20,11 @@ export default defineEventHandler(async (event) => {
                         statusMessage : "no found contract"
                     })
                 }
+                eventsAudit.emit("entity.update", {
+                    userid : portal?.user_id,
+                    entity : entityType.CONTRACT,
+                    entityName : contract.name
+                } as EventEntity)
                 return contractGetMapPrisma(contract);
             }catch(e){
                 console.error(e);

@@ -1,10 +1,10 @@
 import { initCompanyClient } from "~~/server/services/bitrix/CompanyClient";
 import getCompanyPrisma from "~~/server/utils/prisma/getCompany";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 
 
 export default defineEventHandler(async (event) => {
-    const portal = event.context.portal;
-    console.log(portal)
+    const portal = event.context.portal as PortalDataType;
     const id = getRouterParams(event).id;
     let parseId : number;
     if(id){
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         const company = await getCompanyPrisma(id)
         if(company) return true
         else{
-            const companyClient = await initCompanyClient(parseId, portal)
+            const companyClient = await initCompanyClient(parseId, portal!.portal)
             console.log(companyClient)
             if(companyClient) return true
             else return false

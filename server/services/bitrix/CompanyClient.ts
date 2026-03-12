@@ -2,7 +2,8 @@ import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
 import { IAddress, ICompnany, IContact, Invoice, IRequisite } from "../models";
 import { config } from "process";
-import { PortalType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 
 export default class companyClient{
     domain : string;
@@ -97,15 +98,13 @@ export default class companyClient{
 
 }
 
-export async function initCompanyClient(bitrix_id : number, portal : number | PortalType){
-    let portalPrisma : PortalType
+export async function initCompanyClient(bitrix_id : number, portal : number | portalPrisma){
+    let portalPrisma : portalPrisma
     if(typeof portal === "number") portalPrisma = await getPortal({id : portal})
     else portalPrisma = portal
-    console.log(portalPrisma)
     if(!portalPrisma || !portalPrisma.refresh_token) return 
     const token = await bitrixAPI.getAccesToken(portalPrisma.client_id, portalPrisma.client_secret, portalPrisma.refresh_token);
     const company = await bitrixAPI.getCompany(bitrix_id, token.access_token, portalPrisma.domain);
-    console.log(company)
     const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result));
     return new companyClient(portalPrisma.domain, companyPrsima[0].id, bitrix_id.toString())
 }
