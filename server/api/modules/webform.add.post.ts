@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) =>{
             eventsAudit.emit("entity.create", {
                 userid : portal?.user_id,
                 entity : entityType.WEBFORM,
-                entityName : webform.title
+                entityName : webform.title,
+                companyid : webform.contract?.company_id
             } as EventEntity)
             return {...webform, integrations : integrations.map(i => i.webform_type.name)}
         }catch(e){

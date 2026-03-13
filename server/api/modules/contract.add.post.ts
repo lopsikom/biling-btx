@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.create", {
             userid : portal_id?.user_id,
             entity : entityType.CONTRACT,
-            entityName : contract.name
+            entityName : contract.name,
+            companyid : contract.company_id
         } as EventEntity)
         return contractGetMapPrisma(contract);
     }catch(e){

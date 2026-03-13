@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
             eventsAudit.emit("entity.update", {
                     userid : portal?.user_id,
                     entity : entityType.CHAT_BOT,
-                    entityName : chatBot.title
+                    entityName : chatBot.title,
+                    companyid : chatBot.contract?.company_id
             } as EventEntity)
             return chatBotGetMapPrisma(chatBot);
         }catch(e){

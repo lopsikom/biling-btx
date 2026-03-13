@@ -1,5 +1,11 @@
 import * as z from "zod"
 
+export interface IPagionationResponse<T>{
+    data : T[],
+    skip : number,
+    count : number
+}
+
 
 export const Contract = z.object({
     id : z.number(),
@@ -284,6 +290,40 @@ export type IConnection = z.infer<typeof Connection>
 export type IConnectionPost = z.infer<typeof ConnectionPost>
 export type IConnectionPatch = z.infer<typeof ConnectionPatch>
 
+export enum entityType {
+    CONNECTION = "connection",
+    AUTOINFORMATION = "autoinformation",
+    CHAT_BOT = "chat_bot",
+    CONTRACT = "contract",
+    VATS = "vats",
+    VOICE_ROBOT = "voice_robot",
+    WEBFORM = "webform"
+}
+export enum EventType {
+    CREATE = "create",
+    UPDATE = "update",
+    DELETE = "delete"
+}
+export const EventFilter = z.object({
+    companyId : z.xor([z.string(), z.number()]).optional(),
+    userId : z.number().optional(),
+    action : z.enum(EventType).optional(),
+    entity : z.enum(entityType).optional(),
+    entityName : z.string().optional(),
+    createdAt : z.date().optional()
+})
+export const Event = z.object({
+    userId : z.number(),
+    action : z.enum(EventType),
+    entity : z.enum(entityType),
+    entityName : z.string(),
+    createdAt : z.date()
+})
+
+export type IEvent = z.infer<typeof Event>
+export type IEventFilter = z.infer<typeof EventFilter>
+
+
 export interface IMessengers{
     id : number,
     name : string
@@ -300,12 +340,6 @@ export enum connectionTypesEnum {
     VATS = "vats",
     ANOTHER = "another"
 }
-export enum entityType {
-    CONNECTION = "connection",
-    AUTOINFORMATION = "autoinformation",
-    CHAT_BOT = "chat_bot",
-    CONTRACT = "contract",
-    VATS = "vats",
-    VOICE_ROBOT = "voice_robot",
-    WEBFORM = "webform"
-}
+
+
+

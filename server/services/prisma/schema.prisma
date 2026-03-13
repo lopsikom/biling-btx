@@ -93,6 +93,7 @@ model company {
   connection                                      connection[]
   contact                                         contact[]
   contract                                        contract[]
+  events                                          events[]
   invoice                                         invoice[]
   requisite                                       requisite[]
 
@@ -383,5 +384,7 @@ model events {
   entity      String
   entityName  String?
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  companyId   Int
+  company     company     @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_bitrix user_bitrix @relation(fields: [userid], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

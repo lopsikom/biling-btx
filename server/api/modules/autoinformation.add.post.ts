@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
             eventsAudit.emit("entity.create", {
                 userid : portal?.user_id,
                 entity : entityType.AUTOINFORMATION,
-                entityName : autoinformation_module.title
+                entityName : autoinformation_module.title,
+                companyid : autoinformation_module.contract?.company_id
             } as EventEntity) 
             return autoinformation_module
         }catch(e){

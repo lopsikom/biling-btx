@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
             eventsAudit.emit("entity.update", {
                 userid : portal?.user_id,
                 entity : entityType.WEBFORM,
-                entityName : webForm.title
+                entityName : webForm.title,
+                companyid : webForm.contract?.company_id
             } as EventEntity) 
             return webformGetMapPrisma(webForm);
         }catch(e){

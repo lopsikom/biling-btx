@@ -22,7 +22,8 @@ export default defineEventHandler(async (event) => {
                 eventsAudit.emit("entity.update", {
                     userid : portal?.user_id,
                     entity : entityType.VATS,
-                    entityName : vats.title
+                    entityName : vats.title,
+                    companyid : vats.contract?.company_id
                 } as EventEntity)
                 return vats
             }catch(e){

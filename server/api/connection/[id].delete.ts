@@ -24,7 +24,8 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.delete", {
             userid : portal?.user_id,
             entity : entityType.CONNECTION,
-            entityName : data.title
+            entityName : data.title,
+            companyid : data.company_id
         } as EventEntity)
         return true;
     }

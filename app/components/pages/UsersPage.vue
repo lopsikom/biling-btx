@@ -12,7 +12,6 @@ import type { IContract } from '~~/shared/models/APIModels'
 
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
-
 const RoleItems = computed(() => {
     const a = billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject})
     a.push({label : 0, value : "Все Статусы"})

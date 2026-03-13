@@ -13,11 +13,12 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.create", {
             userid : portal_id?.user_id,
             entity : entityType.CONNECTION,
-            entityName : data.title
+            entityName : data.title,
+            companyid : data.company_id
         } as EventEntity) 
         setResponseStatus(event, 201);
         return data
-        
+
     }catch(e){
         console.error(e)
         if(e instanceof ZodError){

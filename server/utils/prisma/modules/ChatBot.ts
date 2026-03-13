@@ -30,7 +30,10 @@ export async function getChatBotListPrisma(data : {portal_id? : number, filter? 
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         },
         orderBy : {
             id : 'asc'
@@ -54,7 +57,10 @@ export async function getChatBotById(id : number){
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response;
@@ -73,14 +79,22 @@ export async function getChatBotMessengersPrisma(id : number){
                 select :{
                     name : true
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         },
     })
     return response.map(m => m.messengers.name);
 }
 export async function deleteChatBotPrisma(id : number){
     const response = await prisma.chat_bot.delete({
-        where : {id : id}
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
@@ -100,14 +114,22 @@ export async function patchChatBotPrisma(id : number, data : chat_botUpdateInput
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
 }
 export async function postChatBotPrisma(data : chat_botCreateInput){
     const response = prisma.chat_bot.create({
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }

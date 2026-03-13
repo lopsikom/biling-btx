@@ -24,7 +24,8 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.delete", {
             userid : portal?.user_id,
             entity : entityType.CHAT_BOT,
-            entityName : ChatBot.title
+            entityName : ChatBot.title,
+            companyid : ChatBot.contract?.company_id
         } as EventEntity)   
         return true;
     }

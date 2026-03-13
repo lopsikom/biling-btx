@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
                 eventsAudit.emit("entity.update", {
                     userid : portal?.user_id,
                     entity : entityType.CONTRACT,
-                    entityName : contract.name
+                    entityName : contract.name,
+                    companyid : contract.company_id
                 } as EventEntity)
                 return contractGetMapPrisma(contract);
             }catch(e){

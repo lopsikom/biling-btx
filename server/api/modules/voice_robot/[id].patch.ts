@@ -22,7 +22,8 @@ export default defineEventHandler(async (event) => {
                 eventsAudit.emit("entity.update", {
                     userid : portal?.user_id,
                     entity : entityType.VOICE_ROBOT,
-                    entityName : voice_robot.title
+                    entityName : voice_robot.title,
+                    companyid : voice_robot.contract?.company_id
                 } as EventEntity) 
                 return voice_robot
             }catch(e){

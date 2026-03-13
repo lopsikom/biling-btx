@@ -8,7 +8,8 @@ eventsAudit.on("entity.create", async (data : EventEntity) => {
         action : "create",
         entity : data.entity,
         entityName : data.entityName,
-        user_bitrix : {connect : {id : data.userid}}
+        user_bitrix : {connect : {id : data.userid}},
+        company : {connect : {id : data.companyid}}
     })
 })
 eventsAudit.on("entity.update", async (data : EventEntity) => {
@@ -16,7 +17,8 @@ eventsAudit.on("entity.update", async (data : EventEntity) => {
         action : "update",
         entity : data.entity,
         entityName : data.entityName,
-        user_bitrix : {connect : {id : data.userid}}
+        user_bitrix : {connect : {id : data.userid}},
+        company : {connect : {id : data.companyid}}
     })
 })
 eventsAudit.on("entity.delete", async (data : EventEntity) => {
@@ -24,12 +26,14 @@ eventsAudit.on("entity.delete", async (data : EventEntity) => {
         action : "delete",
         entity : data.entity,
         entityName : data.entityName,
-        user_bitrix : {connect : {id : data.userid}}
+        user_bitrix : {connect : {id : data.userid}},
+        company : {connect : {id : data.companyid}}
     })
 })
 
 export type EventEntity = {
     userid : number,
     entity : string,
-    entityName : string
+    entityName : string,
+    companyid : number
 }

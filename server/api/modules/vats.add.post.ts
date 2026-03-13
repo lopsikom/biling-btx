@@ -13,7 +13,8 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.create", {
             userid : portal?.user_id,
             entity : entityType.VATS,
-            entityName : vats.title
+            entityName : vats.title,
+            companyid : vats.contract?.company_id
         } as EventEntity)
         setResponseStatus(event, 201);
         return vats

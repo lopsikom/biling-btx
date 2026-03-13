@@ -21,6 +21,11 @@ export async function getVoiceRobotListPrisma(data : {portal_id? : number, filte
         },
         orderBy : {
             id : 'asc'
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
@@ -30,13 +35,23 @@ export async function getVoiceRobotByIdPrisma(id : number){
     const response = await prisma.voice_robot.findFirst({
         where : {
             id : id
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
 }
 export async function deleteVoiceRobotPrisma(id : number){
     const response = await prisma.voice_robot.delete({
-        where : {id : id}
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
@@ -45,13 +60,23 @@ export async function patchVoiceRobotPrisma(id : number, data : voice_robotUpdat
         where : {
             id : id
         },
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
 export async function postVoiceRobotPrisma(data : voice_robotCreateInput){
     const response = prisma.voice_robot.create({
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }

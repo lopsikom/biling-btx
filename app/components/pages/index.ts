@@ -3,13 +3,13 @@ import MainPage from "./MainPage.vue";
 import ProfilePage from "./ProfilePage.vue";
 import UsersPage from "./UsersPage.vue";
 import BillingPage from "./billingPage.vue";
-import EventsPage from "./eventsPage.vue";
+import EventsPage from "./EventsPage.vue";
 
 export * from "./MainPage.vue";
 export * from "./ProfilePage.vue";
 export * from "./UsersPage.vue";
 export * from "./billingPage.vue";
-export * from "./eventsPage.vue";
+export * from "./EventsPage.vue";
 
 export const pagesEnum = {
     [bilingPagesEnum.Main] : MainPage,

@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
         eventsAudit.emit("entity.create", {
                 userid : portal?.user_id,
                 entity : entityType.CHAT_BOT,
-                entityName : chat_bot.title
+                entityName : chat_bot.title,
+                companyid : chat_bot.contract?.company_id
             } as EventEntity) 
         return {...chat_bot, tarrif_id : chat_bot.tariff_id, messengers : messengers}
     }catch(e){

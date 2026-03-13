@@ -21,7 +21,8 @@ export default defineEventHandler(async (event) => {
             eventsAudit.emit("entity.update", {
                     userid : portal?.user_id,
                     entity : entityType.CONNECTION,
-                    entityName : connection.title
+                    entityName : connection.title,
+                    companyid : data.company_id
             } as EventEntity)
             return connection
         }catch(e){
