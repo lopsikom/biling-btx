@@ -23,7 +23,7 @@ const toastStore = useToastStore()
 const {$axios} = useNuxtApp()
 const eventsList = ref<IEvent[]>()
 const countEvent = ref<number>();
-const limitPagination = ref<number>(10);
+const limitPagination = ref<number>(20);
 const isLoad = ref<boolean>(false)
 // const UsersBitrix = ref<IUser[]>([]);
 const dealsBitrix = ref<IDeal[]>([]);
@@ -126,14 +126,15 @@ watch(() => pagePagination.value, async () => {
 })
 watch(() => eventSourceValue.value, async () => {
     countEvent.value = 0;
-    if(eventSourceValue.value === "События биллинга") await getEventPagination()
-    else await getEventDeals()
+    if(eventSourceValue.value === "События биллинга") {limitPagination.value = 10; await getEventPagination()}
+    else {limitPagination.value = 50; await getEventDeals()}
+    console.log(limitPagination.value)
 })
 
 </script>
 <template>
     <div class="flex flex-col">
-        <div class="any-white-container px-5 py-4 flex flex-col h-[790px]">
+        <div class="any-white-container px-5 py-4 flex flex-col h-[800px]">
             <div class="flex">
                 <div class="flex flex-col gap-1">
                     <span class="select-none font-semibold">События</span>
@@ -161,20 +162,21 @@ watch(() => eventSourceValue.value, async () => {
                    <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                 </div>
             </div>
-            <div class="h-[100%]" v-if="eventSourceValue === 'События биллинга'">
+            <div class="h-[72%]" v-if="eventSourceValue === 'События биллинга'">
                 <div class="flex flex-col h-[100%]" v-if="(countEvent && countEvent > 0) || isLoad">
                     <div class="flex items-center font-semibold text-lg
-                    justify-center h-[100%] select-none" v-if="isLoad">
-                    <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
-                </div>
+                        justify-center h-[100%] select-none" v-if="isLoad">
+                        <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
+                    </div>
                     <div class="users-list-grid mt-[30px]" v-else>
-                        <div class="users-list-row" style="border-width: 0;">
+                        <div class="users-list-row h-[50px]" style="border-width: 0;">
                             <div class="font-semibold">Сотрудник</div>
                             <div class="font-semibold">Действие</div>
                             <div class="font-semibold">Описание</div>
                             <div class="font-semibold">Время</div>
                         </div>
-                        <div  v-for="(value, index) in eventsList" :key="index" >
+                        <div style=" overflow-y: auto;">
+                            <div  v-for="(value, index) in eventsList" :key="index" >
                             <div class="users-list-row users-item">
                                 <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.user_bitrix.name }} {{ value.user_bitrix.last_name }} {{ value.user_bitrix.second_name }}</p>
                                 <div >
@@ -184,6 +186,7 @@ watch(() => eventSourceValue.value, async () => {
                                 <div>{{ new Date(value.createdAt).toLocaleDateString() }} : {{ new Date(value.createdAt).toLocaleTimeString() }}</div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 </div>
                 <div class="flex items-center font-semibold text-lg
@@ -191,27 +194,29 @@ watch(() => eventSourceValue.value, async () => {
                     Записи отсуствуют
                 </div>
             </div>
-             <div class="h-[100%]" v-else>
+             <div class="h-[72%]" v-else>
                 <div class="flex flex-col h-[100%]" v-if="(countEvent && countEvent > 0) || isLoad">
                     <div class="flex items-center font-semibold text-lg
                         justify-center h-[100%] select-none" v-if="isLoad">
                         <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
                     </div>
                     <div class="users-list-grid mt-[30px]" v-else>
-                        <div class="users-list-row" style="border-width: 0;">
+                        <div class="users-list-row h-[50px]" style="border-width: 0;">
                             <div class="font-semibold">Сделка</div>
                             <div class="font-semibold">Действие</div>
                             <div class="font-semibold">Описание</div>
                             <div class="font-semibold">Время</div>
                         </div>
-                        <div  v-for="(value, index) in eventDealComputed" :key="index" >
-                            <div class="users-list-row users-item">
-                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.dealTitle }}</p>
-                                <div >
-                                    <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" :class="`type-box-${value.stageSematic}`" style="width: fit-content;" >{{ StageSemantic[value.stageSematic] ?? value.stageSematic }}</div>
+                        <div style="overflow-y: auto;">
+                            <div  v-for="(value, index) in eventDealComputed" :key="index" >
+                                <div class="users-list-row users-item">
+                                    <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.dealTitle }}</p>
+                                    <div >
+                                        <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" :class="`type-box-${value.stageSematic}`" style="width: fit-content;" >{{ StageSemantic[value.stageSematic] ?? value.stageSematic }}</div>
+                                    </div>
+                                    <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ StageRecord[value.stageId] ?? value.stageId }}</p>
+                                    <div>{{ new Date(value.createdAt).toLocaleDateString() }} : {{ new Date(value.createdAt).toLocaleTimeString() }}</div>
                                 </div>
-                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ StageRecord[value.stageId] ?? value.stageId }}</p>
-                                <div>{{ new Date(value.createdAt).toLocaleDateString() }} : {{ new Date(value.createdAt).toLocaleTimeString() }}</div>
                             </div>
                         </div>
                     </div>
@@ -226,7 +231,7 @@ watch(() => eventSourceValue.value, async () => {
             v-model:page="pagePagination"
             :total="countEvent"
             :sibling-count="2"
-            :items-per-page="10"
+            :items-per-page="limitPagination"
             show-edges
             :default-page="1"
             style="margin-top: auto;">
@@ -303,14 +308,16 @@ watch(() => eventSourceValue.value, async () => {
  background-color: #9cd1ff;
   -webkit-text-fill-color: rgb(13, 12, 12);
 }
+.type-box-P,
 .type-box-update{
  background-color: #3b74a6;
   -webkit-text-fill-color: white;
 }
-.type-box-PAY{
+.type-box-S{
  background-color: #6ffe82;
  -webkit-text-fill-color: black;
 }
+.type-box-F,
 .type-box-delete{
  background-color: #fd3d3d;
  -webkit-text-fill-color: white;
@@ -359,14 +366,15 @@ watch(() => eventSourceValue.value, async () => {
     transition: box-shadow 0.15s ease;
 }
 .users-list-grid{
-    overflow-x:auto ;
+    overflow-x: auto;
+    overflow-y: hidden;
     display: grid;
     grid-auto-rows: auto;
     width: 100%;
 }
 .users-list-row{
     display: grid;
-    grid-template-columns: 220px 150px 1fr 250px;
+    grid-template-columns: 220px 190px 1fr 220px;
     overflow-x: auto;
     align-items: center;
     gap: 10px;
@@ -398,9 +406,5 @@ watch(() => eventSourceValue.value, async () => {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-.users-item:hover .role-box{
-    background-color: #ebf8ff;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+
 </style>
