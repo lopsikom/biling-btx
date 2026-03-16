@@ -96,7 +96,7 @@ onMounted(async () => {
         </div>
         <div class="flex items-center font-semibold text-lg
              justify-center h-[200px] select-none" v-if="isLoad">
-            <Icon icon="line-md:loading-loop" width="60"/>
+            <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
         </div>
         <div class="users-list-grid mt-[30px]" v-else-if="bitrixStateStore.InvoiceGridList && bitrixStateStore.InvoiceGridList.length > 0">
                         <div class="users-list-row" style="border-width: 0;">

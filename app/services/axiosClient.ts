@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 
 
 export class axiosClient{
@@ -243,6 +243,25 @@ export class axiosClient{
     async deleteConnection(id : number){
         const response = await this.AxiosClient.delete(`connection/${id}`);
         return response.data as boolean
+    }
+    async getEvents(data : { filter : IEventFilter}) : Promise<IEvent[]>
+    async getEvents(data : { filter? : IEventFilter, pagination : {skip : number, limit : number}}) :  Promise<{ data: IEvent[], count: number}>
+    async getEvents(data : { filter? : IEventFilter, pagination? : {skip : number, limit : number}}){
+        const params : any = {}
+        const filter = {...data.filter, companyId : this.BitrixFrame?.placement.options.ID ?? 
+            (useNuxtApp().$config.public.dev ? "2" : "0")} as IEventFilter
+        params.filter = JSON.stringify(filter)
+        if(data.pagination) {
+            params.skip = data.pagination.skip,
+            params.limit = data.pagination.limit
+        }
+        const response = await this.AxiosClient.get(`event.list`,{
+            params : {
+                ...params,
+            }
+        })
+        if(data.pagination) return response.data as { data: IEvent[], count: number}
+        else return response.data as IEvent[]
     }
     
 

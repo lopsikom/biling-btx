@@ -21,8 +21,18 @@ export async function eventListPrisma(data : {filter? : IEventFilter, portal_id?
             createdAt : filter?.createdAt
         },
         orderBy : {
-            id : "desc"
+            createdAt : "desc"
         },
+        include : {
+            user_bitrix : {
+                select : {
+                    id : true,
+                    name : true,
+                    last_name : true,
+                    second_name : true
+                }
+            }
+        }
         
     } as eventsFindManyArgs
     if(typeof filter?.companyId === "string") args.where!.company = {bitrix_id : filter.companyId , portal_id : portal_id};

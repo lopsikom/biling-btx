@@ -317,7 +317,13 @@ export const Event = z.object({
     action : z.enum(EventType),
     entity : z.enum(entityType),
     entityName : z.string(),
-    createdAt : z.date()
+    createdAt : z.date(),
+    user_bitrix : z.object({
+        id : z.number(),
+        name : z.string(),
+        last_name : z.string(),
+        second_name : z.string().optional()
+    })
 })
 
 export type IEvent = z.infer<typeof Event>
