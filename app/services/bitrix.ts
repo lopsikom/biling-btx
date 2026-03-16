@@ -1,5 +1,5 @@
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IField, Invoice, IRequisite, IUser, IUserField } from '~/services/models'
+import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IDeal, IField, Invoice, IRequisite, IResponseNewBitrix, IStage, IUser, IUserField } from '~/services/models'
 
 export class Bitrix {
     public bitrixFrame : B24Frame
@@ -47,6 +47,14 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("user.get", {
             ID : id
         })).getData().result as IUser[]
+    }
+    async getUsers(data? : {filter? : object, order? : object, pagination : number}){
+        const response = await this.bitrixFrame.callMethod("user.get", {
+            filter : data?.filter,
+            order : data?.order,
+            start : data?.pagination
+        })
+        return response.getData().result as IUser[]
     }
     async companyAdress(id? : string | number) : Promise<IAddress[]>{
         return (await this.bitrixFrame.callMethod("crm.address.list", {
@@ -110,6 +118,24 @@ export class Bitrix {
             companyId : id ?? this.bitrixFrame.placement.options.ID
         }
     })).getData().result.items as Invoice[];
+    }
+    async getStage(id : number, data? : {filter? : object, order? : object, select? : string[], start? : number }){
+        const response = await this.bitrixFrame.callMethod("crm.stagehistory.list", {
+            entityTypeId : id,
+            filter : data?.filter,
+            order : data?.order,
+            select : data?.select,
+            start : data?.start
+        })
+        return response.getData() as IResponseNewBitrix<IStage[]>
+    }
+    async getDeals(data? : {filter? : object, order? : object, select? : string[], start? : number }){
+        const response = await this.bitrixFrame.callMethod("crm.deal.list", {
+            filter : data?.filter,
+            order : data?.order,
+            start : data?.start
+        })
+        return response.getData().result as IDeal[]
     }
     
 }

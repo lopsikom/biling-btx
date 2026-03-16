@@ -31,16 +31,16 @@ export class axiosClient{
     set setBitrixFrame(BitrixFrame : B24Frame) {this.BitrixFrame = BitrixFrame;}
 
     async verifyBitrixUser(token : string) {
-        const response = await this.AxiosClient.get("oauth/verify.install",{
+        const response = await this.AxiosClient.get<boolean>("oauth/verify.install",{
             headers:{
                 Authorization : token
             }
         })
-        return response.data as boolean;
+        return response.data
     }
     async getCheckCompany(){
-        const response = await this.AxiosClient.get(`bitrix/company.check/${this.BitrixFrame?.placement.options.ID ?? "2"}`)
-        return response.data as boolean
+        const response = await this.AxiosClient.get<boolean>(`bitrix/company.check/${this.BitrixFrame?.placement.options.ID ?? "2"}`)
+        return response.data 
     }
     async getContractStatuses(){
         const response = await this.AxiosClient.get("modules/contract.statuses.list")

@@ -8,13 +8,16 @@ import Selector from '../Selector.vue'
 import { PaginationList, PaginationListItem, PaginationNext, PaginationPrev, PaginationRoot } from 'reka-ui'
 import { entityType, EventType, type IEvent } from '~~/shared/models/APIModels'
 import useToastStore from '~/services/stores/toastStore'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
+import { type IUser, type IDeal, type IStage, StageStatus } from '~/services/models'
 
 
 const billingStateStore = usebillingStateStore()
+const bitrixStateStore = useBitrixStateStore()
 const eventSource = ref<string[]>(["События биллинга", "События сделок"])
 const RoleItems = ref<string[]>(["dawdaw", "dawdwa"])
 const RoleMenuValue = ref<string>()
-const eventSourceValue = ref<string>("События биллинга")
+const eventSourceValue = ref<"События биллинга" | "События сделок">("События биллинга")
 const search = ref<string>()
 const toastStore = useToastStore()
 const {$axios} = useNuxtApp()
@@ -22,6 +25,22 @@ const eventsList = ref<IEvent[]>()
 const countEvent = ref<number>();
 const limitPagination = ref<number>(10);
 const isLoad = ref<boolean>(false)
+// const UsersBitrix = ref<IUser[]>([]);
+const dealsBitrix = ref<IDeal[]>([]);
+const eventsDeal = ref<IStage[]>([]);
+
+const eventDealComputed = computed(() => {
+    return eventsDeal.value.map(e => {
+        // const user = UsersBitrix.value.find(u => u.ID === e.OWNER_ID.toString())
+        const deal = dealsBitrix.value.find(d => d.ID === e.OWNER_ID.toString())
+        return {
+            dealTitle : deal?.TITLE,
+            stageId : e.STAGE_ID,
+            stageSematic : e.STAGE_SEMANTIC_ID,
+            createdAt : e.CREATED_TIME
+        }
+    })
+})
 
 const ActionRecord : Record<string, string> = {
     [EventType.CREATE] : "Добавление",
@@ -37,6 +56,22 @@ const EntityRecord : Record<string, string> = {
     [entityType.VATS] : "ВАТС",
     [entityType.VOICE_ROBOT] : "голосового робота",
     [entityType.WEBFORM] : "вебформы"
+}
+
+const StageRecord : Record<string, string> ={ 
+    [StageStatus.STAGE_NEW] : "Создание новой сделки",
+    [StageStatus.STAGE_PREPARATION] : "Переход на подготовку документов",
+    [StageStatus.STAGE_PREPAYMENT_INVOICE] : "Переход на предоплату счёта",
+    [StageStatus.STAGE_EXECUTING] : "Передача в работу",
+    [StageStatus.STAGE_FINAL_INVOICE] : "Выставление финального счёта",
+    [StageStatus.STAGE_LOSE] : "Неудачное завершщение сделки",
+    [StageStatus.STAGE_WON] : "Удачное заверщение сделки"
+}
+
+const StageSemantic : Record<string, string> = {
+    "P" : "промежуточная  стадия",
+    "S" : "Успешная стадия",
+    "F" : "Провальная стадия"
 }
 
 async function getEventPagination(){
@@ -56,16 +91,43 @@ async function getEventPagination(){
     }finally{
         isLoad.value = false;
     }
+} 
+
+async function getEventDeals(){
+    isLoad.value = true;
+    const frame = bitrixStateStore.getBitrixClient();
+    try{
+        if(!frame) return
+        const data = await frame?.getStage(2, {order : {CREATED_TIME : "DESC"}, start : (pagePagination.value - 1) * 50})
+        console.log(data);
+        eventsDeal.value = data.result.items;
+        countEvent.value = data.total;
+    }catch(e){
+        console.log(e);
+        toastStore.openToast("Ошибка получения событий");
+    }finally{ isLoad.value = false}
 }
 
 onMounted(async () => {
-    await getEventPagination()
+    const frame = bitrixStateStore.getBitrixClient();
+    if(frame){
+        // UsersBitrix.value = await frame.getUsers();
+        dealsBitrix.value = await frame.getDeals();
+    }
+    if(eventSourceValue.value === "События биллинга") await getEventPagination()
+    else await getEventDeals()
 })
 
 const pagePagination = ref(1)
 
 watch(() => pagePagination.value, async () => {
-    await getEventPagination()
+    if(eventSourceValue.value === "События биллинга") await getEventPagination()
+    else await getEventDeals()
+})
+watch(() => eventSourceValue.value, async () => {
+    countEvent.value = 0;
+    if(eventSourceValue.value === "События биллинга") await getEventPagination()
+    else await getEventDeals()
 })
 
 </script>
@@ -99,8 +161,9 @@ watch(() => pagePagination.value, async () => {
                    <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                 </div>
             </div>
-            <div class="flex flex-col h-[100%]" v-if="(countEvent && countEvent > 0) || isLoad">
-                            <div class="flex items-center font-semibold text-lg
+            <div class="h-[100%]" v-if="eventSourceValue === 'События биллинга'">
+                <div class="flex flex-col h-[100%]" v-if="(countEvent && countEvent > 0) || isLoad">
+                    <div class="flex items-center font-semibold text-lg
                     justify-center h-[100%] select-none" v-if="isLoad">
                     <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
                 </div>
@@ -122,62 +185,93 @@ watch(() => pagePagination.value, async () => {
                             </div>
                         </div>
                     </div>
-                    
-                    <PaginationRoot
-                        v-model:page="pagePagination"
-                        :total="countEvent"
-                        :sibling-count="2"
-                        :items-per-page="10"
-                        show-edges
-                        :default-page="1"
-                        style="margin-top: auto;">
-                        <PaginationList
-                        v-slot="{ items }"
-                        class="PaginationList"
-                        >
-                        <PaginationFirst class="Button">
-                            <Icon icon="radix-icons:double-arrow-left" />
-                        </PaginationFirst>
-                        <PaginationPrev
-                            :style="{ marginRight: 16 }"
-                            class="Button"
-                        >
-                            <Icon icon="radix-icons:chevron-left" />
-                        </PaginationPrev>
-                        <template v-for="(page, index) in items">
-                            <PaginationListItem
-                            v-if="page.type === 'page'"
-                            :key="index"
-                            class="Button"
-                            :value="page.value"
-                            >
-                            {{ page.value }}
-                            </PaginationListItem>
-                            <PaginationEllipsis
-                            v-else
-                            :key="page.type"
-                            :index="index"
-                            class="PaginationEllipsis"
-                            >
-                            &#8230;
-                            </PaginationEllipsis>
-                        </template>
-                        <PaginationNext
-                            :style="{ marginLeft: 16 }"
-                            class="Button"
-                        >
-                            <Icon icon="radix-icons:chevron-right" />
-                        </PaginationNext>
-                        <PaginationLast class="Button">
-                            <Icon icon="radix-icons:double-arrow-right" />
-                        </PaginationLast>
-                        </PaginationList>
-                    </PaginationRoot>
-            </div>
+                </div>
                 <div class="flex items-center font-semibold text-lg
                 justify-center h-[100%] select-none" v-else>
                     Записи отсуствуют
                 </div>
+            </div>
+             <div class="h-[100%]" v-else>
+                <div class="flex flex-col h-[100%]" v-if="(countEvent && countEvent > 0) || isLoad">
+                    <div class="flex items-center font-semibold text-lg
+                        justify-center h-[100%] select-none" v-if="isLoad">
+                        <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
+                    </div>
+                    <div class="users-list-grid mt-[30px]" v-else>
+                        <div class="users-list-row" style="border-width: 0;">
+                            <div class="font-semibold">Сделка</div>
+                            <div class="font-semibold">Действие</div>
+                            <div class="font-semibold">Описание</div>
+                            <div class="font-semibold">Время</div>
+                        </div>
+                        <div  v-for="(value, index) in eventDealComputed" :key="index" >
+                            <div class="users-list-row users-item">
+                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.dealTitle }}</p>
+                                <div >
+                                    <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" :class="`type-box-${value.stageSematic}`" style="width: fit-content;" >{{ StageSemantic[value.stageSematic] ?? value.stageSematic }}</div>
+                                </div>
+                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ StageRecord[value.stageId] ?? value.stageId }}</p>
+                                <div>{{ new Date(value.createdAt).toLocaleDateString() }} : {{ new Date(value.createdAt).toLocaleTimeString() }}</div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="flex items-center font-semibold text-lg
+            justify-center h-[100%] select-none" v-else>
+                Записи отсуствуют
+            </div>
+        </div>
+        <PaginationRoot
+            v-if="countEvent && countEvent > 0"
+            v-model:page="pagePagination"
+            :total="countEvent"
+            :sibling-count="2"
+            :items-per-page="10"
+            show-edges
+            :default-page="1"
+            style="margin-top: auto;">
+            <PaginationList
+            v-slot="{ items }"
+            class="PaginationList"
+            >
+            <PaginationFirst class="Button">
+                <Icon icon="radix-icons:double-arrow-left" />
+            </PaginationFirst>
+            <PaginationPrev
+                :style="{ marginRight: 16 }"
+                class="Button"
+            >
+                <Icon icon="radix-icons:chevron-left" />
+            </PaginationPrev>
+            <template v-for="(page, index) in items">
+                <PaginationListItem
+                v-if="page.type === 'page'"
+                :key="index"
+                class="Button"
+                :value="page.value"
+                >
+                {{ page.value }}
+                </PaginationListItem>
+                <PaginationEllipsis
+                v-else
+                :key="page.type"
+                :index="index"
+                class="PaginationEllipsis"
+                >
+                &#8230;
+                </PaginationEllipsis>
+            </template>
+            <PaginationNext
+                :style="{ marginLeft: 16 }"
+                class="Button"
+            >
+                <Icon icon="radix-icons:chevron-right" />
+            </PaginationNext>
+            <PaginationLast class="Button">
+                <Icon icon="radix-icons:double-arrow-right" />
+            </PaginationLast>
+            </PaginationList>
+        </PaginationRoot>
         </div>
     </div>
 </template>
