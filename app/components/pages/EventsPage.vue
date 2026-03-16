@@ -23,7 +23,7 @@ const toastStore = useToastStore()
 const {$axios} = useNuxtApp()
 const eventsList = ref<IEvent[]>()
 const countEvent = ref<number>();
-const limitPagination = ref<number>(20);
+const limitPagination = ref<number>(10);
 const isLoad = ref<boolean>(false)
 // const UsersBitrix = ref<IUser[]>([]);
 const dealsBitrix = ref<IDeal[]>([]);
@@ -114,8 +114,8 @@ onMounted(async () => {
         // UsersBitrix.value = await frame.getUsers();
         dealsBitrix.value = await frame.getDeals();
     }
-    if(eventSourceValue.value === "События биллинга") await getEventPagination()
-    else await getEventDeals()
+    if(eventSourceValue.value === "События биллинга") {limitPagination.value = 10; await getEventPagination()}
+    else {limitPagination.value = 50; await getEventDeals()}
 })
 
 const pagePagination = ref(1)
@@ -128,7 +128,6 @@ watch(() => eventSourceValue.value, async () => {
     countEvent.value = 0;
     if(eventSourceValue.value === "События биллинга") {limitPagination.value = 10; await getEventPagination()}
     else {limitPagination.value = 50; await getEventDeals()}
-    console.log(limitPagination.value)
 })
 
 </script>
