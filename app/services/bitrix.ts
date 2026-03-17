@@ -131,7 +131,7 @@ export class Bitrix {
     }
     async getDeals(data? : {filter? : object, order? : object, select? : string[], start? : number }){
         const response = await this.bitrixFrame.callMethod("crm.deal.list", {
-            filter : data?.filter,
+            filter : {...data?.filter, "COMPANY_ID" : this.bitrixFrame.placement.options.ID},
             order : data?.order,
             start : data?.start
         })
@@ -148,7 +148,7 @@ export default async function initBitrix(frame? : B24Frame) : Promise<Bitrix>{
     const bitrixClient = new Bitrix(frame);
     if(!bitrixClient.bitrixFrame.placement.isSliderMode){
         const size = bitrixClient.bitrixFrame.parent.getScrollSize()
-        const height = window.screen.height * 0.666
+        const height = window.screen.height * 0.7
         console.log(height)
         bitrixClient.bitrixFrame.parent.resizeWindow(size.scrollWidth, height)
     }

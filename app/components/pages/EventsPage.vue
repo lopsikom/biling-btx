@@ -98,7 +98,10 @@ async function getEventDeals(){
     const frame = bitrixStateStore.getBitrixClient();
     try{
         if(!frame) return
-        const data = await frame?.getStage(2, {order : {CREATED_TIME : "DESC"}, start : (pagePagination.value - 1) * 50})
+        dealsBitrix.value = await frame.getDeals();
+        const dealIds = dealsBitrix.value.map(d => parseInt(d.ID))
+        console.log(dealIds)
+        const data = await frame?.getStage(2, {order : {CREATED_TIME : "DESC"}, filter : {"@OWNER_ID" : dealIds }, start : (pagePagination.value - 1) * 50})
         console.log(data);
         eventsDeal.value = data.result.items;
         countEvent.value = data.total;
@@ -109,11 +112,12 @@ async function getEventDeals(){
 }
 
 onMounted(async () => {
-    const frame = bitrixStateStore.getBitrixClient();
-    if(frame){
-        // UsersBitrix.value = await frame.getUsers();
-        dealsBitrix.value = await frame.getDeals();
-    }
+    isLoad.value = true;
+    // const frame = bitrixStateStore.getBitrixClient();
+    // if(frame){
+    //     // UsersBitrix.value = await frame.getUsers();
+    //     dealsBitrix.value = await frame.getDeals();
+    // }
     if(eventSourceValue.value === "События биллинга") {limitPagination.value = 10; await getEventPagination()}
     else {limitPagination.value = 50; await getEventDeals()}
 })
