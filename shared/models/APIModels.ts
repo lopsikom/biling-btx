@@ -1,8 +1,9 @@
 import * as z from "zod"
 
+
 export interface IPagionationResponse<T>{
     data : T[],
-    skip : number,
+    skip? : number,
     count : number
 }
 

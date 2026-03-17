@@ -1,10 +1,12 @@
-import { contractCreateInput, contractUpdateInput } from "~~/server/services/models/generated/prisma/models";
+import { contractCreateInput, contractFindManyArgs, contractUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IContractFilter } from "~~/shared/models/APIModels";
 
-export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}){
+export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}) : Promise<contractPrismaGet[]>
+export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}, pagination? : {after? : number, limit? : number}) : Promise<contractPrismaWithPagination>
+export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}, pagination? : {after? : number, limit? : number}){
     const {portal_id, filter} = data
-    const response = await prisma.contract.findMany({
+    const args = {
         where : {
             name : filter?.name,
             company_id : filter?.company_id,
@@ -26,8 +28,24 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             id : 'asc'
         }
         
-    })
-    return response
+    } as contractFindManyArgs
+    if(pagination){
+        if(pagination.after) args.skip = pagination.after;
+        if(pagination.limit) args.take = pagination.limit;
+        const response = await prisma.$transaction([
+            prisma.contract.findMany(args),
+            prisma.contract.count({where : args.where})
+        ])
+        const [list, count] = response
+        return {
+            data : list,
+            count : count
+        }
+    }
+    else{
+        const response = await prisma.contract.findMany(args);
+        return response;
+    }
 }
 
 export async function getContractById(id : number){
@@ -105,3 +123,7 @@ export async function getTariffs(){
     return response
 }
 export type contractPrismaGet = Awaited<ReturnType<typeof addContractPrisma>>
+export type contractPrismaWithPagination = {
+    data : contractPrismaGet[],
+    count : number
+}

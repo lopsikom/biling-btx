@@ -52,7 +52,6 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         billingStateStore.contractStatuses = await $axios.getContractStatuses();
         billingStateStore.integrations = await $axios.getIntegrations();
         billingStateStore.tariff = await $axios.getTariff();
-        billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : bitrix.bitrixFrame.placement.options.ID});
         const vats = await $axios.getVats({bitrix_id : bitrix.bitrixFrame.placement.options.ID})
         billingStateStore.vats.push(...vats);
         const voiceRobot = await $axios.getVoiceRobots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
@@ -84,7 +83,6 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             billingStateStore.integrations = await $axios.getIntegrations();
             billingStateStore.contractStatuses = await $axios.getContractStatuses();
             billingStateStore.tariff = await $axios.getTariff();
-            billingStateStore.contracts = await $axios.getContracts({bitrxi_company_id : "2"});
             const vats = await $axios.getVats({bitrix_id : "2"})
             billingStateStore.vats.push(...vats);
             const voiceRobot = await $axios.getVoiceRobots({bitrix_id : "2"});

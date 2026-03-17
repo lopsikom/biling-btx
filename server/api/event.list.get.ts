@@ -7,6 +7,11 @@ import { ZodError } from "zod";
 export default defineEventHandler(async (event) => {
     try{
         const portal = event.context.portal as PortalDataType
+        if(!portal) {
+            throw createError({
+                statusCode: 401
+            })
+        }
         let {filter, skip, limit} = getQuery(event);
         let filterParse : IEventFilter | undefined = undefined;
         let skipParse : number | undefined;
@@ -17,7 +22,7 @@ export default defineEventHandler(async (event) => {
                 skipParse = parseInt(skip as string);
                 limitParse = parseInt(limit as string);
             }catch(e){
-                console.warn("Невалидный filter JSON")
+                console.warn("Невалидный filter JSON", filter)
                 throw createError({
                     statusCode : 400,
                     statusMessage : "Invalid filter"

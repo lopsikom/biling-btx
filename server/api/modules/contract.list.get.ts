@@ -2,35 +2,47 @@ import { portal } from "~~/server/services/models/generated/prisma/client"
 import {ContractFilter, IContract, IContractFilter} from "~~/shared/models/APIModels"
 import { contractGetMapPrisma } from "~~/server/utils/mappers"
 import { getContractList } from "~~/server/utils/prisma/modules/Contract"
-import { ZodError } from "zod"
+import z, { ZodError } from "zod"
 
 
 export default  defineEventHandler(async (event) =>{
     try{
         const portal = event.context.portal as portal
+        let {filter, skip, limit} = getQuery(event)
+        let filterParse : IContractFilter | undefined = undefined;
+        let skipParse : number | undefined;
+        let limitParse : number | undefined;
         if(!portal) {
             throw createError({
                 statusCode: 401
             })
         }
-        const query = getQuery(event);
-        let filter : IContractFilter | undefined = undefined;
-        if(query.filter){
+        if(filter){
             try{
-                filter = JSON.parse(query.filter as string)
+                filterParse = JSON.parse(filter as string)
+                skipParse = parseInt(skip as string);
+                limitParse = parseInt(limit as string);
             }catch(e){
-                console.warn("Невалидный filter JSON", query.filter)
+                console.warn("Невалидный filter JSON", filter)
                 throw createError({
                     statusCode : 400,
                     statusMessage : "Invalid filter"
                 })
             }
         }
-        if(filter) filter = ContractFilter.parse(filter)
-        const data = await getContractList({portal_id : portal.id, filter : filter})
-        const contracts = contractGetMapPrisma(data)
-
-        return contracts
+        if(filterParse) filterParse = ContractFilter.parse(filterParse);
+        if(skip) skipParse = z.number().optional().parse(skipParse);
+        if(limit) limitParse = z.number().optional().parse(limitParse);
+        if(skipParse || limitParse){
+            const data = await getContractList({portal_id : portal.id, filter : filterParse}, {after : skipParse, limit : limitParse})
+            const contracts = contractGetMapPrisma(data.data)
+            return {data : contracts, count : data.count}
+        }
+        else{
+            const data = await getContractList({portal_id : portal.id, filter : filterParse})
+            const contracts = contractGetMapPrisma(data)
+            return contracts
+        }
     }catch(e){
         console.error(e)
         if(e instanceof ZodError){

@@ -8,10 +8,17 @@ import type { SelectorObject } from '~/services/models'
 import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import type { IContract } from '~~/shared/models/APIModels'
+import useToastStore from '~/services/stores/toastStore'
 
 
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
+const toastStore = useToastStore()
+const {$axios} = useNuxtApp()
+const countContracts = ref<number>(0)
+const limitPagination = ref<number>(10);
+const isLoad = ref<boolean>(false);
+const search = ref<string>()
 const RoleItems = computed(() => {
     const a = billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject})
     a.push({label : 0, value : "Все Статусы"})
@@ -24,12 +31,35 @@ function openEdit(item : IContract){
     modalStore.showModal(ModalEnum.EDIT_CONTRACT)
 }
 
-const search = ref<string>()
+const pagePagination = ref(1)
+
+async function getContractPagination(){
+    isLoad.value = true;
+    try{
+        const data = await $axios.getContracts({
+            pagination :{
+                skip : (pagePagination.value - 1) * limitPagination.value,
+                limit : limitPagination.value
+            }
+        })
+        countContracts.value = data.count;
+        billingStateStore.contracts = data.data;
+    }catch(e){
+        console.error(e);
+        toastStore.openToast("Ошибка получения событий");
+    }finally {isLoad.value = false}
+}
+
+onMounted(async () => {
+    await getContractPagination();
+})
+
+watch(() => pagePagination.value, async () => await getContractPagination())
 
 </script>
 <template>
     <div class="flex flex-col">
-        <div class="any-white-container px-5 py-4 flex flex-col">
+        <div class="any-white-container px-5 py-4 flex flex-col h-[800px]">
             <div class="flex">
                 <div class="flex flex-col gap-1">
                     <span class="select-none font-semibold">Договора</span>
@@ -40,7 +70,6 @@ const search = ref<string>()
                     <span class="select-none text-sm text-slate-50 font-semibold">Добавить договор</span>
                 </div>
             </div>
-            <div class="flex flex-col">
                 <div class="flex mt-5 gap-5">
                     <div class="search-box flex gap-3">
                         <SearchIcon class="w-5.5 h-5.5 text-gray-400" />
@@ -62,33 +91,139 @@ const search = ref<string>()
                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
                 </div>
-                    <div class="users-list-grid mt-[30px]">
-                        <div class="users-list-row" style="border-width: 0;">
-                            <div class="font-semibold"  >Имя</div>
-                            <div class="font-semibold">Организация</div>
-                            <div class="font-semibold">Статус</div>
-                            <div class="font-semibold">Дата начала</div>
-                            <div class="font-semibold">Дата конца</div>
+                <div class="h-[72%]">
+                    <div class="flex flex-col h-[100%]" v-if="(countContracts && countContracts > 0) || isLoad">
+                        <div class="flex items-center font-semibold text-lg
+                            justify-center h-[100%] select-none" v-if="isLoad">
+                            <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
                         </div>
-                        <div  v-for="(value, index) in billingStateStore.contracts" :key="index" >
-                            <div class="users-list-row users-item" @click="openEdit(value)">
-                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.name }} {{value.index }}</p>
-                                <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
-                                <div >
-                                    <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
+                        <div class="users-list-grid mt-[30px]" v-else>
+                            <div class="users-list-row h-[50px]" style="border-width: 0;">
+                                <div class="font-semibold">Имя</div>
+                                <div class="font-semibold">Организация</div>
+                                <div class="font-semibold">Статус</div>
+                                <div class="font-semibold">Дата начала</div>
+                                <div class="font-semibold">Дата конца</div>
+                            </div>
+                            <div style="overflow-y: auto;">
+                                <div v-for="(value, index) in billingStateStore.contracts" :key="index" >
+                                    <div class="users-list-row users-item" @click="openEdit(value)">
+                                        <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.name }} {{value.index }}</p>
+                                        <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
+                                        <div >
+                                            <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
+                                        </div>
+                                        <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
+                                        <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
+                                    </div>
                                 </div>
-                                <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
-                                <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
                             </div>
                         </div>
                     </div>
+                    <div class="flex items-center font-semibold text-lg
+                        justify-center h-[100%] select-none" v-else>
+                        Записи отсуствуют
+                    </div>
+                </div>
+                <PaginationRoot
+                    v-if="countContracts && countContracts > 0"
+                    v-model:page="pagePagination"
+                    :total="countContracts"
+                    :sibling-count="2"
+                    :items-per-page="limitPagination"
+                    show-edges
+                    :default-page="1"
+                    style="margin-top: auto;">
+                    <PaginationList
+                    v-slot="{ items }"
+                    class="PaginationList"
+                    >
+                    <PaginationFirst class="Button">
+                        <Icon icon="radix-icons:double-arrow-left" />
+                    </PaginationFirst>
+                    <PaginationPrev
+                        :style="{ marginRight: 16 }"
+                        class="Button"
+                    >
+                        <Icon icon="radix-icons:chevron-left" />
+                    </PaginationPrev>
+                    <template v-for="(page, index) in items">
+                        <PaginationListItem
+                        v-if="page.type === 'page'"
+                        :key="index"
+                        class="Button"
+                        :value="page.value"
+                        >
+                        {{ page.value }}
+                        </PaginationListItem>
+                        <PaginationEllipsis
+                        v-else
+                        :key="page.type"
+                        :index="index"
+                        class="PaginationEllipsis"
+                        >
+                        &#8230;
+                        </PaginationEllipsis>
+                    </template>
+                    <PaginationNext
+                        :style="{ marginLeft: 16 }"
+                        class="Button"
+                    >
+                        <Icon icon="radix-icons:chevron-right" />
+                    </PaginationNext>
+                    <PaginationLast class="Button">
+                        <Icon icon="radix-icons:double-arrow-right" />
+                    </PaginationLast>
+                    </PaginationList>
+            </PaginationRoot>
             </div>
         </div>
-    </div>
 </template>
 <style scoped>
     @import '~/assets/css/any-container.css';
     
+.Button{
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  width: 2.25rem;
+  border-radius: 0.25rem; 
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.Button:disabled {
+  opacity: .5
+}
+
+.Button:hover{
+  background-color: white
+}
+
+.Button[data-selected]{ 
+  background-color: #3989d1;
+  color: rgb(255 255 255);
+}
+
+.PaginationEllipsis{
+  display: flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center
+}
+
+.PaginationList{
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  gap: 0.25rem; 
+  color: black
+}
+
 .add-user-btn{
     background: #3182ce;
     border-radius: 10px;

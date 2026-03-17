@@ -149,7 +149,6 @@ watch(() => eventSourceValue.value, async () => {
                     <SearchIcon class="w-5.5 h-5.5 text-gray-400" />
                     <textarea type="text" v-model="search" rows="1" placeholder="Поиск по названию..." class="search-input text-sm"></textarea>
                 </div>
-                
                 <div class="flex">
                     <Selector v-model="eventSourceValue" :items="eventSource" :width="200"/>
                 </div>
@@ -178,7 +177,7 @@ watch(() => eventSourceValue.value, async () => {
                             <div class="font-semibold">Описание</div>
                             <div class="font-semibold">Время</div>
                         </div>
-                        <div style=" overflow-y: auto;">
+                        <div style=" overflow-y: auto; ">
                             <div  v-for="(value, index) in eventsList" :key="index" >
                             <div class="users-list-row users-item">
                                 <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.user_bitrix.name }} {{ value.user_bitrix.last_name }} {{ value.user_bitrix.second_name }}</p>

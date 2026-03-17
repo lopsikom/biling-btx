@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 
 
 export class axiosClient{
@@ -59,14 +59,23 @@ export class axiosClient{
         const response = await this.AxiosClient.get("modules/tariff.list")
         return response.data as ITarrifs[]
     }
-
-    async getContracts(filter? : IContractFilter) {
+    async getContracts(data : {filter? : IContractFilter}) : Promise<IContract[]>;
+    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
+    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) {
+        const params : any = {}
+        const filter = {...data.filter, bitrxi_company_id : this.BitrixFrame?.placement.options.ID ?? (useNuxtApp().$config.public.dev ? "2" : "0")}
+        params.filter = JSON.stringify(filter)
+        if(data.pagination) {
+            params.skip = data.pagination.skip,
+            params.limit = data.pagination.limit
+        }
         const response = await this.AxiosClient.get("modules/contract.list", {
             params : {
-                filter : JSON.stringify(filter)
+                ...params
             }
         })
-        return response.data as IContract[]
+        if(data.pagination) return response.data as IPagionationResponse<IContract>
+        else return response.data as IContract[]
     }
     async getContractById(id : number){
         const response = await  this.AxiosClient.get(`modules/contract/${id}`)
@@ -245,7 +254,7 @@ export class axiosClient{
         return response.data as boolean
     }
     async getEvents(data : { filter : IEventFilter}) : Promise<IEvent[]>
-    async getEvents(data : { filter? : IEventFilter, pagination : {skip : number, limit : number}}) :  Promise<{ data: IEvent[], count: number}>
+    async getEvents(data : { filter? : IEventFilter, pagination : {skip : number, limit : number}}) :  Promise<IPagionationResponse<IEvent>>
     async getEvents(data : { filter? : IEventFilter, pagination? : {skip : number, limit : number}}){
         const params : any = {}
         const filter = {...data.filter, companyId : this.BitrixFrame?.placement.options.ID ?? 
@@ -260,7 +269,7 @@ export class axiosClient{
                 ...params,
             }
         })
-        if(data.pagination) return response.data as { data: IEvent[], count: number}
+        if(data.pagination) return response.data as IPagionationResponse<IEvent>
         else return response.data as IEvent[]
     }
     
