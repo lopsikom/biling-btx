@@ -1,4 +1,5 @@
 import {  type IVoiceRobot,  type IVats,   type IContract,  type IChatBot, type IAutoinformation, type IWebform, type IMessengers, type Integrations, type ITarrifs, type IContractStatus, type IConnection, type IConnectionStatus, type IConnectionType } from "~~/shared/models/APIModels";
+import type { IContact } from "../models";
 
 const usebillingStateStore = defineStore("billingState", () => {
     const contracts = ref<IContract[]>([]);
