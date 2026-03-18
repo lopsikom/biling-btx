@@ -3,6 +3,7 @@ import type { IContact } from "../models";
 
 const usebillingStateStore = defineStore("billingState", () => {
     const contracts = ref<IContract[]>([]);
+    const contractsTariff = ref<IContract[]>([]);
     const vats = ref<IVats[]>([]);
     const voiceRobots = ref<IVoiceRobot[]>([]);
     const chatBots = ref<IChatBot[]>([]);
@@ -22,6 +23,7 @@ const usebillingStateStore = defineStore("billingState", () => {
         voiceRobots,
         chatBots,
         autoinformations,
+        contractsTariff,
         webform,
         messengers,
         integrations,

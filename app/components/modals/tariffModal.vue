@@ -23,8 +23,8 @@ const openModulsMenu = ref({
 
 onMounted(async () => {
     const data = await $axios.getContracts({});
-    contracts.value = data;
-    const ContractsSelect = contracts.value
+    billingStateStore.contractsTariff = data;
+    const ContractsSelect = billingStateStore.contractsTariff
         .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
         .map(c => ({
         label: c.id,
@@ -62,10 +62,8 @@ const tarrifs = ref(billingStateStore.tariff)
 
 const durationList = [1, 3, 6, 12]
 
-const contracts = ref<IContract[]>([])
-
 const ContractsSelect = computed(() =>
-  contracts.value
+  billingStateStore.contractsTariff
     .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
     .map(c => ({
       label: c.id,

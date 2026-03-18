@@ -18,7 +18,6 @@ export function diffObject<T>(
         if(isObject(newData) && isObject(oldData)){
             
             const nestDiff = diffObject(oldData, newData)
-            console.log("WWWW")
             if(Object.keys(nestDiff).length > 0){
                 diff[key] = nestDiff as T[typeof key];
             }
@@ -26,11 +25,9 @@ export function diffObject<T>(
         }
         else if (Array.isArray(oldData) && Array.isArray(newData)){
             let arrDiff;
-            console.log("WW")
             if(withID) arrDiff = diffArray(oldData, newData, "ID");
             else arrDiff = diffArray(oldData, newData);
             if(arrDiff.length > 0) {
-                console.log(key)
                 diff[key] = arrDiff as T[typeof key];
             }
         }
