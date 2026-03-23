@@ -1,9 +1,12 @@
 import * as z from "zod"
-import { ConnectionPatch } from "~~/shared/models/APIModels";
+import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { ConnectionPatch, entityType } from "~~/shared/models/APIModels";
 
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal as PortalDataType
     const body = await readBody(event);
     if(id){
         try{
@@ -15,6 +18,12 @@ export default defineEventHandler(async (event) => {
                     statusMessage : "no found connection"
                 })
             }
+            eventsAudit.emit("entity.update", {
+                    userid : portal?.user_id,
+                    entity : entityType.CONNECTION,
+                    entityName : connection.title,
+                    companyid : data.company_id
+            } as EventEntity)
             return connection
         }catch(e){
             console.error(e);

@@ -92,6 +92,14 @@ export class bitrixAPI {
         })
         return response.data as bitrixResponse<IUser[]>;
     }
+    async getBitrixUser(domain : string, token : string){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/user.current`,{
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<IUser>;
+    }
 }
 
 export default new bitrixAPI();

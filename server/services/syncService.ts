@@ -2,7 +2,6 @@ import getPortalPrisma, { portalPrisma } from "../utils/prisma/getPortal";
 import postCompanyPrisma from "../utils/prisma/postCompany";
 import upsertRequisites from "../utils/prisma/postRequisites";
 import postRequisites from "../utils/prisma/postRequisites";
-import upsertUserPrisma from "../utils/prisma/postUser";
 import bitrixAPI from "./bitrix/bitrixAPI";
 import companyClient from "./bitrix/CompanyClient";
 import { addressCreateInput, contact_emailCreateInput, contact_phonesCreateInput, invoiceCreateInput, requisiteCreateInput } from "~~/server/services/models/generated/prisma/models";
@@ -13,6 +12,7 @@ import upsertAddress from "../utils/prisma/postAddress";
 import upsertInvoice from "../utils/prisma/postInvoice";
 import { getBitrixTokenByRefresh } from "../utils/getBitrixToken";
 import { addressMapUpsertPrisma, companyMapUpsertPrisma, contactMapUpsertPrisma, invocieMapUpsertPrisma, requisiteMapUpsertPrisma, userMapUpsertPrisma } from "../utils/mappers";
+import { upsertUserPrisma } from "../utils/prisma/UserBitrix";
 
 
 export class syncService{
@@ -40,7 +40,7 @@ export class syncService{
             const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
             const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
             if(usersBitrix.length < 0) return false
-            const mappedUsers = await upsertUserPrisma(id, ...userMapUpsertPrisma(id, ...usersBitrix));
+            const mappedUsers = await upsertUserPrisma(id, userMapUpsertPrisma(id, usersBitrix));
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
                 const com = (await postCompanyPrisma( id, ...companyMapUpsertPrisma(id, mappedUsers, b)))[0];

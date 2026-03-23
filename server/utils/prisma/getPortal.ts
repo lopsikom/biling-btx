@@ -2,9 +2,10 @@ import { portalWhereInput } from "~~/server/services/models/generated/prisma/mod
 import { prisma } from "~~/server/services/prisma/prismaClient";
 
 export default async function getPortalPrisma(data : portalWhereInput){
-    return await prisma.portal.findFirst({
+    const response = await prisma.portal.findFirst({
         where : data
     })
+    return response
 }
 
 export async function getPortalsPrisma(data? : portalWhereInput){
@@ -13,4 +14,4 @@ export async function getPortalsPrisma(data? : portalWhereInput){
     })
 } 
 
-export type portalPrisma = ReturnType<typeof getPortalPrisma>
+export type portalPrisma = Awaited<ReturnType<typeof getPortalPrisma>>

@@ -27,6 +27,11 @@ export async function getVatsList(data : {portal_id? : number, filter? : IVatsFi
         },
         orderBy : {
             id : 'asc'
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
@@ -36,6 +41,11 @@ export async function getVatsById(id : number){
     const response = await prisma.vats.findFirst({
         where : {
             id : id
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
@@ -43,7 +53,12 @@ export async function getVatsById(id : number){
 
 export  async function deleteVatsPrisma(id : number){
     const response = await prisma.vats.delete({
-        where : {id : id}
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
@@ -53,14 +68,24 @@ export  async function patchVatsPrisma(id :number, data : vatsUpdateInput ){
         where : {
             id : id
         },
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
 
 export async function postVatsPrisma(data : vatsCreateInput){
     const response = prisma.vats.create({
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }

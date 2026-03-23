@@ -7,21 +7,31 @@ import { connectionPrisma } from "./prisma/Connection";
 import { contractPrismaGet } from "./prisma/modules/Contract";
 import * as z from "zod"
 
-export function userMapUpsertPrisma(portal_id : number, ...user : IUser[]) : user_bitrixCreateInput[]{
-    return user.map( (u) => {
-      return {
-        bitrix_id : u.ID,
-        email : u.EMAIL!,
-        name : u.NAME!,
-        last_name : u.LAST_NAME,
-        second_name : u.SECOND_NAME,
-        personal_photo : u.PERSONAL_PHOTO,
-        portal : {connect : {id : portal_id}},
-        personal_phone : u.PERSONAL_PHONE,
-        work_phone : u.WORK_PHONE,
-        work_position : u.WORK_POSITION
-      }
-    })
+export function userMapUpsertPrisma(portal_id: number, user: IUser): user_bitrixCreateInput;
+export function userMapUpsertPrisma(portal_id: number, user: IUser[]): user_bitrixCreateInput[];
+export function userMapUpsertPrisma(
+  portal_id: number,
+  user: IUser | IUser[]
+): user_bitrixCreateInput | user_bitrixCreateInput[] {
+
+  const mapUser = (u: IUser): user_bitrixCreateInput => ({
+    bitrix_id: u.ID,
+    email: u.EMAIL!,
+    name: u.NAME!,
+    last_name: u.LAST_NAME,
+    second_name: u.SECOND_NAME,
+    personal_photo: u.PERSONAL_PHOTO,
+    portal: { connect: { id: portal_id } },
+    personal_phone: u.PERSONAL_PHONE,
+    work_phone: u.WORK_PHONE,
+    work_position: u.WORK_POSITION
+  });
+
+  if (Array.isArray(user)) {
+    return user.map(mapUser);
+  }
+
+  return mapUser(user);
 }
 
 export function companyMapUpsertPrisma(portal_id : number, users : user_bitrix[], ...companys : ICompnany[]) : companyCreateInput[]{

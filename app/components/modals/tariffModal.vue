@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import type { IAutoinformation, IChatBot, IChatBotPost, IVats, IVoiceRobot, IWebform, IWebformPost } from '~~/shared/models/APIModels';
+import type { IAutoinformation, IChatBot, IChatBotPost, IContract, IVats, IVoiceRobot, IWebform, IWebformPost } from '~~/shared/models/APIModels';
 import InputBox from '../InputBox.vue';
 import Selector from '../Selector.vue';
 import type { SelectorObject } from '~/services/models';
@@ -21,6 +21,32 @@ const openModulsMenu = ref({
     webForm : false
 })
 
+onBeforeMount(async () => {
+    const data = await $axios.getContracts({});
+    billingStateStore.contractsTariff = data;
+    const ContractsSelect = billingStateStore.contractsTariff
+        .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
+        .map(c => ({
+        label: c.id,
+        value: `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`
+    }))
+    voiceRobotComputed.value.forEach(v => {
+        v.selected_contract = ContractsSelect.find(c => c.label === v.old_item.contract_id)
+    })
+    vats.value.forEach(v => {
+        v.selected_contract = ContractsSelect.find(c => c.label === v.old_item.contract_id)
+    })
+    chatBotComputed.value.forEach(v => {
+        v.selected_contract = ContractsSelect.find(c => c.label === v.old_item.contract_id)
+    })
+    webFormsComputed.value.forEach(v => {
+        v.selected_contract = ContractsSelect.find(c => c.label === v.old_item.contract_id)
+    })
+    autoInfoComputed.value.forEach(v => {
+        v.selected_contract = ContractsSelect.find(c => c.label === v.old_item.contract_id)
+    })
+
+})
 
 const toastStore = useToastStore()
 
@@ -36,9 +62,14 @@ const tarrifs = ref(billingStateStore.tariff)
 
 const durationList = [1, 3, 6, 12]
 
-const contracts = ref(billingStateStore.contracts)
+const ContractsSelect = computed(() =>
+  billingStateStore.contractsTariff
+    .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
+    .map(c => ({
+      label: c.id,
+      value: `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`
+})))
 
-const ContractsSelect = computed(() => contracts.value.map(c => { if(c.status !== "Завершен" && c.status !== "Приостановлен")  return {label : c.id, value : `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`}}).filter(Boolean))
 const tarrifsSelect = computed(() => tarrifs.value.map(c => {return {label : c.id, value : c.name}}))
 
 const voiceRobotComputed = ref(billingStateStore.voiceRobots.map(v => {

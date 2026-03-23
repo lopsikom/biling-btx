@@ -27,7 +27,10 @@ export async function getWebformListPrisma(data : {portal_id? : number, filter? 
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         },
         orderBy : {
             id : 'asc'
@@ -50,7 +53,10 @@ export async function getWebformByIdPrisma(id : number){
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
@@ -66,14 +72,22 @@ export async function getWebformTypeWebformPrisma(id : number){
                 select : {
                     name : true
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
 }
 export  async function deleteWebForm(id : number){
     const response = await prisma.webform.delete({
-        where : {id : id}
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
@@ -98,14 +112,22 @@ export function patchWebformPrisma(id : number, data : webformUpdateInput, integ
                         }
                     }
                 }
-            }
+            },
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response
 }
 export async function postWebFormPrisma(data : webformCreateInput){
     const response = prisma.webform.create({
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }

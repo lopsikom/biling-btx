@@ -1,13 +1,21 @@
-import { Connection, ConnectionPost, IConnectionPost } from "~~/shared/models/APIModels";
+import { Connection, ConnectionPost, entityType, IConnectionPost } from "~~/shared/models/APIModels";
 import { connectionPostPrisma } from "../utils/prisma/Connection";
 import { connectionMapPostPrisma } from "../utils/mappers";
 import { ZodError } from "zod";
+import { eventsAudit, EventEntity } from "../services/EventsAudit";
+import { PortalDataType } from "../utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) => {
     try{
-        const portal_id = event.context.portal;
-        const body = await ConnectionPost.transform(val => connectionMapPostPrisma(val, portal_id.id)).parseAsync(await readBody(event))
+        const portal_id = event.context.portal as PortalDataType;
+        const body = await ConnectionPost.transform(val => connectionMapPostPrisma(val, portal_id!.portal.id)).parseAsync(await readBody(event))
         const data = await connectionPostPrisma(body)
+        eventsAudit.emit("entity.create", {
+            userid : portal_id?.user_id,
+            entity : entityType.CONNECTION,
+            entityName : data.title,
+            companyid : data.company_id
+        } as EventEntity) 
         setResponseStatus(event, 201);
         return data
 

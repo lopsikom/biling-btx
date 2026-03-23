@@ -1,11 +1,14 @@
 import { chat_botUpdateInput, webformUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { webformInputUpdateMapPrisma } from "~~/server/utils/mappers";
 import { patchWebformPrisma } from "~~/server/utils/prisma/modules/WebForm";
-import { WebFormFilterUpdate } from "~~/shared/models/APIModels";
+import { entityType, WebFormFilterUpdate } from "~~/shared/models/APIModels";
 import * as z from "zod"
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal as PortalDataType
     const body = await readBody(event);
     if(id){
         try{
@@ -17,6 +20,12 @@ export default defineEventHandler(async (event) => {
                     statusMessage : "no found webForm"
                 })
             }
+            eventsAudit.emit("entity.update", {
+                userid : portal?.user_id,
+                entity : entityType.WEBFORM,
+                entityName : webForm.title,
+                companyid : webForm.contract?.company_id
+            } as EventEntity) 
             return webformGetMapPrisma(webForm);
         }catch(e){
             console.error(e);

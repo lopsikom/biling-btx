@@ -1,11 +1,13 @@
 import { ZodError } from "zod";
 import { vatsUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { patchVatsPrisma } from "~~/server/utils/prisma/modules/Vats";
-import { VatsUpdate } from "~~/shared/models/APIModels";
+import { entityType, VatsUpdate } from "~~/shared/models/APIModels";
 import * as z from "zod"
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal;
     const body = await readBody(event);
         if(id){
             try{
@@ -17,6 +19,12 @@ export default defineEventHandler(async (event) => {
                         statusMessage : "no found vats"
                     })
                 }
+                eventsAudit.emit("entity.update", {
+                    userid : portal?.user_id,
+                    entity : entityType.VATS,
+                    entityName : vats.title,
+                    companyid : vats.contract?.company_id
+                } as EventEntity)
                 return vats
             }catch(e){
                 console.error(e);

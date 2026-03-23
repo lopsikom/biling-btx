@@ -62,11 +62,13 @@ async function saveData(){
         if(!isValidData(data)) throw new Error("Validation Error")
         const newContract = await $axios.postContract(data)
         
-        billingStateStore.contracts.push(newContract)
         
         if(modalStore.addContractTariff){
-            modalStore.addContractTariff.selected_contract = {label : newContract.id, value :`${newContract.name} ${newContract.index ?? ''} ${newContract.org_name} ${newContract.status} от ${new Date(newContract.date_begin).toLocaleDateString()}`}
-            
+            billingStateStore.contractsTariff.unshift(newContract)
+            modalStore.addContractTariff.selected_contract = {label : newContract.id, value :`${newContract.name} ${newContract.index ?? ''} ${newContract.org_name} ${newContract.status} от ${new Date(newContract.date_begin).toLocaleDateString()}`}   
+        }
+        else{
+            billingStateStore.isRefreshContracts = true;
         }
         toastStore.openToast("Данные сохраненны")
         modalStore.hideModal();

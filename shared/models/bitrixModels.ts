@@ -248,7 +248,8 @@ export interface IAppInfo {
         client_endpoint : string,
         member_id : string,
         member_type : string
-    }
+    },
+    user_id : number
 } 
 export interface IBitrixToken{
     access_token : string,
@@ -271,4 +272,81 @@ export type InvoiceGrid = {
     status? : string,
     beginDate? : string,
     closeDate? : string
+}
+
+export interface IStage {
+    ID : number,
+    TYPE_ID : number,
+    OWNER_ID : number,
+    CREATED_TIME : string,
+    CATEGORY_ID : number,
+    STAGE_SEMANTIC_ID : string,
+    STAGE_ID : StageStatus
+}
+
+export interface IResponseNewBitrix<T>{
+    result : {
+        items : T
+    },
+    total : number,
+    time : any
+
+}
+export interface IDeal{
+  ID: string;
+  TITLE: string;
+  TYPE_ID: string;
+  STAGE_ID: string;
+  PROBABILITY: string;
+  CURRENCY_ID: string;
+  OPPORTUNITY: string;
+  IS_MANUAL_OPPORTUNITY: "Y" | "N";
+  TAX_VALUE: string;
+  LEAD_ID: string | null;
+  COMPANY_ID: string;
+  CONTACT_ID: string;
+  QUOTE_ID: string | null;
+  BEGINDATE: string;
+  CLOSEDATE: string;
+  ASSIGNED_BY_ID: string;
+  CREATED_BY_ID: string;
+  MODIFY_BY_ID: string;
+  DATE_CREATE: string;
+  DATE_MODIFY: string;
+  OPENED: "Y" | "N";
+  CLOSED: "Y" | "N";
+  COMMENTS: string;
+  ADDITIONAL_INFO: string;
+  LOCATION_ID: string | null;
+  CATEGORY_ID: string;
+  STAGE_SEMANTIC_ID: "P";
+  IS_NEW: "Y" | "N";
+  IS_RECURRING: "Y" | "N";
+  IS_RETURN_CUSTOMER: "Y" | "N";
+  IS_REPEATED_APPROACH: "Y" | "N";
+  SOURCE_ID: string;
+  SOURCE_DESCRIPTION: string;
+  ORIGINATOR_ID: string | null;
+  ORIGIN_ID: string | null;
+  MOVED_BY_ID: string;
+  MOVED_TIME: string;
+  LAST_ACTIVITY_TIME: string;
+  UTM_SOURCE: string;
+  UTM_MEDIUM: string;
+  UTM_CAMPAIGN: string | null;
+  UTM_CONTENT: string | null;
+  UTM_TERM: string | null;
+  PARENT_ID_1220: string;
+  LAST_ACTIVITY_BY: string;
+  UF_CRM_1721244482250: string;
+}
+
+export enum StageStatus  {
+    STAGE_NEW = "NEW",
+    STAGE_PREPARATION = "PREPARATION",
+    STAGE_PREPAYMENT_INVOICE = "PREPAYMENT_INVOICE",
+    STAGE_EXECUTING = "EXECUTING",
+    STAGE_FINAL_INVOICE = "FINAL_INVOICE",
+    STAGE_WON = "WON",
+    STAGE_LOSE = "LOSE"
 }

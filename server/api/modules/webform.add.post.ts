@@ -1,16 +1,24 @@
 import { ZodError } from "zod";
+import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { webformInputUpdateMapPrisma } from "~~/server/utils/mappers";
 import { postWebFormPrisma, postWebFormTypePrisma } from "~~/server/utils/prisma/modules/WebForm";
-import { IWebformPost, WebFormPost } from "~~/shared/models/APIModels";
+import { entityType, IWebformPost, WebFormPost } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) =>{
         const body = await readBody(event) as IWebformPost;
+        const portal = event.context.portal;
         try{
             const ZBody = await WebFormPost.transform(val => webformInputUpdateMapPrisma(val)).parseAsync(body)
             const webform = await postWebFormPrisma(ZBody);
             if(!webform) { setResponseStatus(event, 400); return; }
             const integrations = await postWebFormTypePrisma(webform.id, body.integrations)
             setResponseStatus(event, 201);
+            eventsAudit.emit("entity.create", {
+                userid : portal?.user_id,
+                entity : entityType.WEBFORM,
+                entityName : webform.title,
+                companyid : webform.contract?.company_id
+            } as EventEntity)
             return {...webform, integrations : integrations.map(i => i.webform_type.name)}
         }catch(e){
             console.error(e)

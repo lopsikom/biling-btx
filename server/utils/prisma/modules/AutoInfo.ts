@@ -22,6 +22,11 @@ export async function getAutoinformationListPrisma(data : {portal_id? : number, 
         },
         orderBy : {
             id : 'asc'
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     });
     return response;
@@ -31,6 +36,11 @@ export async function getAutoinformationByIdPrisma(id : number){
     const response = prisma.autoinformation_module.findFirst({
         where :{
             id : id
+        },
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
         }
     })
     return response;
@@ -40,7 +50,12 @@ export async function getAutoinformationByIdPrisma(id : number){
 
 export  async function deleteAutoInforPrisma(id : number){
     const response = await prisma.autoinformation_module.delete({
-        where : {id : id}
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
@@ -50,14 +65,24 @@ export async function patchAutoinfromationPrisma(id : number, data : autoinforma
         where : {
             id : id
         },
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response;
 }
 
 export async function postAutoinformationPrisma(data : autoinformation_moduleCreateInput){
     const response = await prisma.autoinformation_module.create({
-        data : data
+        data : data,
+        include : {
+            contract : {select : {
+                company_id : true
+            }}
+        }
     })
     return response
 }
