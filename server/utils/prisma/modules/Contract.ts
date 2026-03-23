@@ -25,7 +25,7 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             contract_status : true
         },
         orderBy : {
-            id : 'asc'
+            id : 'desc'
         }
         
     } as contractFindManyArgs
@@ -41,7 +41,7 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             data : list,
             count : count
         }
-    }
+    } 
     else{
         const response = await prisma.contract.findMany(args);
         return response;

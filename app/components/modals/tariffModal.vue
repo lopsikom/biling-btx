@@ -21,7 +21,7 @@ const openModulsMenu = ref({
     webForm : false
 })
 
-onMounted(async () => {
+onBeforeMount(async () => {
     const data = await $axios.getContracts({});
     billingStateStore.contractsTariff = data;
     const ContractsSelect = billingStateStore.contractsTariff

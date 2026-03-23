@@ -17,9 +17,12 @@ const usebillingStateStore = defineStore("billingState", () => {
     const connection_statuses = ref<IConnectionStatus[]>([]);
     const connection_types = ref<IConnectionType[]>([]);
 
+    const isRefreshContracts = ref<boolean>(false);
+
     return {
         contracts,
         vats,
+        isRefreshContracts,
         voiceRobots,
         chatBots,
         autoinformations,

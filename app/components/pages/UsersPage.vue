@@ -54,7 +54,13 @@ onMounted(async () => {
     await getContractPagination();
 })
 
-watch(() => pagePagination.value, async () => await getContractPagination())
+watch(() => pagePagination.value, async () => {await getContractPagination()})
+watch(() => billingStateStore.isRefreshContracts, async () => {
+    if(billingStateStore.isRefreshContracts) {
+        await getContractPagination()
+        billingStateStore.isRefreshContracts = false
+    }
+})
 
 </script>
 <template>
