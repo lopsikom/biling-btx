@@ -3,6 +3,7 @@ import bitrixAPI from "../services/bitrix/bitrixAPI"
 import getPortalByUserBitrix, { PortalDataType } from "../utils/prisma/getPortalByUserBitrix";
 
 export default defineEventHandler(async (event) => {
+    const t0 = Date.now();
     if(!event.path.startsWith("/api")) return
     if(event.path.startsWith("/api/oauth")) return
     const token = getHeader(event, "Authorization");
@@ -36,6 +37,8 @@ export default defineEventHandler(async (event) => {
             statusMessage : "Bad Auth",
             message : 'none find portal'
         })
+        const t1 = Date.now();
+        console.log("verify bitrix token" , t1 - t0)
         event.context.portal = portal;
     }catch(e){
         console.log(e);

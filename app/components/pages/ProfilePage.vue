@@ -29,7 +29,7 @@ onMounted(async () => {
         bitrixClient = await initBitrix(frame);
         bitrixStateStore.setBitrixClient(bitrixClient);
     }
-});
+})
 
 
 const editCompany = ref<ICompnany>();
@@ -275,7 +275,7 @@ function saveEditContacts (){
         </div>
         <div style="margin-left: auto; position: relative;">
             <div  v-if="!openEditMode.userInfo">
-                <MoreBox @click.stop="() => openEditSelector.usersInfo = !openEditSelector.usersInfo" >
+                <MoreBox @click.stop="() => {if(companyContacts && companyContacts?.length > 0) openEditSelector.usersInfo = !openEditSelector.usersInfo}" >
                 </MoreBox>
                 <Transition name="openEditSelector">
                     <div class="menu-edit-container any-white-container" v-if="openEditSelector.usersInfo" @click.stop>
@@ -298,7 +298,7 @@ function saveEditContacts (){
             </div>
         </div>
     </div>
-    <div class="flex flex-col px-5 mt-5 gap-5">
+    <div class="flex flex-col px-5 mt-5 gap-5" v-if="companyContacts && companyContacts?.length > 0">
         <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts" :key="index">
             <div class="contacts-info-grid">
                 <div class="firt-row-grid">
@@ -329,6 +329,9 @@ function saveEditContacts (){
                 </div>
             </div>
         </div>
+    </div>
+    <div class="flex justify-center items-center h-[200px]" v-else>
+        <span class="select-none text-lg font-semibold">Контакты отсуствуют</span>
     </div>
 </div>
 </template>
