@@ -258,12 +258,12 @@ function saveEditContacts (){
             <span v-if="!openEditMode.companyInfo">{{ bitrixCompany?.TITLE }}</span>
             <InputBox v-else-if="editCompany" v-model="editCompany.TITLE" :rows="1"/>
         </div>
-        <div class="flex flex-col gap-1">
+        <div v-if="companyRequisite" class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует'}}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite[0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует'}}</span>
             <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1"/>
         </div>
-        <div class="flex flex-col gap-1">
+        <div v-if="companyRequisite" class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
             <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует' }}</span>
             <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" />
