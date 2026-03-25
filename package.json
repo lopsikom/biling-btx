@@ -23,6 +23,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "axios": "^1.13.4",
+    "ioredis": "^5.10.1",
     "nuxt": "^4.2.1",
     "pg": "^8.18.0",
     "pinia": "^3.0.4",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.10.0",
+    "@types/ioredis": "^4.28.10",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.16.0",
     "@vueuse/core": "^14.1.0",

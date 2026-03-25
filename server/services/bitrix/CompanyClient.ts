@@ -1,9 +1,8 @@
 import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
-import { IAddress, ICompnany, IContact, Invoice, IRequisite } from "../models";
-import { config } from "process";
-import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { IAddress, IBitrixToken, ICompnany, IContact, Invoice, IRequisite } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
+import { redisClient } from "../redis";
 
 export default class companyClient{
     domain : string;
@@ -19,11 +18,30 @@ export default class companyClient{
         }});
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
             if(!config.params.auth) {
-                const portal = await getPortal({id : this.portal_id})
-                if(!portal || !portal.refresh_token) return config
+                const parseToken = await redisClient.get(`token:${this.portal_id}`);
+                console.log("parseToken ", parseToken)
+                if(parseToken) {
+                    const token = JSON.parse(parseToken) as IBitrixToken;
+                    config.params.auth = token.access_token;
+                    return config;
+                }
+                const parsePortal = await redisClient.get(`portal:${this.portal_id}`)
+                if(!parsePortal) {
+                    const portal = await getPortal({id : this.portal_id})
+                    if(!portal || !portal.refresh_token) return config;
+                    redisClient.set(`portal:${this.portal_id}`, JSON.stringify(portal));
+                    const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
+                    if(!token) return config
+                    redisClient.set(`token:${this.portal_id}`, JSON.stringify(token), "EX", 3000);
+                    config.params.auth = token.access_token;
+                    return config
+                }
+                const portal = JSON.parse(parsePortal)
                 const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
                 if(!token) return config
+                redisClient.set(`token:${this.portal_id}`, JSON.stringify(token), "EX", 3000);
                 config.params.auth = token.access_token;
+                return config
             }
             return config
         })

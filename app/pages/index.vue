@@ -43,10 +43,6 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         const isCompany = await $axios.getCheckCompany();
         if(!isCompany) throw new Error("Invalid Company")
         bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
-        bitrixStateStore.companyContacts = await bitrix.companyContacts();
-        bitrixStateStore.companyRequisite = await bitrix.companyRequisite();
-        bitrixStateStore.addresTypes = await bitrix.getAddresTypes();
-        bitrixStateStore.companyAddress = await bitrix.companyAdress();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
         billingStateStore.messengers = await $axios.getMessengers();
         billingStateStore.contractStatuses = await $axios.getContractStatuses();

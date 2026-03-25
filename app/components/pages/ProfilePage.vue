@@ -29,6 +29,15 @@ onMounted(async () => {
         bitrixClient = await initBitrix(frame);
         bitrixStateStore.setBitrixClient(bitrixClient);
     }
+    try{
+        menuStore.fetchDataLoad = true
+        if(bitrixStateStore.companyContacts) bitrixStateStore.companyContacts = await bitrixClient.companyContacts();
+        if(bitrixStateStore.addresTypes) bitrixStateStore.addresTypes = await bitrixClient.getAddresTypes();
+        if(bitrixStateStore.companyAddress) bitrixStateStore.companyAddress = await bitrixClient.companyAdress();
+        if(bitrixStateStore.companyRequisite) bitrixStateStore.companyRequisite = await bitrixClient.companyRequisite();
+    }catch(e){
+        console.error(e)
+    }finally {menuStore.fetchDataLoad = false}
 })
 
 
