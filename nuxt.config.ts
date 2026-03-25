@@ -34,7 +34,7 @@ export default defineNuxtConfig({
  
   runtimeConfig: {
     AuthUri : "https://oauth.bitrix.info/",
-    RedisUrl : "localhost",
+    RedisUrl : "redis",
     RedisPort : 6379,
     DatabaseUrl : "",
     public : {
