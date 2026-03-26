@@ -39,6 +39,7 @@ export default defineEventHandler(async (event) => {
             event.context.portal = JSON.parse(cachePortal);
             return
         }
+        console.log("no cachePortal")
         const portal = await getPortalByUserBitrix(token)
         if(!portal) throw createError({
             statusCode : 404,
