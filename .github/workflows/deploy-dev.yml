@@ -22,7 +22,13 @@ jobs:
                 password: ${{secrets.GHCR_TOKEN}}
             - name: Build Docker image
               run: |
-                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL_DEV}}" --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL_DEV}}" --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI_DEV}}" -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}-dev:${{ github.sha }} .
+                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL_DEV}}" \
+                  --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" \
+                  --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL_DEV}}" \
+                  --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI_DEV}}" \
+                  --build-arg NUXT_REDIS_URL="${{secrets.REDIS_URL_DEV}}" \
+                  --build-arg NUXT_REDIS_PORT="${{secrets.REDIS_PORT_DEV}}" \
+                  -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}-dev:${{ github.sha }} .
                   docker push ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}-dev:${{ github.sha }}
 
     deploy:
@@ -40,7 +46,7 @@ jobs:
                         docker pull ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};
                         docker stop redis-dev;
                         docker rm redis-dev;
-                        docker run -d -p 6379:6379 --name redis-dev --network billing_network redis;
+                        docker run -d -p ${{secrets.REDIS_PORT_DEV}}:6379 --name redis-dev --network billing_network redis;
                         docker stop ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
                         docker rm ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
                         docker run -p 5050:3000 --network billing_network -d --name ${{secrets.DOCKER_CONTAINER_NAME}}-dev ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};
