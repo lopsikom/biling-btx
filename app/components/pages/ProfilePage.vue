@@ -23,7 +23,6 @@ let bitrixClient : Bitrix | undefined = undefined
 
 onMounted(async () => {
     bitrixClient = bitrixStateStore.getBitrixClient();
-    console.log(bitrixStateStore)
     if(!bitrixClient){
         const {$initializeB24Frame} = useNuxtApp();
         const frame = await $initializeB24Frame();
@@ -32,11 +31,10 @@ onMounted(async () => {
     }
     try{
         menuStore.fetchDataLoad = true
-        console.log(bitrixStateStore)
-        if(bitrixStateStore.companyContacts) bitrixStateStore.companyContacts = await bitrixClient.companyContacts();
-        if(bitrixStateStore.addresTypes) bitrixStateStore.addresTypes = await bitrixClient.getAddresTypes();
-        if(bitrixStateStore.companyAddress) bitrixStateStore.companyAddress = await bitrixClient.companyAdress();
-        if(bitrixStateStore.companyRequisite) bitrixStateStore.companyRequisite = await bitrixClient.companyRequisite();
+        if(!bitrixStateStore.companyContacts) bitrixStateStore.companyContacts = await bitrixClient.companyContacts();
+        if(!bitrixStateStore.addresTypes) bitrixStateStore.addresTypes = await bitrixClient.getAddresTypes();
+        if(!bitrixStateStore.companyAddress) bitrixStateStore.companyAddress = await bitrixClient.companyAdress();
+        if(!bitrixStateStore.companyRequisite) bitrixStateStore.companyRequisite = await bitrixClient.companyRequisite();
     }catch(e){
         console.error(e)
     }finally {menuStore.fetchDataLoad = false}
@@ -260,14 +258,14 @@ function saveEditContacts (){
             <span v-if="!openEditMode.companyInfo">{{ bitrixCompany?.TITLE }}</span>
             <InputBox v-else-if="editCompany" v-model="editCompany.TITLE" :rows="1"/>
         </div>
-        <div v-if="companyRequisite" class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite[0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует'}}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite ? (companyRequisite[0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует') : "Отсутсвует"}}</span>
             <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1"/>
         </div>
         <div v-if="companyRequisite" class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует' }}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite ? (companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует') : "Отсуствует"}}</span>
             <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" />
         </div>
         <!-- Продумать изменение адрессов -->
