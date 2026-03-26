@@ -23,6 +23,7 @@ let bitrixClient : Bitrix | undefined = undefined
 
 onMounted(async () => {
     bitrixClient = bitrixStateStore.getBitrixClient();
+    console.log(bitrixStateStore)
     if(!bitrixClient){
         const {$initializeB24Frame} = useNuxtApp();
         const frame = await $initializeB24Frame();
@@ -31,6 +32,7 @@ onMounted(async () => {
     }
     try{
         menuStore.fetchDataLoad = true
+        console.log(bitrixStateStore)
         if(bitrixStateStore.companyContacts) bitrixStateStore.companyContacts = await bitrixClient.companyContacts();
         if(bitrixStateStore.addresTypes) bitrixStateStore.addresTypes = await bitrixClient.getAddresTypes();
         if(bitrixStateStore.companyAddress) bitrixStateStore.companyAddress = await bitrixClient.companyAdress();
