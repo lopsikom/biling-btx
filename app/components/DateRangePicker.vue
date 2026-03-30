@@ -139,7 +139,7 @@ const props = defineProps<{
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #f5f7fb;
+  background: #edf2f7;
   border: 1px solid #e6edf3;
   padding: 10px 12px;
   border-radius: 10px;

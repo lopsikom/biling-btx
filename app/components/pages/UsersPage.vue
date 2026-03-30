@@ -7,8 +7,9 @@ import usebillingStateStore from '~/services/stores/billingStateStore'
 import type { SelectorObject } from '~/services/models'
 import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
-import type { IContract } from '~~/shared/models/APIModels'
+import type { IContract, IContractFilter } from '~~/shared/models/APIModels'
 import useToastStore from '~/services/stores/toastStore'
+import type { CalendarDate } from '@internationalized/date'
 
 
 const billingStateStore = usebillingStateStore()
@@ -21,14 +22,28 @@ const isLoad = ref<boolean>(false);
 const search = ref<string>()
 const RoleItems = computed(() => {
     const a = billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject})
-    a.push({label : 0, value : "Все Статусы"})
+    a.unshift({label : 0, value : "Все Статусы"})
     return a
 })
-const RoleMenuValue = ref<SelectorObject>({label : 0, value : "Все Статусы"})
+const timeOutSearch = ref<NodeJS.Timeout>()
+const RoleMenuValue = ref<SelectorObject>({label : 0, value : "Все Статусы"});
+const DateBeginFilter = ref<CalendarDate>();
+const DateCloseFilter = ref<CalendarDate>();
+// const excludeDisabled = ref<boolean>(false);
 
 function openEdit(item : IContract){
     modalStore.EditContract = item;
     modalStore.showModal(ModalEnum.EDIT_CONTRACT)
+}
+
+function clearFilter(){
+    RoleMenuValue.value = {label : 0, value : "Все Статусы"};
+    DateBeginFilter.value = undefined;
+    DateCloseFilter.value = undefined;
+    search.value =""
+    // excludeDisabled.value = false;
+    toastStore.openToast("Фильтр очищен")
+
 }
 
 const pagePagination = ref(1)
@@ -36,7 +51,17 @@ const pagePagination = ref(1)
 async function getContractPagination(){
     isLoad.value = true;
     try{
+        const filter = {} as Partial<IContractFilter>
+        if(DateBeginFilter.value) {
+            if(DateBeginFilter.value.year.toString().length > 3) filter.date_begin = `${DateBeginFilter.value.year}-${String(DateBeginFilter.value.month).padStart(2, '0')}-${String(DateBeginFilter.value.day).padStart(2, '0')}T00:00:00.000Z`;
+        }
+        if(DateCloseFilter.value) {
+            if(DateCloseFilter.value.year.toString().length > 3) filter.date_close = `${DateCloseFilter.value.year}-${String(DateCloseFilter.value.month).padStart(2, '0')}-${String(DateCloseFilter.value.day).padStart(2, '0')}T00:00:00.000Z`;
+        }
+        if(RoleMenuValue.value.label !== 0) filter.status = RoleMenuValue.value.value.toString()
+        if(search.value?.trim() !== "") filter.name = search.value;
         const data = await $axios.getContracts({
+            filter : filter,
             pagination :{
                 skip : (pagePagination.value - 1) * limitPagination.value,
                 limit : limitPagination.value
@@ -54,48 +79,106 @@ onMounted(async () => {
     await getContractPagination();
 })
 
-watch(() => pagePagination.value, async () => {await getContractPagination()})
+watch(() => [
+    DateBeginFilter.value,
+], async () => {
+    if(DateBeginFilter.value) {
+        if(DateBeginFilter.value.year.toString().length > 3) await getContractPagination()
+    }
+})
+
+watch(() => [
+    DateCloseFilter.value,
+], async () => {
+    if(DateCloseFilter.value) {
+        if(DateCloseFilter.value.year.toString().length > 3) await getContractPagination()
+    }
+})
+
+watch(() => [
+    pagePagination.value, 
+    RoleMenuValue.value], 
+    async () => { await getContractPagination()})
 watch(() => billingStateStore.isRefreshContracts, async () => {
     if(billingStateStore.isRefreshContracts) {
         await getContractPagination()
         billingStateStore.isRefreshContracts = false
     }
 })
+// watch(() => search.value, 
+// async (newSearch, oldSearch) => {
+//     search.value = search.value!.trimStart()
+//     if(search.value?.trim() !== ""){
+//         if(timeOutSearch.value) {
+//             clearTimeout(timeOutSearch.value)
+//             timeOutSearch.value = undefined;
+//         }
+//         timeOutSearch.value = setTimeout(async () => await getContractPagination(), 500)
+//     }else {
+//         if(oldSearch?.length !== 0 && newSearch?.length ===0) {
+//             await getContractPagination()
+//         }
+//     }
+// })
+const clearInputSearch = ref(false);
+async function inputSearch(e : InputEvent){
+    search.value = search.value!.trimStart()
+    if(search.value?.trim() !== ""){
+        if(timeOutSearch.value) {
+            clearTimeout(timeOutSearch.value)
+            timeOutSearch.value = undefined;
+        }
+        timeOutSearch.value = setTimeout(async () => await getContractPagination(), 500)
+        clearInputSearch.value = true
+    }else {
+        if(clearInputSearch.value) {
+            clearTimeout(timeOutSearch.value);
+            clearInputSearch.value = false;
+            await getContractPagination();
+        }
+    }
+}
 
 </script>
 <template>
     <div class="flex flex-col">
-        <div class="any-white-container px-5 py-4 flex flex-col h-[800px]">
+        <div class="any-white-container px-5 py-4 flex flex-col h-[840px]">
             <div class="flex">
                 <div class="flex flex-col gap-1">
                     <span class="select-none font-semibold">Договора</span>
                     <span class="text-gray-500">Управление договорами организации</span>
                 </div>
-                <div class="add-user-btn items-center flex px-2 py-2 gap-1" @click="modalStore.showModal(ModalEnum.ADD_CONTRACT)">
-                    <Icon icon="basil:document-solid" class="w-5 h-5 text-slate-50" />
-                    <span class="select-none text-sm text-slate-50 font-semibold">Добавить договор</span>
+                <div class="flex gap-5" style="margin-left: auto;">
+                    <div class="clear-filter-btn items-center flex px-2 py-2 gap-1" @click="clearFilter()">
+                        <Icon icon="tdesign:filter-clear-filled" class="w-5 h-5 text-slate-50" />
+                        <span class="select-none text-sm text-slate-50 font-semibold">Очистить фильтр</span>
+                    </div>
+                    <div class="add-user-btn items-center flex px-2 py-2 gap-1" @click="modalStore.showModal(ModalEnum.ADD_CONTRACT)">
+                        <Icon icon="basil:document-solid" class="w-5 h-5 text-slate-50" />
+                        <span class="select-none text-sm text-slate-50 font-semibold">Добавить договор</span>
+                    </div>
                 </div>
             </div>
-                <div class="flex mt-5 gap-5">
+                <div class="flex mt-5 gap-5 items-center">
                     <div class="search-box flex gap-3">
                         <SearchIcon class="w-5.5 h-5.5 text-gray-400" />
-                        <textarea type="text" v-model="search" rows="1" placeholder="Поиск по названию..." class="search-input text-sm"></textarea>
+                        <textarea type="text" v-model="search" @input="(e) => inputSearch(e)" rows="1" placeholder="Поиск по названию..." class="search-input text-sm"></textarea>
                     </div>
-                    
-                    <div class="flex">
-                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
-                    </div>
-                    <div class="flex">
-                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
-                    </div>
+                    <DateRangePicker v-model="DateBeginFilter" title="Дата начала"/>
+                    <DateRangePicker v-model="DateCloseFilter" title="Дата окончания"/>
                 </div> 
                 <div class="flex mt-[15px] gap-5">
                     <div class="flex">
                         <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
                     </div>
-                    <div class="flex">
-                       <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
-                    </div>
+                    <!-- <div class="flex items-center gap-3">
+                        <CheckboxRoot v-model="excludeDisabled" :class="excludeDisabled ? 'checkbox-active' : 'checkbox-disable'">
+                            <CheckboxIndicator>
+                                <Icon icon="radix-icons:check" style="color: white;"/>
+                            </CheckboxIndicator>
+                        </CheckboxRoot>
+                        <span class="select-none font-semibold">Исключить завершённые сделки</span>
+                    </div> -->
                 </div>
                 <div class="h-[72%]">
                     <div class="flex flex-col h-[100%]" v-if="(countContracts && countContracts > 0) || isLoad">
@@ -201,6 +284,29 @@ watch(() => billingStateStore.isRefreshContracts, async () => {
   cursor: pointer;
 }
 
+.checkbox-disable{
+    background-color: #edf2f7;
+    border-color: #e7eaee;
+    border-width: 1.0px;
+    border-radius: 5px;
+    display: flex;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+}
+.checkbox-active{
+    background-color: #3182ce;
+    border-color: #e7eaee;
+    border-width: 1.0px;
+    border-radius: 5px;
+    display: flex;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
 .Button:disabled {
   opacity: .5
 }
@@ -233,15 +339,24 @@ watch(() => billingStateStore.isRefreshContracts, async () => {
 .add-user-btn{
     background: #3182ce;
     border-radius: 10px;
-    margin-left: auto;
+    height: fit-content;
+}
+.clear-filter-btn{
+    background: red;
+    border-radius: 10px;
     height: fit-content;
 }
 .add-user-btn:hover{
     background: #5899d7;
     transition: background 0.15s ease;
 }
-
+.clear-filter-btn:hover{
+    background: rgb(255, 49, 49);
+    transition: background 0.15s ease;
+}
 .search-box{
+    height: 65%;
+    margin-top: auto;
     padding: 7px 10px;
     background-color: #edf2f7;
     border-radius: 5px;

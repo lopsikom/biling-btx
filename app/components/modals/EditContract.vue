@@ -59,15 +59,15 @@ watch(() => dateClose.value, () => {
 async function saveData(){
     menuStore.fetchDataLoad = true
     try{
-        const begin = dateBegin.value ? new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day) : undefined
-        const close = dateClose.value ? new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day) : undefined
-        if(!begin || !close) throw new Error("Validation Error")
+        if(!dateBegin.value || !dateClose.value) throw new Error("Validation Error")
+        const begin = new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day)
+        const close = new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day)
         const data = {
             name : contract.value.name,
             status : SelectStatus.value?.label,
             index : contract.value.index?.toString(),
-            date_begin : begin?.toISOString(),
-            date_close : close?.toISOString(),
+            date_begin : `${dateBegin.value.year}-${String(dateBegin.value.month).padStart(2, '0')}-${String(dateBegin.value.day).padStart(2, '0')}T00:00:00.000Z`,
+            date_close : `${dateClose.value.year}-${String(dateClose.value.month).padStart(2, '0')}-${String(dateClose.value.day).padStart(2, '0')}T00:00:00.000Z`,
             org_name : contract.value.org_name
         } as IContractPost
         if(begin.getTime() > close.getTime()) throw new Error("Validation Error")

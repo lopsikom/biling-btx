@@ -8,7 +8,10 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
     const {portal_id, filter} = data
     const args = {
         where : {
-            name : filter?.name,
+            name : {
+                startsWith : filter?.name,
+                mode : "insensitive"
+            },
             company_id : filter?.company_id,
             contract_status : {
                 name : filter?.status

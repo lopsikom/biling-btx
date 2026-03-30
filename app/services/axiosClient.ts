@@ -59,9 +59,9 @@ export class axiosClient{
         const response = await this.AxiosClient.get("modules/tariff.list")
         return response.data as ITarrifs[]
     }
-    async getContracts(data : {filter? : IContractFilter}) : Promise<IContract[]>;
-    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
-    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) {
+    async getContracts(data : {filter? : Partial<IContractFilter>}) : Promise<IContract[]>;
+    async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
+    async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) {
         const params : any = {}
         const filter = {...data.filter, bitrxi_company_id : this.BitrixFrame?.placement.options.ID ?? (useNuxtApp().$config.public.dev ? "2" : "0")}
         params.filter = JSON.stringify(filter)
