@@ -1,3 +1,4 @@
+import { user_bitrix } from "~~/server/services/models/generated/prisma/client";
 import { user_bitrixCreateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 
@@ -35,9 +36,10 @@ export async function upsertUserPrisma(
 
   return upsertOne(data);
 }
-
-export async function getUserPrisma(id : string | number){
-    const where = typeof id === "string" ? {bitrix_id : id} : {id : id}
+export async function getUserPrisma(id : number): Promise<user_bitrix | null>
+export async function getUserPrisma(id : string, portal_id : number): Promise<user_bitrix | null>
+export async function getUserPrisma(id : string | number, portal_id? : number): Promise<user_bitrix | null>{
+    const where = typeof id === "string" ? {bitrix_id : id, portal_id : portal_id} : {id : id}
     const response = await prisma.user_bitrix.findFirst({
         where : where
     })

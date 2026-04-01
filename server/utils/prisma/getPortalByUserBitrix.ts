@@ -10,7 +10,7 @@ export default async function getPortalByUserBitrix(token : string){
                 client_id : client_id
         });
         if(!portal) return
-        let user = await getUserPrisma(data.result.user_id.toString())
+        let user = await getUserPrisma(data.result.user_id.toString(), portal.id)
         if(!user) {
                 const user_bitrix = await bitrixAPI.getBitrixUser(install.domain, token)
                 if(!user_bitrix.result) return
