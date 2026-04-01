@@ -311,14 +311,14 @@ export const EventFilter = z.object({
     action : z.enum(EventType).optional(),
     entity : z.enum(entityType).optional(),
     entityName : z.string().optional(),
-    createdAt : z.date().optional()
+    createdAt : z.string().optional()
 })
 export const Event = z.object({
     userId : z.number(),
     action : z.enum(EventType),
     entity : z.enum(entityType),
     entityName : z.string(),
-    createdAt : z.date(),
+    createdAt : z.string(),
     user_bitrix : z.object({
         id : z.number(),
         name : z.string(),
@@ -330,6 +330,13 @@ export const Event = z.object({
 export type IEvent = z.infer<typeof Event>
 export type IEventFilter = z.infer<typeof EventFilter>
 
+export interface IUser{
+    id : number,
+    name : string,
+    last_name : string,
+    second_name : string
+
+}
 
 export interface IMessengers{
     id : number,

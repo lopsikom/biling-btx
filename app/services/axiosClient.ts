@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IUser, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+
 
 
 export class axiosClient{
@@ -271,6 +272,10 @@ export class axiosClient{
         })
         if(data.pagination) return response.data as IPagionationResponse<IEvent>
         else return response.data as IEvent[]
+    }
+    async getUsers(){
+        const response = await this.AxiosClient.get<IUser[]>(`bitrix/user.list`);
+        return response.data;
     }
     
 

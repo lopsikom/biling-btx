@@ -44,6 +44,16 @@ export async function getUserPrisma(id : string | number){
     return response
 }
 
+export async function getUsersPrisma(portal_id : number, select? : any){
+  const response = await prisma.user_bitrix.findMany({
+    where : {
+      portal_id : portal_id
+    },
+    select : select
+  })
+  return response;
+}
+
 export async function postUserPrisma(data : user_bitrixCreateInput) {
     const response = await prisma.user_bitrix.create({data :data})
     return response

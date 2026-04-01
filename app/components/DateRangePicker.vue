@@ -26,13 +26,13 @@ import type { CalendarDate } from '@internationalized/date';
 
 const model = defineModel<CalendarDate>()
 const props = defineProps<{
-    title : string
+    title? : string
 }>()
 </script>
 
 <template>
   <div class="df-wrapper">
-    <Label for="date-field" class="df-label">{{ title }}</Label>
+    <Label for="date-field" class="df-label" v-if="title">{{ title }}</Label>
 
     <DatePickerRoot id="date-field" granularity="day" locale="ru" v-model="model">
       <DatePickerField v-slot="{ segments }" class="df-field">
