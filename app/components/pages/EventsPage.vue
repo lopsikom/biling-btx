@@ -222,8 +222,8 @@ watch(() => [pagePagination.value,
             selectActionBilling.value,
             selectUser.value,            
             selectEntityfilter.value,
-            selectDeal,
-            selectStageFilter,  
+            selectDeal.value,
+            selectStageFilter.value,  
         ], async () => {
             if(eventSourceValue.value === "События биллинга") await getEventPagination()
             else await getEventDeals()
