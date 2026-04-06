@@ -21,6 +21,7 @@ export class syncService{
         if(portals) this.portals =  portals;
     }
     async installSync(portal : string | number) : Promise<boolean>{
+        console.log(portal);
         try{
             let id : number;
             let domain : string;
@@ -32,6 +33,7 @@ export class syncService{
                 id = portal;
                 const data = Object.entries(this.portals)
                 .find(([_, v]) => v === portal)?.[0];
+                console.log(this.portals)
                 if(!data) return false;
                 domain = data;
             }
