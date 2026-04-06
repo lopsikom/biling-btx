@@ -13,24 +13,29 @@ onMounted( async () => {
         const data = frame.auth.getAuthData()
         if(!data) {badInstall.value = true; return}
         const verify = await $axios.verifyBitrixUser(data.access_token);
-        
+        console.log(`${url}/api/bitrix/webhook`)
+        console.log(verify)
         if(!verify) {badInstall.value = true; return}
         try{
             await frame.callMethod('placement.bind',{
-            PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
-            HANDLER : url,
-            DESCRIPTION : "DESCRIPTION",
-            LANG_ALL : {
-                en : {
-                    TITLE : "Billing",
-                    DESCRIPTION : "DESCRIPTION"
-                },
-                ru : {
-                    TITLE : "Billing",
-                    DESCRIPTION : "Описание"
-                }
-            }        
-        })
+                PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
+                HANDLER : url,
+                DESCRIPTION : "DESCRIPTION",
+                LANG_ALL : {
+                    en : {
+                        TITLE : "Billing",
+                        DESCRIPTION : "DESCRIPTION"
+                    },
+                    ru : {
+                        TITLE : "Billing",
+                        DESCRIPTION : "Описание"
+                    }
+                }        
+            })
+            await frame.callMethod("event.bind", {
+                event : "ONCRMDEALADD",
+                handler : `${url}/api/bitrix/webhook`
+            })
         }
         catch(e){
             console.error(e)
