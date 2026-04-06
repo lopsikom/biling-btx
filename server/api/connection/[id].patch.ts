@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
                     userid : portal?.user_id,
                     entity : entityType.CONNECTION,
                     entityName : connection.title,
-                    companyid : data.company_id
+                    companyid : connection.company_id
             } as EventEntity)
             return connection
         }catch(e){
