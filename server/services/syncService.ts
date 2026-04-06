@@ -36,9 +36,11 @@ export class syncService{
                 domain = data;
             }
             const token = await getBitrixTokenByRefresh(id)
+            console.log("token", token)
             if(!token) return false
             const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
             const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
+            console.log("usersBitrix", usersBitrix)
             if(usersBitrix.length < 0) return false
             const mappedUsers = await upsertUserPrisma(id, userMapUpsertPrisma(id, usersBitrix));
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
