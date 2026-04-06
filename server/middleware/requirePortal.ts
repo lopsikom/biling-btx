@@ -7,7 +7,7 @@ import { redisClient } from "../services/redis";
 export default defineEventHandler(async (event) => {
     if(!event.path.startsWith("/api")) return
     if(event.path.startsWith("/api/oauth")) return
-    if(event.path.startsWith("api/oauth/webhook")) return
+    if(event.path.startsWith("api/bitrix/webhook")) return
     const token = getHeader(event, "Authorization");
     if(!token){
         if(process.env.NUXT_PUBLIC_DEV){

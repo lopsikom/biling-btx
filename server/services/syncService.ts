@@ -21,7 +21,6 @@ export class syncService{
         if(portals) this.portals =  portals;
     }
     async installSync(portal : string | number) : Promise<boolean>{
-        console.log(portal);
         try{
             let id : number;
             let domain : string;
@@ -33,16 +32,13 @@ export class syncService{
                 id = portal;
                 const data = Object.entries(this.portals)
                 .find(([_, v]) => v === portal)?.[0];
-                console.log(this.portals)
                 if(!data) return false;
                 domain = data;
             }
             const token = await getBitrixTokenByRefresh(id)
-            console.log("token", token)
             if(!token) return false
             const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
             const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
-            console.log("usersBitrix", usersBitrix)
             if(usersBitrix.length < 0) return false
             const mappedUsers = await upsertUserPrisma(id, userMapUpsertPrisma(id, usersBitrix));
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
