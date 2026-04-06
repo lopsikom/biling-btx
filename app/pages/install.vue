@@ -18,6 +18,12 @@ onMounted( async () => {
         console.log(verify)
         if(!verify) {badInstall.value = true; return}
         try{
+            await unbindAllEvent(frame)
+            console.log("adawd")
+            await frame.callMethod("event.bind", {
+                event : "ONCRMDEALADD",
+                handler : `${url}api/bitrix/webhook`
+            })
             await frame.callMethod('placement.bind',{
                 PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
                 HANDLER : url,
@@ -32,12 +38,6 @@ onMounted( async () => {
                         DESCRIPTION : "Описание"
                     }
                 }        
-            })
-            await unbindAllEvent(frame)
-            console.log("adawd")
-            await frame.callMethod("event.bind", {
-                event : "ONCRMDEALADD",
-                handler : `${url}api/bitrix/webhook`
             })
         }
         catch(e){
