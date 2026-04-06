@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
+import { unbindAllEvent } from '~/services/utils/utils';
 
 
 const badInstall = ref(false)
@@ -32,6 +33,7 @@ onMounted( async () => {
                     }
                 }        
             })
+            await unbindAllEvent(frame)
             await frame.callMethod("event.bind", {
                 event : "ONCRMDEALADD",
                 handler : `${url}api/bitrix/webhook`
