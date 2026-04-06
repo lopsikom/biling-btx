@@ -34,7 +34,7 @@ onMounted( async () => {
             })
             await frame.callMethod("event.bind", {
                 event : "ONCRMDEALADD",
-                handler : `${url}/api/bitrix/webhook`
+                handler : `${url}api/bitrix/webhook`
             })
         }
         catch(e){

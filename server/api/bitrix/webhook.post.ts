@@ -1,3 +1,3 @@
 export default defineEventHandler(async (event) => {
-    console.log(readBody(event))
+    console.log(await readBody(event))
 })
