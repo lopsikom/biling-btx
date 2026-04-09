@@ -5,9 +5,9 @@ import {redisClient} from "../services/redis"
 import {IBitrixToken} from "../services/models"
 
 
-export async function getBitrixTokenByCode(code : string, domain : string, server_domain : string){
+export async function getBitrixTokenByCode(code : string, server_domain : string, state : number){
     const portal = await getPortalPrisma({
-        domain : domain.toString()
+        id : state
     });
         if(!portal){
             throw createError({
