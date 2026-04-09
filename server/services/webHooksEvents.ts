@@ -1,4 +1,4 @@
-import { EventEmitter } from "stream";
+import { EventEmitter } from "node:events";
 import { Bitrix24Event, IBitrixWebhookPayload, ICompanyNew, IContractBitrix, IDynamicItemEvent } from "./models";
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
