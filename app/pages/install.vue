@@ -5,6 +5,7 @@ import { unbindAllEvent } from '~/services/utils/utils';
 
 const badInstall = ref(false)
 const errorTitle = ref()
+const dev = process.env.NUXT_PUBLIC_DEV
 
 onMounted( async () => {
     try{
@@ -29,11 +30,11 @@ onMounted( async () => {
                 DESCRIPTION : "DESCRIPTION",
                 LANG_ALL : {
                     en : {
-                        TITLE : "Billing",
+                        TITLE : dev ? "Billing-dev" : "Billing",
                         DESCRIPTION : "DESCRIPTION"
                     },
                     ru : {
-                        TITLE : "Billing",
+                        TITLE : dev ? "Биллинг-dev" : "Биллинг",
                         DESCRIPTION : "Описание"
                     }
                 }        
