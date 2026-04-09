@@ -167,13 +167,18 @@ model contract {
   date_begin             DateTime                 @db.Date
   date_close             DateTime                 @db.Date
   org_name               String
+  bitrix_id              Int?
+  portal_id              Int?
   autoinformation_module autoinformation_module[]
   chat_bot               chat_bot[]
   company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal                 portal?                  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contract_portal_id_fk")
   contract_status        contract_status          @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
   vats                   vats[]
   voice_robot            voice_robot[]
   webform                webform[]
+
+  @@unique([portal_id, bitrix_id], map: "bitrix_id_portal_id")
 }
 
 model invoice {
@@ -225,6 +230,7 @@ model portal {
   contact        contact[]
   contact_email  contact_email[]
   contact_phones contact_phones[]
+  contract       contract[]
   invoice        invoice[]
   requisite      requisite[]
   user_bitrix    user_bitrix[]

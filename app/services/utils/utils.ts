@@ -136,13 +136,10 @@ export function reloadFrame(){
 
 export async function unbindAllEvent(frame : B24Frame){
     const event = (await frame.callMethod("event.get")).getData() as bitrixResponse<IEventBitrix[]>
-    console.log(event.result)
     await Promise.all(event.result.map(async e => {
-        const data = await frame.callMethod("event.unbind", {
+        await frame.callMethod("event.unbind", {
             event : e.event,
             handler : e.handler
         })
-        console.log(data.getData())
     }))
-    console.log("Unbind")
 }

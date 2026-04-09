@@ -63,32 +63,19 @@ export async function getContractById(id : number){
     return response
 }
 
-export async function deleteContractPrisma(id : number){
+export async function deleteContractPrisma(id : number, portal_id? : number){
+    const config = {
+        where : portal_id ? {contract : {bitrix_id : id}} : {contract_id : id},
+        data : {contract_id : null}
+    }
     const response = await prisma.$transaction([
-        prisma.webform.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.autoinformation_module.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.vats.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null},
-        }),
-        prisma.voice_robot.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.chat_bot.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
+        prisma.webform.updateMany(config),
+        prisma.autoinformation_module.updateMany(config),
+        prisma.vats.updateMany(config),
+        prisma.voice_robot.updateMany(config),
+        prisma.chat_bot.updateMany(config),
         prisma.contract.delete({
-            where : {
-                id : id
-            }
+            where : portal_id ? {portal_id_bitrix_id : {bitrix_id : id, portal_id : portal_id}} : {id : id}
         })
     ])
     return response
@@ -105,6 +92,20 @@ export async function patchContractPrisma(id : number, data : contractUpdateInpu
         }
     })
     return response
+}
+
+export async function upsertContractPrisma(portal_id : number, data : contractCreateInput){
+    const response = await prisma.contract.upsert({
+        where : {
+            portal_id_bitrix_id : {
+                bitrix_id : data.bitrix_id!,
+                portal_id : portal_id
+            }
+        },
+        update : data,
+        create : data
+    })
+    return response;
 }
 
 export  async function addContractPrisma(data : contractCreateInput) {

@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from "axios"
-import { IAppInfo, IBitrixToken, ICompnany, IUser } from "../models"
+import { IAppInfo, IBitrixToken, ICompnany, IContractBitrix, IResponseArrayNewBitrix, IResponseNewBitrix, IUser } from "../models"
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 import { config } from "process"
 
@@ -99,6 +99,27 @@ export class bitrixAPI {
             }
         })
         return response.data as bitrixResponse<IUser>;
+    }
+    async getItem<T>(domain : string, token : string, entityTypeId : string, id : string){
+        const response = await this.AxiosClient.get(`https"://${domain}/rest/crm.item.get`, {
+            params : {
+                entityTypeId : entityTypeId,
+                id : id,
+                auth : token,
+            }
+        })
+        return response.data as IResponseNewBitrix<T>
+    }
+    async getItems<T>(domain : string, token : string, entityTypeId : string, filter? : object){
+        const response = await this.AxiosClient.post(`https"://${domain}/rest/crm.item.list`, {
+            filter : filter,    
+        }, {
+            params: {
+                entityTypeId : entityTypeId,
+                auth : token,
+            }
+        })
+        return response.data as IResponseArrayNewBitrix<T>
     }
 }
 

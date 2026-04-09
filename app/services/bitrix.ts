@@ -1,5 +1,5 @@
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IDeal, IField, Invoice, IRequisite, IResponseNewBitrix, IStage, IUser, IUserField } from '~/services/models'
+import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IDeal, IField, Invoice, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix, IStage, IUser, IUserField } from '~/services/models'
 
 export class Bitrix {
     public bitrixFrame : B24Frame
@@ -127,7 +127,7 @@ export class Bitrix {
             select : data?.select,
             start : data?.start
         })
-        return response.getData() as IResponseNewBitrix<IStage[]>
+        return response.getData() as IResponseArrayNewBitrix<IStage[]>
     }
     async getDeals(data? : {filter? : object, order? : object, select? : string[], start? : number }){
         const response = await this.bitrixFrame.callMethod("crm.deal.list", {

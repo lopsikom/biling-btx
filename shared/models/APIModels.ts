@@ -354,6 +354,10 @@ export enum connectionTypesEnum {
     VATS = "vats",
     ANOTHER = "another"
 }
+export type ICacheCompany = {
+    id : number,
+    title : string,
+}
 
 
 

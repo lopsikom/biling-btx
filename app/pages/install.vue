@@ -19,7 +19,6 @@ onMounted( async () => {
         if(!verify) {badInstall.value = true; return}
         try{
             await unbindAllEvent(frame)
-            console.log("adawd")
             await frame.callMethod("event.bind", {
                 event : "ONCRMDEALADD",
                 handler : `${url}api/bitrix/webhook`
