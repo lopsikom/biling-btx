@@ -101,7 +101,7 @@ export class bitrixAPI {
         return response.data as bitrixResponse<IUser>;
     }
     async getItem<T>(domain : string, token : string, entityTypeId : string, id : string){
-        const response = await this.AxiosClient.get(`https"://${domain}/rest/crm.item.get`, {
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.item.get`, {
             params : {
                 entityTypeId : entityTypeId,
                 id : id,
@@ -111,7 +111,7 @@ export class bitrixAPI {
         return response.data as IResponseNewBitrix<T>
     }
     async getItems<T>(domain : string, token : string, entityTypeId : string, filter? : object){
-        const response = await this.AxiosClient.post(`https"://${domain}/rest/crm.item.list`, {
+        const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.list`, {
             filter : filter,    
         }, {
             params: {
