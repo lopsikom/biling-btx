@@ -1,5 +1,5 @@
 import { Contract, ContractPost, IAutoinformationFilterUpdate, IAutoinformationPost, ICacheCompany, IChatBot, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
-import { IAddress, ICompnany, IContact, IContactInfo, IContractBitrix, Invoice, IRequisite, IUser } from "../services/models";
+import { IAddress, ICompnany, IContact, IContactInfo, IContractBitrix, Invoice, IRequisite, IUser, NewBitrixCompany } from "../services/models";
 import { contract, user_bitrix } from "../services/models/generated/prisma/client";
 import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, connectionCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
 import { ContactWithData } from "./prisma/postContact";
@@ -34,24 +34,24 @@ export function userMapUpsertPrisma(
   return mapUser(user);
 }
 
-export function companyMapUpsertPrisma(portal_id : number, users : user_bitrix[], ...companys : ICompnany[]) : companyCreateInput[]{
+export function companyMapUpsertPrisma(portal_id : number, users : user_bitrix[], ...companys : NewBitrixCompany[]) : companyCreateInput[]{
     return companys.map(b =>{
         const company : companyCreateInput = {
-            bitrix_id : b.ID,
-            title : b.TITLE,
-            company_type : b.COMPANY_TYPE,
-            industry : b.INDUSTRY,
-            opened : b.OPENED === 'Y',
-            is_my_company : b.IS_MY_COMPANY === 'Y',
-            date_create : b.DATE_CREATE,
-            date_modify : b.DATE_MODIFY,
+            bitrix_id : b.id.toString(),
+            title : b.title,
+            company_type : b.typeId,
+            industry : b.industry,
+            opened : b.opened === 'Y',
+            is_my_company : b.isMyCompany === 'Y',
+            date_create : b.createdTime,
+            date_modify : b.updatedTime,
             portal : {connect : {id : portal_id}},
         }
-        const assigned = users.find(u => u.bitrix_id === b.ASSIGNED_BY_ID);
+        const assigned = users.find(u => u.bitrix_id === b.assignedById.toString());
         if(assigned) company.user_bitrix_company_assigned_by_idTouser_bitrix = {connect : {id : assigned.id}};
-        const modify = users.find(u => u.bitrix_id === b.MODIFY_BY_ID);
+        const modify = users.find(u => u.bitrix_id === b.updatedBy.toString());
         if(modify) company.user_bitrix_company_modify_by_idTouser_bitrix = {connect : {id : modify.id}};
-        const created = users.find(u => u.bitrix_id === b.CREATED_BY_ID);
+        const created = users.find(u => u.bitrix_id === b.createdBy.toString());
         if(created) company.user_bitrix_company_created_by_idTouser_bitrix = {connect : {id : created.id}};
         return company
     })
@@ -223,6 +223,7 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         bitrix_id : a.id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
+    console.log(data2);
     return data2
    }
 }

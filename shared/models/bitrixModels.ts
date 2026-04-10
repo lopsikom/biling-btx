@@ -100,6 +100,78 @@ export interface ICompnany {
 
   USER_FIELDS? : IField[]
 }
+
+export interface BitrixCompanyFm {
+  id: number;
+  valueType: string;
+  value: string;
+  typeId: string;
+}
+
+export interface NewBitrixCompany {
+  id: number;
+  createdTime: string;
+  updatedTime: string;
+  createdBy: number;
+  updatedBy: number;
+  assignedById: number;
+  opened: string;
+  title: string;
+  logo: string;
+  address: string;
+  addressLegal: string;
+  bankingDetails: string;
+  comments: string;
+  typeId: string;
+  industry: string;
+  revenue: number;
+  currencyId: string;
+  employees: string;
+  leadId: number;
+  webformId: number;
+  originatorId: string | null;
+  originId: string | null;
+  originVersion: string | null;
+  hasPhone: string;
+  hasEmail: string;
+  hasImol: string;
+  isMyCompany: string;
+  searchContent: string;
+  categoryId: number;
+  lastActivityBy: number;
+  lastActivityTime: string;
+  emailHome: string;
+  emailWork: string;
+  emailMailing: string;
+  phoneMobile: string;
+  phoneWork: string;
+  phoneMailing: string;
+  imol: string;
+  email: string;
+  phone: string;
+  lastCommunicationTime: string | null;
+  lastCommunicationCallTime: string | null;
+  lastCommunicationEmailTime: string | null;
+  lastCommunicationImolTime: string | null;
+  lastCommunicationWebformTime: string | null;
+  ufLogo: string | null;
+  ufStamp: string | null;
+  ufDirectorSign: string | null;
+  ufAccountantSign: string | null;
+  parentId1058: number | null;
+  parentId1066: number | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  utmTerm: string | null;
+  observers: number[];
+  contactIds: number[];
+  entityTypeId: number;
+  fm: BitrixCompanyFm[];
+  [key: `ufCrm${string}`]: string | null;
+}
+
 export interface IRequisite{
     ID : string,
     ENTITY_TYPE_ID : number,

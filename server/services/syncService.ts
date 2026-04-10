@@ -37,15 +37,15 @@ export class syncService{
             }
             const token = await getBitrixTokenByRefresh(id)
             if(!token) return false
-            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result
+            const companysBitrix = (await bitrixAPI.getCompanies(domain,token.accessToken)).result.items
             const usersBitrix =  (await bitrixAPI.getBitrixUsers(domain, token.accessToken)).result
             if(usersBitrix.length < 0) return false
             const mappedUsers = await upsertUserPrisma(id, userMapUpsertPrisma(id, usersBitrix));
             const companyClients = await Promise.all(companysBitrix.map(async b => { 
                 try{
                 const com = (await postCompanyPrisma( id, ...companyMapUpsertPrisma(id, mappedUsers, b)))[0];
-                console.log(`Company '${b.TITLE}' added`)
-                const company = new companyClient(domain, id, b.ID)
+                console.log(`Company '${b.title}' added`)
+                const company = new companyClient(domain, id, b.id.toString())
                 const r = (await company.getRequisites()).result
                 await upsertRequisites(id, ...requisiteMapUpsertPrisma(id, com.id, ...r))
                 const addresses = await company.getAddress()
@@ -58,7 +58,7 @@ export class syncService{
                 const ii = await upsertInvoice(id, ...invocieMapUpsertPrisma(id, com.id, mappedUsers, ...i.result.items))
                 ii.forEach(iii => console.log("Added invoice " + iii.title))
                 }catch(e){
-                    console.error(`Error added company '${b.TITLE}\nError:\n${e}`)
+                    console.error(`Error added company '${b.title}\nError:\n${e}`)
                     return false
                 }
             }))

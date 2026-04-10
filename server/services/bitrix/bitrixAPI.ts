@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from "axios"
-import { IAppInfo, IBitrixToken, ICompnany, IContractBitrix, IResponseArrayNewBitrix, IResponseNewBitrix, IUser } from "../models"
+import { IAppInfo, IBitrixToken, ICompnany, IContractBitrix, IResponseArrayNewBitrix, IResponseNewBitrix, IUser, NewBitrixCompany } from "../models"
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 import { config } from "process"
 
@@ -68,12 +68,13 @@ export class bitrixAPI {
         return response.data as bitrixTokens;
     }
     async getCompanies(domain : string, token : string){
-        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.list`, {
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.item.list`, {
             params : {
+                entityTypeId : 4,
                 auth : token
             }
         })
-        return response.data as bitrixResponse<ICompnany[]>
+        return response.data as IResponseArrayNewBitrix<NewBitrixCompany[]>
     }
     async getCompany(id : number, token : string, domain : string){
         const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.get`, {
