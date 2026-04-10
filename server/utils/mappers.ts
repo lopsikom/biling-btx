@@ -215,7 +215,7 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
     const data2 ={
         name : a.title,
         contract_status : {connect : {id : 1}}, //Временная затычка
-        company : {connect : {bitrix_id_portal_id : {bitrix_id : a.id?.toString(), portal_id : portal_id}}},
+        company : {connect : {bitrix_id_portal_id : {bitrix_id : a.companyId?.toString(), portal_id : portal_id}}},
         index : "0", //Временная затычка,
         date_begin : a.ufCrm7_1772107131118,
         date_close : a.ufCrm7_1772107148271,
