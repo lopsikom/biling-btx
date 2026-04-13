@@ -27,21 +27,21 @@ onMounted( async () => {
                     handler : `${url}api/bitrix/webhook`
                 })
             }))
-            await frame.callMethod('placement.bind',{
-                PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
-                HANDLER : url,
-                DESCRIPTION : "DESCRIPTION",
-                LANG_ALL : {
-                    en : {
-                        TITLE : dev ? "Billing-dev" : "Billing",
-                        DESCRIPTION : "DESCRIPTION"
-                    },
-                    ru : {
-                        TITLE : dev ? "Биллинг-dev" : "Биллинг",
-                        DESCRIPTION : "Описание"
-                    }
-                }        
-            })
+            // await frame.callMethod('placement.bind',{
+            //     PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
+            //     HANDLER : url,
+            //     DESCRIPTION : "DESCRIPTION",
+            //     LANG_ALL : {
+            //         en : {
+            //             TITLE : dev ? "Billing-dev" : "Billing",
+            //             DESCRIPTION : "DESCRIPTION"
+            //         },
+            //         ru : {
+            //             TITLE : dev ? "Биллинг-dev" : "Биллинг",
+            //             DESCRIPTION : "Описание"
+            //         }
+            //     }        
+            // })
         }
         catch(e){
             console.error(e)

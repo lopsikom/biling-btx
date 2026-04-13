@@ -143,3 +143,13 @@ export async function unbindAllEvent(frame : B24Frame){
         })
     }))
 }
+export async function unbindAllPlacement(frame : B24Frame){
+    const event = (await frame.callMethod("placement.get")).getData() as bitrixResponse<{placement : string, handler : string}[]>
+    console.log(event.result)
+    // await Promise.all(event.result.map(async e => {
+    //     await frame.callMethod("placement.unbind", {
+    //         PLACEMENT : e.placement,
+    //         HANDLER : e.handler
+    //     })
+    // }))
+}
