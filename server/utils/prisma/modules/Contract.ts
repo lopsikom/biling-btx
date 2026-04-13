@@ -88,7 +88,12 @@ export async function patchContractPrisma(id : number, data : contractUpdateInpu
         },
         data : data,
         include : { 
-            contract_status : true
+            contract_status : true,
+            company : {
+                select : {
+                    bitrix_id : true
+                }
+            }
         }
     })
     return response

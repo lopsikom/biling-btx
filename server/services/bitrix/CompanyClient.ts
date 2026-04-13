@@ -122,6 +122,17 @@ export default class companyClient{
         })
         return response.data as IResponseNewBitrix<IContractBitrix>
     }
+    async patchContract(data : Omit<Partial<IContractBitrix>, "id">, id : number){
+        const entityTypeId = useRuntimeConfig().ContractIdBitrix;
+        const response = await this.axiosClient.post('/rest/crm.item.update', {}, {
+            params : {
+                entityTypeId : entityTypeId,
+                id : id,
+                fields : data
+            }
+        })
+        return response.data as IResponseNewBitrix<IContractBitrix>
+    }
     
 
 }

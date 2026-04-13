@@ -226,8 +226,9 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
     return data2
    }
 }
-
-export function contractMapBitrix(data : IContractPost, user_id : number, company_id? : number){
+export function contractMapBitrix(data : contractPrismaGet) : IContractBitrix
+export function contractMapBitrix(data : IContractPost, user_id: number, company_id? : number) : IContractBitrix
+export function contractMapBitrix(data : IContractPost | contractPrismaGet, user_id? : number, company_id? : number) : IContractBitrix{
      const _data = {
         title : data.name,
         opened : "N",
