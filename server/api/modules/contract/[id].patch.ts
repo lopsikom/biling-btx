@@ -15,8 +15,10 @@ export default defineEventHandler(async (event) => {
             try{
                 const data = await ContractUpdate.parseAsync(body)
                 const contract = await patchContractPrisma(z.coerce.number().parse(id), contractUpdateMapPrisma(data));
-                const CompanyClient = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
-                CompanyClient.patchContract(contractMapBitrix(contract), 1)
+                if(contract.bitrix_id){
+                    const CompanyClient = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
+                    CompanyClient.patchContract(contractMapBitrix(contract), contract.bitrix_id)
+                }
 
                 if(!contract){
                     throw createError({
