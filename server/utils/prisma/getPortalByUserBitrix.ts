@@ -18,4 +18,4 @@ export default async function getPortalByUserBitrix(token : string){
         }
         return {portal, user_id : user.id, bitrix_user_id : user.bitrix_id}
 }
-export type PortalDataType = Awaited<ReturnType<typeof getPortalByUserBitrix>>
+export type PortalDataType = NonNullable<Awaited<ReturnType<typeof getPortalByUserBitrix>>>

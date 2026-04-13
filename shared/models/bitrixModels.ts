@@ -620,24 +620,24 @@ export interface IDynamicItemEvent {
 }
 export interface IContractBitrix {
   // --- Read-only system fields ---
-  id?: number;
-  createdTime?: string;        // datetime ISO
-  updatedTime?: string;        // datetime ISO
-  createdBy?: number;          // user ID
-  updatedBy?: number;          // user ID
-  movedTime?: string;          // datetime ISO
-  movedBy?: number;            // user ID
-  previousStageId?: string;    // crm_status
-  lastCommunicationTime?: string;
-  lastCommunicationCallTime?: string;
-  lastCommunicationEmailTime?: string;
-  lastCommunicationImolTime?: string;
-  lastCommunicationWebformTime?: string;
+  readonly id?: number;
+  readonly createdTime?: string;        // datetime ISO
+  readonly updatedTime?: string;        // datetime ISO
+  readonly createdBy?: number;          // user ID
+  readonly updatedBy?: number;          // user ID
+  readonly movedTime?: string;          // datetime ISO
+  readonly movedBy?: number;            // user ID
+  readonly previousStageId?: string;    // crm_status
+  readonly lastCommunicationTime?: string;
+  readonly lastCommunicationCallTime?: string;
+  readonly lastCommunicationEmailTime?: string;
+  readonly lastCommunicationImolTime?: string;
+  readonly lastCommunicationWebformTime?: string;
  
   // --- Editable base fields ---
   title?: string;
   xmlId?: string;
-  opened: boolean;             // required
+  opened: "Y" | "N";             // required
   assignedById?: number;       // user ID
   webformId?: number;
   categoryId?: number;         // crm_category (воронка)
@@ -645,7 +645,7 @@ export interface IContractBitrix {
   currencyId?: string;         // crm_currency
   opportunity?: number;
   taxValue?: number;
-  isManualOpportunity?: boolean;
+  isManualOpportunity?: "Y" | "N";
   begindate?: string;          // date YYYY-MM-DD
   closedate?: string;          // date YYYY-MM-DD
   companyId?: number;          // crm_company
@@ -667,14 +667,14 @@ export interface IContractBitrix {
   // --- Custom (UF) fields ---
   ufCrm7_1772107131118?: string;   // date — Дата начала договора
   ufCrm7_1772107148271?: string;   // date — Дата окончания договора
-  ufCrm7_1772523967924?: boolean;  // boolean — Пролонгация
+  ufCrm7_1772523967924?: "Y" | "N";  // "Y" | "N" — Пролонгация
   ufCrm7_1772524025251?: string;   // date — Дата подписания договора
   ufCrm7_1772527646144?: {
     id : number,
     url : string,
     urlMachine : string
   }[]; // file IDs — Файлы договора
-  ufCrm7_1773131357728?: boolean;  // boolean — Оригинал получен
+  ufCrm7_1773131357728?: "Y" | "N";  // "Y" | "N" — Оригинал получен
   ufCrm7_1773302434?: string[];    // crm links — Доп. соглашения
 }
 export interface ICompanyNew {

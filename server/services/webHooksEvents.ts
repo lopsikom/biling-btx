@@ -5,6 +5,7 @@ import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
 import { ICacheCompany } from "~~/shared/models/APIModels";
 import { upsertContractPrisma } from "../utils/prisma/modules/Contract";
+import getMyCompanysCache from "../utils/redis/getMyCompanys";
 
 
 export type WebHooksMap = {
@@ -28,18 +29,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
     if(!contract) return
-    const myCompanyCache = await redisClient.get("myCompanyBitrix")
-    let myCompany : ICacheCompany[]
-    if(!myCompanyCache){
-        const myCompanys = (await bitrixAPI.getItems<ICompanyNew[]>(portal.portal.domain, token.access_token, "4", {
-            "isMyCompany" : "Y"
-        })).result.items
-        const cache = myCompanys.map(c => {return {id : c.id, title : c.title} as ICacheCompany})
-        await redisClient.set("myCompanyBitrix", JSON.stringify(cache));
-        myCompany = cache
-    }
-    else myCompany = JSON.parse(myCompanyCache) as ICacheCompany[]
-    const company = myCompany.find(c => c.id === contract.mycompanyId);
+    const myCompanys = await getMyCompanysCache(portal, token.access_token);
+    const company = myCompanys.find(c => c.id === contract.mycompanyId);
     await addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company))
     console.log("Contract added")
 })
@@ -51,18 +42,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
     if(!contract || contract.companyId === 0) return
-    const myCompanyCache = await redisClient.get("myCompanyBitrix")
-    let myCompany : ICacheCompany[]
-    if(!myCompanyCache){
-        const myCompanys = (await bitrixAPI.getItems<ICompanyNew[]>(portal.portal.domain, token.access_token, "4", {
-            "isMyCompany" : "Y"
-        })).result.items
-        const cache = myCompanys.map(c => {return {id : c.id, title : c.title} as ICacheCompany})
-        await redisClient.set("myCompanyBitrix", JSON.stringify(cache));
-        myCompany = cache
-    }
-    else myCompany = JSON.parse(myCompanyCache) as ICacheCompany[]
-    const company = myCompany.find(c => c.id === contract.mycompanyId);
+    const myCompanys = await getMyCompanysCache(portal, token.access_token);
+    const company = myCompanys.find(c => c.id === contract.mycompanyId);
     await upsertContractPrisma(portal.portal.id, contractInputMapPrisma(contract, portal.portal.id, company))
     console.log("Contract updated")
 })

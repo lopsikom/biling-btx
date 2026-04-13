@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
-import { IAddress, IBitrixToken, ICompnany, IContact, Invoice, IRequisite } from "../models";
+import { IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 import { redisClient } from "../redis";
 
@@ -111,6 +111,16 @@ export default class companyClient{
             }
         })
         return response.data as bitrixResponse<{items : Invoice[]}>
+    }
+    async addContract(data : IContractBitrix){
+        const entityTypeId = useRuntimeConfig().ContractIdBitrix;
+        const response = await this.axiosClient.post(`/rest/crm.item.add`,{}, {
+            params : {
+                entityTypeId : entityTypeId,
+                fields : data
+            }
+        })
+        return response.data as IResponseNewBitrix<IContractBitrix>
     }
     
 

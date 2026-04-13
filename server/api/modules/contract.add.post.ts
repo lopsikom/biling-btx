@@ -1,16 +1,22 @@
 import { ZodError } from "zod";
+import companyClient from "~~/server/services/bitrix/CompanyClient";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
-import { contractInputMapPrisma } from "~~/server/utils/mappers";
+import { contractInputMapPrisma, contractMapBitrix } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { addContractPrisma } from "~~/server/utils/prisma/modules/Contract";
+import getMyCompanysCache from "~~/server/utils/redis/getMyCompanys";
 import { ContractPost, entityType } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {
     const portal_id = event.context.portal as PortalDataType;
     const body = await readBody(event);
     try{
-        const ZBody = await ContractPost.transform(val => contractInputMapPrisma(val, portal_id!.portal.id)).parseAsync(body);
-        const contract = await addContractPrisma(ZBody);
+        const ZBody = await ContractPost.parseAsync(body);
+        const bitrixCompany =  new companyClient(portal_id!.portal.domain, portal_id!.portal.id, ZBody.bitrix_id!);
+        const myCompanys = await getMyCompanysCache(portal_id)
+        const myCompany = myCompanys.find(c => c.title === ZBody.org_name) ?? myCompanys[0] 
+        const bitirixContract = await bitrixCompany.addContract(contractMapBitrix(ZBody, portal_id!.user_id, myCompany.id))
+        const contract = await addContractPrisma(contractInputMapPrisma(ZBody, portal_id!.portal.id, bitirixContract.result.item.id!));
         setResponseStatus(event, 201);
         eventsAudit.emit("entity.create", {
             userid : portal_id?.user_id,

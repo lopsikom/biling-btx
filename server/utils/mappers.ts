@@ -227,6 +227,23 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
    }
 }
 
+export function contractMapBitrix(data : IContractPost, user_id : number, company_id? : number){
+     const _data = {
+        title : data.name,
+        opened : "N",
+        assignedById : user_id,
+        companyId : data.bitrix_id,
+        currencyId : "RUB",
+        mycompanyId : company_id,
+        ufCrm7_1772107131118 : data.date_begin,
+        ufCrm7_1772107148271 : data.date_close,
+        ufCrm7_1772523967924 : "N",
+        ufCrm7_1772524025251 : data.date_begin,
+        ufCrm7_1773131357728 : "N"
+     } as IContractBitrix
+     return _data
+}
+
 export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdateInput{
     const contract = {
         name : data.name,
