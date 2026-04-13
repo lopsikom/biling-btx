@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
 import { Bitrix24Event } from '~/services/models';
-import { unbindAllEvent } from '~/services/utils/utils';
+import { unbindAllEvent, unbindAllPlacement } from '~/services/utils/utils';
 
 
 const badInstall = ref(false)
@@ -27,6 +27,7 @@ onMounted( async () => {
                     handler : `${url}api/bitrix/webhook`
                 })
             }))
+            await unbindAllPlacement(frame)
             // await frame.callMethod('placement.bind',{
             //     PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
             //     HANDLER : url,
