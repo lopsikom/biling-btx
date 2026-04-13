@@ -223,9 +223,6 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         bitrix_id : a.id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
-    console.log(data2);
-    console.log(data2.company.connect)
-    console.log(data2.company.connect?.bitrix_id_portal_id)
     return data2
    }
 }

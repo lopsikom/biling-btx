@@ -27,7 +27,6 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     const token = await getBitrixTokenByRedis(portal);
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
-    console.log(contract)
     if(!contract) return
     const myCompanyCache = await redisClient.get("myCompanyBitrix")
     let myCompany : ICacheCompany[]
@@ -51,8 +50,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     const token = await getBitrixTokenByRedis(portal);
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
-    console.log(contract)
-    if(!contract) return
+    if(!contract || contract.companyId === 0) return
     const myCompanyCache = await redisClient.get("myCompanyBitrix")
     let myCompany : ICacheCompany[]
     if(!myCompanyCache){

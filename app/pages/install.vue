@@ -19,18 +19,14 @@ onMounted( async () => {
         if(!verify) {badInstall.value = true; return}
         try{
             await unbindAllEvent(frame)
-            await frame.callMethod("event.bind", {
-                event : Bitrix24Event.CRM_DYNAMIC_ITEM_ADD,
-                handler : `${url}api/bitrix/webhook`
-            })
-            await frame.callMethod("event.bind", {
-                event : Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE,
-                handler : `${url}api/bitrix/webhook`
-            })
-            await frame.callMethod("event.bind", {
-                event : Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE,
-                handler : `${url}api/bitrix/webhook`
-            })
+            const eventsKeys = Object.values(Bitrix24Event);
+            console.log(eventsKeys)
+            await Promise.all(eventsKeys.map(async e => {
+                await frame.callMethod("event.bind", {
+                    event : e,
+                    handler : `${url}api/bitrix/webhook`
+                })
+            }))
             await frame.callMethod('placement.bind',{
                 PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
                 HANDLER : url,

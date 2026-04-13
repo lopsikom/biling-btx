@@ -123,6 +123,6 @@ export async function initCompanyClient(bitrix_id : number, portal : number | po
     if(!portalPrisma || !portalPrisma.refresh_token) return 
     const token = await bitrixAPI.getAccesToken(portalPrisma.client_id, portalPrisma.client_secret, portalPrisma.refresh_token);
     const company = await bitrixAPI.getCompany(bitrix_id, token.access_token, portalPrisma.domain);
-    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result));
+    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result.item));
     return new companyClient(portalPrisma.domain, companyPrsima[0].id, bitrix_id.toString())
 }

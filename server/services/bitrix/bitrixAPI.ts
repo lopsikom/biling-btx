@@ -83,7 +83,7 @@ export class bitrixAPI {
                 ID : id
             }
         })
-        return response.data as bitrixResponse<ICompnany>
+        return response.data as IResponseNewBitrix<NewBitrixCompany>
     }
     async getBitrixUsers(domain : string, token : string){
         const response = await this.AxiosClient.get(`https://${domain}/rest/user.get`,{
