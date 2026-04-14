@@ -233,7 +233,7 @@ export function contractMapBitrix(data : IContractPost | IContractUpdate, user_i
         title : data.name,
         opened : "N",
         assignedById : user_id,
-        companyId : data.company_id,
+        companyId : "bitrix_id" in data ? data.bitrix_id : undefined,
         currencyId : "RUB",
         mycompanyId : company_id,
         ufCrm7_1772107131118 : data.date_begin,
