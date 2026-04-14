@@ -233,7 +233,7 @@ export function contractMapBitrix(data : IContractPost | contractPrismaGet, user
         title : data.name,
         opened : "N",
         assignedById : user_id,
-        companyId : data.bitrix_id,
+        companyId : "portal_id" in contractGetMapPrisma ? null : data.bitrix_id,
         currencyId : "RUB",
         mycompanyId : company_id,
         ufCrm7_1772107131118 : data.date_begin,
