@@ -6,6 +6,7 @@ import { ContractUpdate, entityType } from "~~/shared/models/APIModels";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import companyClient from "~~/server/services/bitrix/CompanyClient";
+import getMyCompanysCache from "~~/server/utils/redis/getMyCompanys";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
@@ -17,9 +18,10 @@ export default defineEventHandler(async (event) => {
                 const contract = await patchContractPrisma(z.coerce.number().parse(id), contractUpdateMapPrisma(data));
                 if(contract.bitrix_id){
                     const CompanyClient = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
-                    CompanyClient.patchContract(contractMapBitrix(data), contract.bitrix_id)
+                    const myCompanys = await getMyCompanysCache(portal)
+                    const myCompany = myCompanys.find(c => c.title === data.org_name) ?? myCompanys[0] 
+                    CompanyClient.patchContract(contractMapBitrix(data, {company_id : myCompany.id}), contract.bitrix_id)
                 }
-
                 if(!contract){
                     throw createError({
                         statusCode : 404,
