@@ -219,7 +219,7 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         index : "0", //Временная затычка,
         date_begin : a.ufCrm7_1772107131118,
         date_close : a.ufCrm7_1772107148271,
-        org_name : resolvedMyCompany?.title ?? "ООО 'Минта'",
+        org_name : resolvedMyCompany?.title ?? "МИНТА ООО",
         bitrix_id : a.id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
@@ -233,7 +233,7 @@ export function contractMapBitrix(data : IContractPost | IContractUpdate, user_i
         title : data.name,
         opened : "N",
         assignedById : user_id,
-        companyId : company_id,
+        companyId : data.company_id,
         currencyId : "RUB",
         mycompanyId : company_id,
         ufCrm7_1772107131118 : data.date_begin,
