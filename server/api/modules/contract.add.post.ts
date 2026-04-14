@@ -8,18 +8,19 @@ import getMyCompanysCache from "~~/server/utils/redis/getMyCompanys";
 import { ContractPost, entityType } from "~~/shared/models/APIModels";
 
 export default defineEventHandler(async (event) => {
-    const portal_id = event.context.portal as PortalDataType;
+    const portal = event.context.portal as PortalDataType;
     const body = await readBody(event);
     try{
         const ZBody = await ContractPost.parseAsync(body);
-        const bitrixCompany =  new companyClient(portal_id!.portal.domain, portal_id!.portal.id, ZBody.bitrix_id!);
-        const myCompanys = await getMyCompanysCache(portal_id)
-        const myCompany = myCompanys.find(c => c.title === ZBody.org_name) ?? myCompanys[0] 
-        const bitirixContract = await bitrixCompany.addContract(contractMapBitrix(ZBody, portal_id!.user_id, myCompany.id))
-        const contract = await addContractPrisma(contractInputMapPrisma(ZBody, portal_id!.portal.id, bitirixContract.result.item.id!));
+        const bitrixCompany =  new companyClient(portal!.portal.domain, portal!.portal.id, ZBody.bitrix_id!);
+        const myCompanys = await getMyCompanysCache(portal)
+        const myCompany = myCompanys.find(c => c.title === ZBody.org_name) ?? myCompanys[0]
+        console.log(portal)
+        const bitirixContract = await bitrixCompany.addContract(contractMapBitrix(ZBody, Number(portal!.bitrix_user_id), myCompany.id)) //Пофиксить строковый айди
+        const contract = await addContractPrisma(contractInputMapPrisma(ZBody, portal!.portal.id, bitirixContract.result.item.id!));
         setResponseStatus(event, 201);
         eventsAudit.emit("entity.create", {
-            userid : portal_id?.user_id,
+            userid : portal?.user_id,
             entity : entityType.CONTRACT,
             entityName : contract.name,
             companyid : contract.company_id
