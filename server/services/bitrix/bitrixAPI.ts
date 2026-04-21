@@ -139,8 +139,10 @@ export class bitrixAPI {
     }
     async getProductRowContract(domain : string, token : string, ownerId : string, ownerType : string){
         const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.list`,{
-            "=ownerId" : ownerId,
-            "=ownerType" : ownerType
+            filter : {
+                "=ownerId" : ownerId,
+                "=ownerType" : ownerType
+            }
         },{
             params : {
                 auth : token
