@@ -24,6 +24,21 @@ export class bitrixAPI {
         this.AxiosClient = axios.create({headers: {
             'Content-Type': 'application/json'
         }});
+        this.AxiosClient.interceptors.response.use((response) => response,(error) => {
+            const { response, request, config, message } = error;
+
+            console.group(`❌ ERROR [${config?.method?.toUpperCase()}] ${config?.url}`);
+
+            if (response) {
+                console.error(`Status:  ${response.status} ${response.statusText}`);
+                console.error('Data:   ', response.data);
+                console.error('Headers:', response.headers);
+            }
+            else if (request) {
+                console.error('📡 Нет ответа от сервера');
+                console.error('Request:', request);
+            }
+        })
     }
     async getPortalData(token : string) : Promise<bitrixResponse<IAppInfo>>{
         const response = await this.AxiosClient.get(this.AuthURI + "app.info", {
