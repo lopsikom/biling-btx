@@ -55,6 +55,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             console.log("product", productRows)
             return await Promise.all(productRows.result.productRows.map(async p => {
                 const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
+                info.result.product.productName = p.productName
                 return {productRows : p, info : info}
             }))
         })()
