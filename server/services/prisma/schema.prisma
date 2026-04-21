@@ -36,9 +36,15 @@ model autoinformation_module {
   active               Boolean
   tarrif_id            Int?
   title                String
+  bitrix_id            Int?
+  product_id           Int?
+  portal_id            Int?
   contract             contract?            @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff               tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   autoinformation_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal               portal?              @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
+
+  @@unique([portal_id, bitrix_id], map: "autoinformation_module_bitrix_id_portal_id")
 }
 
 model autoinformation_type {
@@ -55,9 +61,15 @@ model chat_bot {
   active              Boolean
   price               Float                 @db.Real
   title               String
+  bitrix_id           Int?
+  product_id          Int?
+  portal_id           Int?
   contract            contract?             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff              tariff?               @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal              portal?               @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   chat_bot_messengers chat_bot_messengers[]
+
+  @@unique([portal_id, bitrix_id], map: "chat_bot_bitrix_id_portal_id")
 }
 
 model chat_bot_messengers {
@@ -219,21 +231,26 @@ model messengers {
 }
 
 model portal {
-  id             Int              @id @default(autoincrement())
-  client_id      String
-  client_secret  String
-  domain         String
-  refresh_token  String?
-  access_token   String?
-  address        address[]
-  company        company[]
-  contact        contact[]
-  contact_email  contact_email[]
-  contact_phones contact_phones[]
-  contract       contract[]
-  invoice        invoice[]
-  requisite      requisite[]
-  user_bitrix    user_bitrix[]
+  id                     Int                      @id @default(autoincrement())
+  client_id              String
+  client_secret          String
+  domain                 String
+  refresh_token          String?
+  access_token           String?
+  address                address[]
+  autoinformation_module autoinformation_module[]
+  chat_bot               chat_bot[]
+  company                company[]
+  contact                contact[]
+  contact_email          contact_email[]
+  contact_phones         contact_phones[]
+  contract               contract[]
+  invoice                invoice[]
+  requisite              requisite[]
+  user_bitrix            user_bitrix[]
+  vats                   vats[]
+  voice_robot            voice_robot[]
+  webform                webform[]
 }
 
 model requisite {
@@ -309,8 +326,14 @@ model vats {
   price            Float     @db.Real
   duration         Int
   title            String
+  bitrix_id        Int?
+  product_id       Int?
+  portal_id        Int?
   contract         contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal           portal?   @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   tariff           tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id], map: "vats_bitrix_id_portal_id")
 }
 
 model webform {
@@ -320,9 +343,15 @@ model webform {
   active               Boolean?
   price                Float                  @db.Real
   title                String
+  bitrix_id            Int?
+  product_id           Int?
+  portal_id            Int?
+  portal               portal?                @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   contract             contract?              @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
   tariff               tariff                 @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   webform_webform_type webform_webform_type[]
+
+  @@unique([portal_id, bitrix_id], map: "webform_bitrix_id_portal_id")
 }
 
 model contract_status {
@@ -345,8 +374,14 @@ model voice_robot {
   active      Boolean?
   price       Float     @db.Real
   title       String
+  bitrix_id   Int?
+  product_id  Int?
+  portal_id   Int?
+  portal      portal?   @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   contract    contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff      tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id], map: "voice_robot_bitrix_id_portal_id")
 }
 
 model webform_webform_type {

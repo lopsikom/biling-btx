@@ -1,6 +1,8 @@
+import { title } from "process";
 import { chat_bot_messengersCreateManyInput, chat_botCreateInput, chat_botUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IChatBotFilter } from "~~/shared/models/APIModels";
+import { IChatBotProduct, IProductRow } from "~~/shared/models/bitrixModels";
 
 export async function getChatBotListPrisma(data : {portal_id? : number, filter? : IChatBotFilter}){ //Фильтр по мессенджерам
     const {portal_id, filter} = data
@@ -141,6 +143,53 @@ export async function postChatBotMessengersPrisma(id : number, messengers : numb
     })
     const messengersData = await getChatBotMessengersPrisma(id);
     return messengersData
+}
+
+export async function upsertChatBotProductPrisma(data : {info : IChatBotProduct, productRows : IProductRow}, portal_id : number){
+   const {info, productRows} = data
+   const messengers : number[] = []
+   if(info.property317 === "Y") messengers.push(1) //Ахуенный костыль
+   if(info.property318 === "Y") messengers.push(4)
+   if(info.property319 === "Y") messengers.push(2)
+   if(info.property320 === "Y") messengers.push(6)
+   if(info.property321 === "Y") messengers.push(3)
+   const response = prisma.chat_bot.upsert({
+    where : {portal_id_bitrix_id :{
+        bitrix_id : info.id,
+        portal_id : portal_id
+    }},
+    create : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        lines_count : 10,
+        active : true,
+        bitrix_id : productRows.id,
+        product_id : productRows.productId,
+        portal : {connect : {id : portal_id}},
+        title : info.name,
+        tariff : {connect : {id : 1}},
+        chat_bot_messengers : {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}
+    },
+    update : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        lines_count : 10,
+        active : true,
+        bitrix_id : productRows.id,
+        product_id : productRows.productId,
+        portal : {connect : {id : portal_id}},
+        title : info.name,
+        tariff : {connect : {id : 1}},
+        chat_bot_messengers : {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}
+    },
+   })
+   return response
 }
 
 export async function getMessengersPrisma(){

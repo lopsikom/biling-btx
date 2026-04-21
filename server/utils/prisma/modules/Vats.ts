@@ -1,6 +1,7 @@
 import { vatsCreateInput, vatsUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IVatsFilter } from "~~/shared/models/APIModels";
+import {IProductRow, IVatsProduct} from "~~/shared/models/bitrixModels"
 
 export async function getVatsList(data : {portal_id? : number, filter? : IVatsFilter}){
     const {portal_id, filter} = data
@@ -88,4 +89,45 @@ export async function postVatsPrisma(data : vatsCreateInput){
         }
     })
     return response
+}
+
+export async function upsertVatsProductPrisma(data : {info : IVatsProduct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = prisma.vats.upsert({
+    where : {portal_id_bitrix_id :{
+        bitrix_id : info.id,
+        portal_id : portal_id
+    }},
+    create : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        additional_users : 10,
+        duration : 10,
+        active : true,
+        bitrix_id : productRows.id,
+        product_id : productRows.productId,
+        portal : {connect : {id : portal_id}},
+        title : info.name,
+        tariff : {connect : {id : 1}},
+    },
+    update : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        lines_count : 10,
+        duration : 10,
+        active : true,
+        bitrix_id : productRows.id,
+        product_id : productRows.productId,
+        portal : {connect : {id : portal_id}},
+        title : info.name,
+        tariff : {connect : {id : 1}}
+    },
+   })
+   return response
 }

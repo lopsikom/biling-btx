@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     RedisUrl : "redis",
     RedisPort : 6379,
     ContractIdBitrix : 1058,
+    ContractStringIdBitrix : "T422",
     DatabaseUrl : "",
     public : {
       dev : process.env.DEV ?? false,

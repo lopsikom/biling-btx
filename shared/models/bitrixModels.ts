@@ -710,3 +710,159 @@ export interface ICompanyNew {
   phone: string;
   entityTypeId: number;
 }
+
+export interface IProductRow {
+  id:               number;
+  ownerId:          number;
+  ownerType:        string;
+  productId:        number;
+  productName:      ProductEnum;
+  price:            number;
+  priceAccount:     number;
+  priceExclusive:   number;
+  priceNetto:       number;
+  priceBrutto:      number;
+  quantity:         number;
+  discountTypeId:   1 | 2;
+  discountRate:     number;
+  discountSum:      number;
+  taxRate:          number | null;
+  taxIncluded:      "Y" | "N";
+  customized:       "Y" | "N";
+  measureCode:      number;
+  measureName:      string;
+  sort:             number;
+  xmlId:            string;
+  type:             1 | 2 | 3 | 4 | 5 | 6;
+  storeId:          number;
+}
+
+export enum ProductEnum {
+    AUTOINFO = "Обзвон",
+    SMS = "Рассылка в sms",
+    VATS = "ВАТС",
+    WEB_FORM = "Веб-форма",
+    VOICE_ROBOT = "Голосовой робот",
+    CHAT_BOT = "Чат-бот"
+}
+
+export interface ICatalogProduct {
+  id:                 number;
+  iblockId:           number;       // ID инфоблока каталога (16 = варианты SKU)
+  name:               string;       // Название товара
+  active:             "Y" | "N";   // Активен ли товар
+  available:          "Y" | "N";   // Доступен для покупки
+  sort:               number;       // Порядок сортировки
+  productName:        string;
+  code:               string | null; // Символьный код (slug)
+  xmlId:              string | null; // Внешний ID для синхронизации
+
+  type:               1 | 2 | 3 | 4 | 5 | 6;
+  // 1 = обычный товар
+  // 2 = комплект
+  // 3 = товар с вариантами (SKU)
+  // 4 = вариант SKU (дочерний элемент)
+  // 5 = свободный SKU (без родителя)
+  // 6 = невалидный SKU
+
+  parentId:           { value: string; valueId: string } | null;
+  // Родительский товар (для type=4, т.е. SKU → родитель type=3)
+
+  bundle:             "Y" | "N";   // Является ли комплектом
+  barcodeMulti:       "Y" | "N";   // Несколько штрихкодов
+  canBuyZero:         "Y" | "N";   // Можно купить при нулевом остатке
+  subscribe:          "Y" | "N";   // Подписка
+  withoutOrder:       "Y" | "N";   // Без оформления заказа
+
+  quantity:           number | null;          // Остаток на складе
+  quantityReserved:   number | null;          // Зарезервировано
+  quantityTrace:      "Y" | "N" | "D";       // Учёт остатков (D = по умолчанию)
+
+  purchasingPrice:    number | null;          // Закупочная цена
+  purchasingCurrency: string | null;          // Валюта закупочной цены
+
+  vatId:              number | null;          // ID ставки НДС
+  vatIncluded:        "Y" | "N";             // НДС включён в цену
+
+  measure:            number | null;          // Код единицы измерения (ОКЕИ)
+  weight:             number | null;          // Вес (г)
+  width:              number | null;          // Ширина (мм)
+  height:             number | null;          // Высота (мм)
+  length:             number | null;          // Длина (мм)
+
+  previewText:        string | null;          // Краткое описание
+  previewTextType:    "text" | "html";
+  detailText:         string | null;          // Подробное описание
+  detailTextType:     "text" | "html";
+  previewPicture:     number | null;          // ID файла превью
+  detailPicture:      number | null;          // ID файла детального фото
+
+  iblockSectionId:    number | null;          // ID основного раздела каталога
+  iblockSection:      number[] | null;        // Все разделы (множественная привязка)
+
+  recurSchemeType:    "D" | "W" | "M" | "Q" | "Y"; // Период подписки
+  recurSchemeLength:  number | null;          // Длина периода подписки
+  trialPriceId:       number | null;          // ID пробной цены
+
+  createdBy:          number;                 // ID пользователя, создавшего товар
+  modifiedBy:         number;                 // ID пользователя, изменившего товар
+  dateCreate:         string;                 // Дата создания (ISO 8601)
+  timestampX:         string;                 // Дата последнего изменения (ISO 8601)
+  dateActiveFrom:     string | null;          // Начало активности
+  dateActiveTo:       string | null;          // Конец активности
+}
+
+
+export interface IChatBotProduct extends ICatalogProduct {
+
+  // ── Каналы коммуникации ────────────────────────────────────────────────────
+  productName : "Чат-бот",
+  property317: "Y" | "N"; // Max         — подключён канал Mango/Max
+  property318: "Y" | "N"; // Tg          — подключён Telegram
+  property319: "Y" | "N"; // Виджет      — подключён веб-виджет
+  property320: "Y" | "N"; // WhatsApp    — подключён WhatsApp
+  property321: "Y" | "N"; // VK          — подключён ВКонтакте
+}
+export interface IVoiceRobotProduct extends ICatalogProduct {
+
+  // ── Каналы коммуникации ────────────────────────────────────────────────────
+  productName : "Голосовой робот",
+  property310 : { // тариф
+    value : string,
+    valueEnum : string,
+    valuedId : string
+  }
+  property311 : { // количество линий
+    value : string,
+    valueEnum : string,
+    valuedId : string
+  }
+}
+export interface IVatsProduct extends ICatalogProduct{
+    productName : "ВАТС"
+}
+export interface IWebFormProdruct extends ICatalogProduct{
+    productName : "Веб-форма",
+    property314 : { // тариф
+        value : string,
+        valueEnum : string,
+        valuedId : string
+    }
+}
+export interface ISmsProduct extends ICatalogProduct{
+    productName : "Рассылка в sms" | "Обзвон",
+    property309 : { // Канал связи
+        value : string,
+        valueEnum : string,
+        valuedId : string
+    }
+}
+export interface IAutoInfoProduct extends ISmsProduct {
+    productName : "Обзвон",
+    property308 : { // РР
+        value : string,
+        valueEnum : string,
+        valuedId : string
+    }
+}
+export type AnyProduct = IChatBotProduct | IVoiceRobotProduct | IVatsProduct | IWebFormProdruct | ISmsProduct | IAutoInfoProduct;

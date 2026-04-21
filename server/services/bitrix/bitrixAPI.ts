@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from "axios"
-import { IAppInfo, IBitrixToken, ICompnany, IContractBitrix, IResponseArrayNewBitrix, IResponseNewBitrix, IUser, NewBitrixCompany } from "../models"
+import { AnyProduct, IAppInfo, IBitrixToken, ICatalogProduct, ICompnany, IContractBitrix, IProductRow, IResponseArrayNewBitrix, IResponseNewBitrix, IUser, NewBitrixCompany } from "../models"
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 import { config } from "process"
 
@@ -121,6 +121,26 @@ export class bitrixAPI {
             }
         })
         return response.data as IResponseArrayNewBitrix<T>
+    }
+    async getProductRowContract(domain : string, token : string, ownerId : string, ownerType : string){
+        const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.list`,{
+            "=ownerId" : ownerId,
+            "=ownerType" : ownerType
+        },{
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<{productRows : IProductRow[]}>
+    }
+    async getProductInfo(domain : string, token : string, id : number){
+        const response = await this.AxiosClient.get(`https://${domain}/rest/catalog.product.get`,{
+            params : {
+                auth : token,
+                id : id
+            }
+        })
+        return response.data as bitrixResponse<{product : AnyProduct}>
     }
 }
 
