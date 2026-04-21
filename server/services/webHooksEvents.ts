@@ -69,6 +69,11 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 const p = _.info.result.product;
                 const r = _.productRows;
                 const key = p.productName as keyof ProductFuncRecord;
+                console.log({
+                key,
+                recordKeys: Object.keys(productFuncRecord),
+                enumValues: Object.values(ProductEnum),
+                });
                 (productFuncRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
                     { info: p, productRows: r },
                     portal.portal.id
