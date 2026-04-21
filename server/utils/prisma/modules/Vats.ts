@@ -119,7 +119,6 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
             portal_id : portal_id
         }}},
         price : productRows.price,
-        lines_count : 10,
         duration : 10,
         active : true,
         bitrix_id : productRows.id,

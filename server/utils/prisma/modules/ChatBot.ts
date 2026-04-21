@@ -171,7 +171,7 @@ export async function upsertChatBotProductPrisma(data : {info : IChatBotProduct,
         portal : {connect : {id : portal_id}},
         title : info.name,
         tariff : {connect : {id : 1}},
-        chat_bot_messengers : {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}
+        chat_bot_messengers : {create : messengers.map(m => { return {messenger_id : m}})}
     },
     update : {
         contract : {connect : {portal_id_bitrix_id : {
