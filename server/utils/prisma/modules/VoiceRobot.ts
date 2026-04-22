@@ -83,7 +83,7 @@ export async function postVoiceRobotPrisma(data : voice_robotCreateInput){
 }
 export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotProduct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
-    const response = prisma.voice_robot.upsert({
+    const response = await prisma.voice_robot.upsert({
         where : {portal_id_bitrix_id : {
             bitrix_id : info.id,
             portal_id : portal_id
@@ -119,4 +119,26 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
     })
     return response
 }
+
+export async function postVoiceRobotProductPrisma(data : {info : IVoiceRobotProduct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = await prisma.voice_robot.create({
+        data : {
+            contract : {connect : {portal_id_bitrix_id : {
+                bitrix_id  : productRows.ownerId,
+                portal_id : portal_id
+            }}},
+            tariff : {connect : {id : info.property310.valueEnum === "Базовый" ? 1 : 2}},
+            lines : Number(info.property311.valueEnum),
+            active : true,
+            price : productRows.price,
+            title : info.name,
+            bitrix_id : productRows.id,
+            product_id : productRows.productId,
+            portal : {connect : {id : portal_id}}
+        },
+    })
+    return response
+}
+
 export type VoiceRobotPrisma = NonNullable<Awaited<ReturnType<typeof getVoiceRobotByIdPrisma>>>

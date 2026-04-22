@@ -196,3 +196,31 @@ export async function getMessengersPrisma(){
     const response = prisma.messengers.findMany();
     return response
 }
+
+export async function postChatBotProductPrisma(data : {info : IChatBotProduct, productRows : IProductRow}, portal_id : number){
+   const {info, productRows} = data
+   const messengers : number[] = []
+   if(info.property317 === "Y") messengers.push(1) //Ахуенный костыль
+   if(info.property318 === "Y") messengers.push(4)
+   if(info.property319 === "Y") messengers.push(2)
+   if(info.property320 === "Y") messengers.push(6)
+   if(info.property321 === "Y") messengers.push(3)
+   const response = prisma.chat_bot.create({
+        data : {
+            contract : {connect : {portal_id_bitrix_id : {
+                bitrix_id : productRows.ownerId,
+                portal_id : portal_id
+            }}},
+            price : productRows.price,
+            lines_count : 10,
+            active : true,
+            bitrix_id : productRows.id,
+            product_id : productRows.productId,
+            portal : {connect : {id : portal_id}},
+            title : info.name,
+            tariff : {connect : {id : 1}},
+            chat_bot_messengers : {create : messengers.map(m => { return {messenger_id : m}})}
+        },
+    })
+   return response
+}

@@ -178,3 +178,23 @@ export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct
    })
    return response
 }
+
+export async function postWebFormProducPrisma(data : {info : IWebFormProdruct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = prisma.webform.create({
+        data : {
+            contract : {connect : {portal_id_bitrix_id : {
+                bitrix_id : productRows.ownerId,
+                portal_id : portal_id
+            }}},
+            price : productRows.price,
+            active : true,
+            bitrix_id : productRows.id,
+            product_id : productRows.productId,
+            portal : {connect : {id : portal_id}},
+            title : info.name,
+            tariff : {connect : {id : 1}},
+        }
+    })
+    return response
+}

@@ -93,7 +93,7 @@ export async function postVatsPrisma(data : vatsCreateInput){
 
 export async function upsertVatsProductPrisma(data : {info : IVatsProduct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
-    const response = prisma.vats.upsert({
+    const response = await prisma.vats.upsert({
     where : {portal_id_bitrix_id :{
         bitrix_id : info.id,
         portal_id : portal_id
@@ -129,4 +129,26 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
     },
    })
    return response
+}
+
+export async function postVatsProductPrisma(data : {info : IVatsProduct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = await prisma.vats.create({
+        data : {
+            contract : {connect : {portal_id_bitrix_id : {
+                bitrix_id : productRows.ownerId,
+                portal_id : portal_id
+            }}},
+            price : productRows.price,
+            additional_users : 10,
+            duration : 10,
+            active : true,
+            bitrix_id : productRows.id,
+            product_id : productRows.productId,
+            portal : {connect : {id : portal_id}},
+            title : info.name,
+            tariff : {connect : {id : 1}},
+        },
+    })
+    return response
 }

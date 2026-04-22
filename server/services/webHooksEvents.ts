@@ -6,11 +6,12 @@ import { redisClient } from "./redis";
 import { ICacheCompany } from "~~/shared/models/APIModels";
 import { upsertContractPrisma } from "../utils/prisma/modules/Contract";
 import getMyCompanysCache from "../utils/redis/getMyCompanys";
-import { upsertChatBotProductPrisma } from "../utils/prisma/modules/ChatBot";
-import { upsertVoiceRobotProductPrisma } from "../utils/prisma/modules/VoiceRobot";
-import { upsertVatsProductPrisma } from "../utils/prisma/modules/Vats";
-import { upsertWebFormProductPrisma } from "../utils/prisma/modules/WebForm";
-import { upsertAutoInformationProductPrisma } from "../utils/prisma/modules/AutoInfo";
+import { postChatBotProductPrisma, upsertChatBotProductPrisma } from "../utils/prisma/modules/ChatBot";
+import { postVoiceRobotProductPrisma, upsertVoiceRobotProductPrisma } from "../utils/prisma/modules/VoiceRobot";
+import { postVatsProductPrisma, upsertVatsProductPrisma } from "../utils/prisma/modules/Vats";
+import { postWebFormProducPrisma, upsertWebFormProductPrisma } from "../utils/prisma/modules/WebForm";
+import { postAutoInformationProductPrisma, upsertAutoInformationProductPrisma } from "../utils/prisma/modules/AutoInfo";
+import { getAllModulesContact } from "../utils/prisma/modules";
 
 
 export type WebHooksMap = {
@@ -35,9 +36,40 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
     if(!contract) return
-    const myCompanys = await getMyCompanysCache(portal, token.access_token);
+    const [myCompanys, products] = await Promise.all([
+        getMyCompanysCache(portal, token.access_token),
+        (async () => {
+            const productRows = await bitrixAPI.getProductRowContract(portal.portal.domain, token.access_token, contract.id!.toString(), CONTRACT_STRING_ID_BITRIX)
+            console.log("product", productRows)
+            return await Promise.all(productRows.result.productRows.map(async p => {
+                const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
+                info.result.product.productName = p.productName
+                return {productRows : p, info : info}
+            }))
+        })()
+    ])
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
-    await addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company))
+    await Promise.all([
+        addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company)),
+        Promise.all(products.map(async _ => {
+            try{
+                const p = _.info.result.product;
+                const r = _.productRows;
+                const key = p.productName as keyof ProductFuncRecord;
+                (productFuncCreateRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
+                    { info: p, productRows: r },
+                    portal.portal.id
+                );
+            }
+            catch(e){
+                console.error(e);
+            }
+        }))
+    ])
+    await saveShapshotProduct(contract.id!, portal.portal.id, products.map((p) => ({
+        id:   p.productRows.id,
+        type: p.productRows.productName,
+    })))
     console.log("Contract added")
 })
 webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
@@ -60,22 +92,21 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             }))
         })()
     ])
-
+    const prev = await getShapshotProduct(contract.id!, portal.portal.id)
+    const curr = products.map((p) => ({
+        id:   p.productRows.id,
+        type: p.productRows.productName,
+    }))
+    const deleted = findDeletedRows(prev, curr)
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
     await Promise.all([
         upsertContractPrisma(portal.portal.id, contractInputMapPrisma(contract, portal.portal.id, company)),
-        Promise.all(products.map(async _ => {
+        ...products.map(async _ => {
             try{
-                console.log("it", _)
                 const p = _.info.result.product;
                 const r = _.productRows;
                 const key = p.productName as keyof ProductFuncRecord;
-                console.log({
-                key,
-                recordKeys: Object.keys(productFuncRecord),
-                enumValues: Object.values(ProductEnum),
-                });
-                (productFuncRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
+                await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
                     { info: p, productRows: r },
                     portal.portal.id
                 );
@@ -83,8 +114,19 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             catch(e){
                 console.error(e);
             }
-        }))
+        }),
+        ...deleted.map(async (_) => {
+            try {
+                await (productFuncDeleteRecord[_.type as ProductEnum] as (
+                    id: number,
+                ) => Promise<void>)(_.id)
+            }
+            catch(e) {
+                console.error(e)
+            }
+        })
     ])
+    await saveShapshotProduct(contract.id!, portal.portal.id, curr)
     console.log("Contract updated")
 })
 
@@ -114,7 +156,7 @@ type ProductFuncRecord = {
   [K in keyof ProductDataMap]: (data: ProductDataMap[K], portal_id: number) => Promise<void>;
 };
 
-const productFuncRecord: ProductFuncRecord = {
+const productFuncUpsertRecord: ProductFuncRecord = {
   [ProductEnum.CHAT_BOT]: async (data, portal_id) => {await upsertChatBotProductPrisma(data, portal_id)},
   [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {await upsertVoiceRobotProductPrisma(data, portal_id)},
   [ProductEnum.VATS] : async (data, portal_id) => {await upsertVatsProductPrisma(data, portal_id)},
@@ -122,3 +164,41 @@ const productFuncRecord: ProductFuncRecord = {
   [ProductEnum.SMS] : async (data, portal_id) => {await upsertAutoInformationProductPrisma(data, portal_id)},
   [ProductEnum.AUTOINFO] : async (data, portal_id) => {await upsertAutoInformationProductPrisma(data, portal_id)}
 };
+const productFuncCreateRecord: ProductFuncRecord = {
+  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {await postChatBotProductPrisma(data, portal_id)},
+  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {await postVoiceRobotProductPrisma(data, portal_id)},
+  [ProductEnum.VATS] : async (data, portal_id) => {await postVatsProductPrisma(data, portal_id)},
+  [ProductEnum.WEB_FORM] : async (data, portal_id) => {await postWebFormProducPrisma(data, portal_id)},
+  [ProductEnum.SMS] : async (data, portal_id) => {await postAutoInformationProductPrisma(data, portal_id)},
+  [ProductEnum.AUTOINFO] : async (data, portal_id) => {await postAutoInformationProductPrisma(data, portal_id)}
+};
+
+const productFuncDeleteRecord = {
+  [ProductEnum.CHAT_BOT]: async (id : number) => {await deleteChatBotPrisma(id)},
+  [ProductEnum.VOICE_ROBOT]: async (id : number) => {await deleteVoiceRobotPrisma(id)},
+  [ProductEnum.VATS] : async (id : number) => {await deleteVatsPrisma(id)},
+  [ProductEnum.WEB_FORM] : async (id : number) => {await deleteWebForm(id)},
+  [ProductEnum.SMS] : async (id : number) => {await deleteAutoInforPrisma(id)},
+  [ProductEnum.AUTOINFO] : async (id : number) => {await deleteAutoInforPrisma(id)}
+}
+
+function findDeletedRows(prev: {id : number, type : string}[], curr: {id : number, type : string}[]): {id : number, type : string}[] {
+  const currIds = new Set(curr.map((r) => r.id));
+  return prev.filter((r) => !currIds.has(r.id));
+}
+
+async function getShapshotProduct(contract_id : number, portal_id : number) {
+    const key = `product-shapshot:${contract_id}_${portal_id}`
+    const cached = await redisClient.get(key)
+    if (cached) {
+        return JSON.parse(cached) as {id : number, type : string}[]
+    }
+    const products = await getAllModulesContact(contract_id, portal_id)
+    await saveShapshotProduct(contract_id, portal_id, products)
+    return products
+}
+
+async function saveShapshotProduct(contract_id : number, portal_id : number, data : {id : number, type : string}[]){
+    const key = `product-shapshot:${contract_id}_${portal_id}`
+    await redisClient.set(key, JSON.stringify(data), "EX", 60*60*24)
+}
