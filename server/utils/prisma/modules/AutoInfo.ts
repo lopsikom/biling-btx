@@ -92,7 +92,7 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
     const type = productRows.productName === "Обзвон" ? ((info as IAutoInfoProduct).property308.valueEnum === "с РР" ? 2 : 1) : 3
     const response = prisma.autoinformation_module.upsert({
     where : {portal_id_bitrix_id :{
-        bitrix_id : info.id,
+        bitrix_id : productRows.id,
         portal_id : portal_id
     }},
     create : {
@@ -118,9 +118,6 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
         price : productRows.price,
         quantity : 10,
         active : true,
-        bitrix_id : productRows.id,
-        product_id : productRows.productId,
-        portal : {connect : {id : portal_id}},
         title : info.name,
         tariff : {connect : {id : 1}},
     },

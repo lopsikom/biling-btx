@@ -85,7 +85,7 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
     const {info, productRows} = data
     const response = await prisma.voice_robot.upsert({
         where : {portal_id_bitrix_id : {
-            bitrix_id : info.id,
+            bitrix_id : productRows.id,
             portal_id : portal_id
         }},
         create : {
@@ -111,10 +111,7 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
             lines : Number(info.property311.valueEnum),
             active : true,
             price : productRows.price,
-            title : info.name,
-            bitrix_id : productRows.id,
-            product_id : productRows.productId,
-            portal : {connect : {id : portal_id}}
+            title : info.name
         }
     })
     return response

@@ -95,7 +95,7 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
     const {info, productRows} = data
     const response = await prisma.vats.upsert({
     where : {portal_id_bitrix_id :{
-        bitrix_id : info.id,
+        bitrix_id : productRows.id,
         portal_id : portal_id
     }},
     create : {
@@ -121,9 +121,6 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
         price : productRows.price,
         duration : 10,
         active : true,
-        bitrix_id : productRows.id,
-        product_id : productRows.productId,
-        portal : {connect : {id : portal_id}},
         title : info.name,
         tariff : {connect : {id : 1}}
     },

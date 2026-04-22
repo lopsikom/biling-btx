@@ -155,7 +155,7 @@ export async function upsertChatBotProductPrisma(data : {info : IChatBotProduct,
    if(info.property321 === "Y") messengers.push(3)
    const response = prisma.chat_bot.upsert({
     where : {portal_id_bitrix_id :{
-        bitrix_id : info.id,
+        bitrix_id : productRows.id,
         portal_id : portal_id
     }},
     create : {
@@ -181,9 +181,6 @@ export async function upsertChatBotProductPrisma(data : {info : IChatBotProduct,
         price : productRows.price,
         lines_count : 10,
         active : true,
-        bitrix_id : productRows.id,
-        product_id : productRows.productId,
-        portal : {connect : {id : portal_id}},
         title : info.name,
         tariff : {connect : {id : 1}},
         chat_bot_messengers : {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}
