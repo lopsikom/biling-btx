@@ -49,9 +49,10 @@ export async function getAutoinformationByIdPrisma(id : number){
 
 
 
-export  async function deleteAutoInforPrisma(id : number){
-    const response = await prisma.autoinformation_module.delete({
-        where : {id : id},
+export  async function deleteAutoInforPrisma(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.autoinformation_module.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -59,6 +60,17 @@ export  async function deleteAutoInforPrisma(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.autoinformation_module.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 
 export async function patchAutoinfromationPrisma(id : number, data : autoinformation_moduleUpdateInput) {

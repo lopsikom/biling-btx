@@ -45,9 +45,10 @@ export async function getVoiceRobotByIdPrisma(id : number){
     })
     return response
 }
-export async function deleteVoiceRobotPrisma(id : number){
-    const response = await prisma.voice_robot.delete({
-        where : {id : id},
+export async function deleteVoiceRobotPrisma(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.voice_robot.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -55,6 +56,17 @@ export async function deleteVoiceRobotPrisma(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.voice_robot.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 export async function patchVoiceRobotPrisma(id : number, data : voice_robotUpdateInput){
     const response = prisma.voice_robot.update({

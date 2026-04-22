@@ -67,7 +67,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
         }))
     ])
     await saveShapshotProduct(contract.id!, portal.portal.id, products.map((p) => ({
-        id:   p.productRows.id,
+        bitrix_id:   p.productRows.id,
+        portal_id : portal.portal.id,
         type: p.productRows.productName,
     })))
     console.log("Contract added")
@@ -94,7 +95,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     ])
     const prev = await getShapshotProduct(contract.id!, portal.portal.id)
     const curr = products.map((p) => ({
-        id:   p.productRows.id,
+        bitrix_id:   p.productRows.id,
+        portal_id: portal.portal.id,
         type: p.productRows.productName,
     }))
     const deleted = findDeletedRows(prev, curr)
@@ -119,7 +121,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             try {
                 await (productFuncDeleteRecord[_.type as ProductEnum] as (
                     id: number,
-                ) => Promise<void>)(_.id)
+                    portal_id : number
+                ) => Promise<void>)(_.bitrix_id, _.portal_id)
             }
             catch(e) {
                 console.error(e)
@@ -174,31 +177,31 @@ const productFuncCreateRecord: ProductFuncRecord = {
 };
 
 const productFuncDeleteRecord = {
-  [ProductEnum.CHAT_BOT]: async (id : number) => {await deleteChatBotPrisma(id)},
-  [ProductEnum.VOICE_ROBOT]: async (id : number) => {await deleteVoiceRobotPrisma(id)},
-  [ProductEnum.VATS] : async (id : number) => {await deleteVatsPrisma(id)},
-  [ProductEnum.WEB_FORM] : async (id : number) => {await deleteWebForm(id)},
-  [ProductEnum.SMS] : async (id : number) => {await deleteAutoInforPrisma(id)},
-  [ProductEnum.AUTOINFO] : async (id : number) => {await deleteAutoInforPrisma(id)}
+  [ProductEnum.CHAT_BOT]: async (id : number, portal_id : number) => {await deleteChatBotPrisma(id,portal_id)},
+  [ProductEnum.VOICE_ROBOT]: async (id : number, portal_id : number) => {await deleteVoiceRobotPrisma(id,portal_id)},
+  [ProductEnum.VATS] : async (id : number, portal_id : number) => {await deleteVatsPrisma(id,portal_id)},
+  [ProductEnum.WEB_FORM] : async (id : number, portal_id : number) => {await deleteWebForm(id,portal_id)},
+  [ProductEnum.SMS] : async (id : number, portal_id : number) => {await deleteAutoInforPrisma(id,portal_id)},
+  [ProductEnum.AUTOINFO] : async (id : number, portal_id : number) => {await deleteAutoInforPrisma(id,portal_id)}
 }
 
-function findDeletedRows(prev: {id : number, type : string}[], curr: {id : number, type : string}[]): {id : number, type : string}[] {
-  const currIds = new Set(curr.map((r) => r.id));
-  return prev.filter((r) => !currIds.has(r.id));
+function findDeletedRows(prev: { bitrix_id : number, portal_id : number, type: string }[], curr: {bitrix_id : number, portal_id : number, type : string}[]): {bitrix_id : number, portal_id : number, type : string}[] {
+  const currIds = new Set(curr.map((r) => r.bitrix_id!));
+  return prev.filter((r) => !currIds.has(r.bitrix_id));
 }
 
 async function getShapshotProduct(contract_id : number, portal_id : number) {
     const key = `product-shapshot:${contract_id}_${portal_id}`
     const cached = await redisClient.get(key)
     if (cached) {
-        return JSON.parse(cached) as {id : number, type : string}[]
+        return JSON.parse(cached) as {bitrix_id : number, portal_id : number, type : string}[]
     }
     const products = await getAllModulesContact(contract_id, portal_id)
     await saveShapshotProduct(contract_id, portal_id, products)
-    return products
+    return products.filter(p => p.bitrix_id && p.portal_id)
 }
 
-async function saveShapshotProduct(contract_id : number, portal_id : number, data : {id : number, type : string}[]){
+async function saveShapshotProduct(contract_id : number, portal_id : number, data : {bitrix_id : number, portal_id : number, type : string}[]){
     const key = `product-shapshot:${contract_id}_${portal_id}`
     await redisClient.set(key, JSON.stringify(data), "EX", 60*60*24)
 }

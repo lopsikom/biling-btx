@@ -81,9 +81,10 @@ export async function getWebformTypeWebformPrisma(id : number){
     })
     return response
 }
-export  async function deleteWebForm(id : number){
-    const response = await prisma.webform.delete({
-        where : {id : id},
+export  async function deleteWebForm(id : number, portal_id? : number){
+if(portal_id){
+        const response = await prisma.webform.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -91,6 +92,17 @@ export  async function deleteWebForm(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.webform.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 
 export  async function getIntegrations(){

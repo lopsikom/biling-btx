@@ -89,9 +89,10 @@ export async function getChatBotMessengersPrisma(id : number){
     })
     return response.map(m => m.messengers.name);
 }
-export async function deleteChatBotPrisma(id : number){
-    const response = await prisma.chat_bot.delete({
-        where : {id : id},
+export async function deleteChatBotPrisma(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.chat_bot.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -99,6 +100,17 @@ export async function deleteChatBotPrisma(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.chat_bot.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 export async function patchChatBotPrisma(id : number, data : chat_botUpdateInput, messengers? : number[]){
     if(messengers) data.chat_bot_messengers = {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}

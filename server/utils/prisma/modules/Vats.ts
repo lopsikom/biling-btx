@@ -52,9 +52,10 @@ export async function getVatsById(id : number){
     return response
 }
 
-export  async function deleteVatsPrisma(id : number){
-    const response = await prisma.vats.delete({
-        where : {id : id},
+export async function deleteVatsPrisma(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.vats.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -62,6 +63,17 @@ export  async function deleteVatsPrisma(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.vats.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 
 export  async function patchVatsPrisma(id :number, data : vatsUpdateInput ){
