@@ -17,6 +17,9 @@ export default class companyClient{
             'Content-Type': 'application/json'
         }});
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
+            if (!config.params) {
+                config.params = {};
+            }
             if(!config.params.auth) {
                 const parseToken = await redisClient.get(`token:${this.portal_id}`);
                 console.log("parseToken ", parseToken)
