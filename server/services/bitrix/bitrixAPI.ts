@@ -187,7 +187,7 @@ export class bitrixAPI {
     }
     async updateProductRowContract(domain : string, token : string, product_id : number, body : object){
         const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.update`,{
-            id : product_id
+            id : product_id,
             ...body
         } , {
             params : {
