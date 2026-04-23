@@ -15,6 +15,11 @@ export default defineEventHandler(async (event) => {
         const prismaBody = vatsInputMapPrisma(Zbody);
         const contract = await getContractById(Zbody.contract_id);
         if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
+        console.log({
+            domain: portal.portal.domain,
+            portalId: portal.portal.id,
+            bitrixId: contract.company.bitrix_id
+            })
         const company = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
         const product = await setProductBitrix<IVatsProductCreate>(company, {contract_id : contract.bitrix_id, price : Zbody.price }, {parent_id : productRecords[ProductEnum.VATS].id, data : {name : Zbody.title, active : Zbody.active ? "Y" : "N"}} )
         console.log(product)
