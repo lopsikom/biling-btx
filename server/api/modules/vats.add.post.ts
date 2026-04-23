@@ -1,4 +1,5 @@
 import { ZodError } from "zod";
+import companyClient from "~~/server/services/bitrix/CompanyClient";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { vatsInputMapPrisma } from "~~/server/utils/mappers";
 import { postVatsPrisma } from "~~/server/utils/prisma/modules/Vats";
@@ -14,7 +15,8 @@ export default defineEventHandler(async (event) => {
         const prismaBody = vatsInputMapPrisma(Zbody);
         const contract = await getContractById(Zbody.contract_id);
         if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
-        const product = await setProductBitrix<IVatsProductCreate>(portal.portal.domain, portal.portal.access_token!, {contract_id : contract.bitrix_id, price : Zbody.price }, {parent_id : productRecords[ProductEnum.VATS].id, data : {name : Zbody.title, active : Zbody.active ? "Y" : "N"}} )
+        const company = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
+        const product = await setProductBitrix<IVatsProductCreate>(company, {contract_id : contract.bitrix_id, price : Zbody.price }, {parent_id : productRecords[ProductEnum.VATS].id, data : {name : Zbody.title, active : Zbody.active ? "Y" : "N"}} )
         prismaBody.bitrix_id = product.productRow.result.productRow.id;
         prismaBody.product_id = product.productCatalog.result.offer.id;
         prismaBody.product_id = portal.portal.id;

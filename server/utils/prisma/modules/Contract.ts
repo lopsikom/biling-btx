@@ -57,7 +57,12 @@ export async function getContractById(id : number){
             id : id
         },
         include : {
-            contract_status : true
+            contract_status : true,
+            company : {select : {
+                id : true,
+                title : true,
+                bitrix_id : true
+            }}
         }
     })
     return response
