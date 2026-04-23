@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import companyClient from "~~/server/services/bitrix/CompanyClient";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
+import { saveShapshotProduct } from "~~/server/services/webHooksEvents";
 import { contractInputMapPrisma, contractMapBitrix } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { addContractPrisma } from "~~/server/utils/prisma/modules/Contract";
@@ -24,6 +25,7 @@ export default defineEventHandler(async (event) => {
             entityName : contract.name,
             companyid : contract.company_id
         } as EventEntity)
+        await saveShapshotProduct(contract.bitrix_id!, portal!.portal.id, [])
         return contractGetMapPrisma(contract);
     }catch(e){
         console.error(e)

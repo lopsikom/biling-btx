@@ -1,7 +1,8 @@
 import axios, {AxiosInstance} from "axios"
-import { AnyProduct, IAppInfo, IBitrixToken, ICatalogProduct, ICompnany, IContractBitrix, IProductRow, IResponseArrayNewBitrix, IResponseNewBitrix, IUser, NewBitrixCompany } from "../models"
+import { AnyProduct, IAppInfo, IBitrixToken, ICatalogProduct, ICompnany, IContractBitrix, IProductCatalogCreate, IProductRow, IResponseArrayNewBitrix, IResponseNewBitrix, IUser, NewBitrixCompany } from "../models"
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 import { config } from "process"
+import { useNuxtApp } from "nuxt/app"
 
 export interface bitrixResponse<T>{
     result : T,
@@ -159,6 +160,63 @@ export class bitrixAPI {
         })
         return response.data as bitrixResponse<{product : AnyProduct}>
     }
+    async setProductRowContract(domain : string, token : string, contract_id : number, product_id : number, ownerType : string, price : number){
+        const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.add`,{
+            ownerId : contract_id,
+            ownerType : ownerType,
+            productId : product_id,
+            price : price
+        } , {
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<{productRow : IProductRow}>
+    }
+    async updateCatalogProduct<T extends IProductCatalogCreate>(domain : string, token : string, product_id : number, ownerType : string,  data : T){
+        const repsonse = await this.AxiosClient.post(`https://${domain}/rest/catalog.product.update`, {
+            id : product_id,
+            ownerType : ownerType,
+            fields : data
+        }, {
+            params : {
+                auth : token
+            }
+        })
+        return repsonse.data as bitrixResponse<{product : AnyProduct}>
+    }
+    async updateProductRowContract(domain : string, token : string, product_id : number, body : object){
+        const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.update`,{
+            id : product_id,
+            ...body
+        } , {
+            params : {
+                auth : token
+            }
+        })
+        return response.data as bitrixResponse<{productRow : IProductRow}>
+    }
+    async deleteProductRow(domain: string, token: string, product_id: number) {
+        const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.productrow.delete`, {
+            id: product_id
+        }, {
+            params: { auth: token }
+        })
+        return response.data as bitrixResponse<boolean>
+    }
+    async addCatalogProduct<T extends IProductCatalogCreate>(domain: string, token: string, parentId: number, body: T) {
+        const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.product.offer.add`, {
+            fields: {
+                iblockId : 16,
+                parentId : parentId,
+                ...body
+            }
+        }, {
+            params: { auth: token }
+        })
+        return response.data as bitrixResponse<{ offer: AnyProduct }>
+    }
+    
 }
 
 export default new bitrixAPI();

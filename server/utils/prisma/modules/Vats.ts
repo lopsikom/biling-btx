@@ -122,7 +122,7 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
         bitrix_id : productRows.id,
         product_id : productRows.productId,
         portal : {connect : {id : portal_id}},
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
     update : {
@@ -133,7 +133,7 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
         price : productRows.price,
         duration : 10,
         active : true,
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}}
     },
    })

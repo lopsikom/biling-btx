@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
-import { IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
+import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IProductCatalogCreate, IProductRow, IProductRowDataCreate, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 import { redisClient } from "../redis";
 
@@ -17,6 +17,9 @@ export default class companyClient{
             'Content-Type': 'application/json'
         }});
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
+            if (!config.params) {
+                config.params = {};
+            }
             if(!config.params.auth) {
                 const parseToken = await redisClient.get(`token:${this.portal_id}`);
                 console.log("parseToken ", parseToken)
@@ -44,6 +47,21 @@ export default class companyClient{
                 return config
             }
             return config
+        })
+        this.axiosClient.interceptors.response.use((response) => response,(error) => {
+            const { response, request, config, message } = error;
+
+            console.group(`❌ ERROR [${config?.method?.toUpperCase()}] ${config?.url}`);
+
+            if (response) {
+                console.error(`Status:  ${response.status} ${response.statusText}`);
+                console.error('Data:   ', response.data);
+                console.error('Headers:', response.headers);
+            }
+            else if (request) {
+                console.error('📡 Нет ответа от сервера');
+                console.error('Request:', request);
+            }
         })
     }   
 
@@ -133,7 +151,90 @@ export default class companyClient{
         })
         return response.data as IResponseNewBitrix<IContractBitrix>
     }
-    
+    async getProductRowContract(ownerId: string, ownerType: string) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.list', {
+            filter: {
+                "=ownerId": ownerId,
+                "=ownerType": ownerType
+            }
+        })
+        return response.data as bitrixResponse<{ productRows: IProductRow[] }>
+    }
+    async getProductRowById(id : number){
+        const response = await this.axiosClient.post('crm.item.productrow.get', {id : id})
+        return response.data as bitrixResponse<{productRow : IProductRow}>
+    }
+
+    async getProductInfo(id: number) {
+        const response = await this.axiosClient.get('/rest/catalog.product.get', {
+            params: { id }
+        })
+        return response.data as bitrixResponse<{ product: AnyProduct }>
+    }
+
+    async addProductRow(contract_id: number, product_id: number, ownerType: string, body : IProductRowDataCreate) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.add', {
+            fields: {
+                ownerId:   contract_id,
+                ownerType: ownerType,
+                productId: product_id,
+                ...body,
+            }
+        })
+        return response.data as bitrixResponse<{ productRow: IProductRow }>
+    }
+
+    async updateProductRow(product_id: number, body: object) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.update', {
+            id: product_id,
+            fields : body
+        })
+        return response.data as bitrixResponse<{ productRow: IProductRow }>
+    }
+
+    async deleteProductRow(product_id: number) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.delete', {
+            id: product_id
+        })
+        return response.data as bitrixResponse<boolean>
+    }
+    async deleteProductOffer(product_id: number){
+        const response = await this.axiosClient.post(`/rest/catalog.product.offer.delete`, {
+            id : product_id
+        })
+        return response.data
+    }
+
+    async updateCatalogProduct<T extends IProductCatalogCreate>(product_id: number, data: Partial<T>) {
+        const response = await this.axiosClient.post('/rest/catalog.product.offer.update', {
+            id:     product_id,
+            fields: data
+        })
+        return response.data as bitrixResponse<{ product: AnyProduct }>
+    }
+
+    async addCatalogProduct<T extends IProductCatalogCreate>(parentId: number, body: T) {
+        const response = await this.axiosClient.post('/rest/catalog.product.offer.add', {
+            fields: {
+                iblockId: 16,
+                parentId: parentId,
+                ...body
+            }
+        })
+        return response.data as bitrixResponse<{ offer: AnyProduct }>
+    }
+
+    async setCatalogPrice(productId: number, price: number, currency = "RUB", catalogGroupId = 1) {
+        const response = await this.axiosClient.post('/rest/catalog.price.add', {
+            fields: {
+                productId:      productId,
+                catalogGroupId: catalogGroupId,
+                price:          price,
+                currency:       currency,
+            }
+        })
+        return response.data as bitrixResponse<{ price: { id: number } }>
+    }
 
 }
 

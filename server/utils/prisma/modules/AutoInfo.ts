@@ -119,7 +119,7 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
         bitrix_id : productRows.id,
         product_id : productRows.productId,
         portal : {connect : {id : portal_id}},
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
     update : {
@@ -130,7 +130,7 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
         price : productRows.price,
         quantity : 10,
         active : true,
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
    })

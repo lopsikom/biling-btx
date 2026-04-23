@@ -32,6 +32,11 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     if(data.data.FIELDS.ENTITY_TYPE_ID !== CONTRACT_ID_BITRIX.toString()) return
     const portal = await getPortalByUserBitrix(data.auth.access_token);
     if(!portal) return
+    const locked = await redisClient.get(`lock:contract:${data.data.FIELDS.ID}_${portal.portal.id}`)
+    if (locked) {
+        console.log(`[webhook] пропускаем — изменение инициировано нами`)
+        return
+    }
     const token = await getBitrixTokenByRedis(portal);
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
@@ -77,6 +82,11 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     if(data.data.FIELDS.ENTITY_TYPE_ID !== CONTRACT_ID_BITRIX.toString()) return
     const portal = await getPortalByUserBitrix(data.auth.access_token);
     if(!portal) return
+        const locked = await redisClient.get(`lock:contract:${data.data.FIELDS.ID}_${portal.portal.id}`)
+    if (locked) {
+        console.log(`[webhook] пропускаем — изменение инициировано нами`)
+        return
+    }
     const token = await getBitrixTokenByRedis(portal);
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX.toString(), data.data.FIELDS.ID)).result.item;
@@ -190,7 +200,7 @@ function findDeletedRows(prev: { bitrix_id : number, portal_id : number, type: s
   return prev.filter((r) => !currIds.has(r.bitrix_id));
 }
 
-async function getShapshotProduct(contract_id : number, portal_id : number) {
+export async function getShapshotProduct(contract_id : number, portal_id : number) {
     const key = `product-shapshot:${contract_id}_${portal_id}`
     const cached = await redisClient.get(key)
     if (cached) {
@@ -201,7 +211,7 @@ async function getShapshotProduct(contract_id : number, portal_id : number) {
     return products.filter(p => p.bitrix_id && p.portal_id)
 }
 
-async function saveShapshotProduct(contract_id : number, portal_id : number, data : {bitrix_id : number, portal_id : number, type : string}[]){
+export async function saveShapshotProduct(contract_id : number, portal_id : number, data : {bitrix_id : number, portal_id : number, type : string}[]){
     const key = `product-shapshot:${contract_id}_${portal_id}`
     await redisClient.set(key, JSON.stringify(data), "EX", 60*60*24)
 }

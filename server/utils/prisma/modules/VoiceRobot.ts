@@ -109,7 +109,7 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
             lines : Number(info.property311.valueEnum),
             active : true,
             price : productRows.price,
-            title : info.name,
+            title : productRows.productName,
             bitrix_id : productRows.id,
             product_id : productRows.productId,
             portal : {connect : {id : portal_id}}
@@ -123,7 +123,7 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
             lines : Number(info.property311.valueEnum),
             active : true,
             price : productRows.price,
-            title : info.name
+            title : productRows.productName
         }
     })
     return response

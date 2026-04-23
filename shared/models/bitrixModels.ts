@@ -865,4 +865,54 @@ export interface IAutoInfoProduct extends ISmsProduct {
         valuedId : string
     }
 }
+
+export interface IProductRowDataCreate {
+    productName : string,
+    price : number
+}
+export interface IProductCatalogCreate {
+    name : string,
+    active : "Y" | "N",
+}
+
+export interface IVatsProductCreate extends IProductCatalogCreate {}
+export interface IChatBotProductCreate extends IProductCatalogCreate, Omit<IChatBotProduct, "productName"> {}
+export interface IVoiceRobotProductCreate extends IProductCatalogCreate, Omit<IVoiceRobotProduct, "productName"> {}
+export interface IWebFormProdructCreate extends IProductCatalogCreate, Omit<IWebFormProdruct, "productName"> {}
+export interface ISmsProductCreate extends IProductCatalogCreate, Omit<ISmsProduct, "productName"> {}
+export interface IAutoInfoProductCreate extends IProductCatalogCreate, Omit<IAutoInfoProduct, "productName"> {}
+
 export type AnyProduct = IChatBotProduct | IVoiceRobotProduct | IVatsProduct | IWebFormProdruct | ISmsProduct | IAutoInfoProduct;
+export const productRecords = {
+    [ProductEnum.AUTOINFO]: {
+        iblockId: 15,
+        id: 4930,
+        name: "Обзвон"
+    },
+    [ProductEnum.SMS]: {
+        iblockId: 15,
+        id: 4933,
+        name: "Рассылка в sms"
+    },
+    [ProductEnum.VATS]: {
+        iblockId: 15,
+        id: 4973,
+        name: "ВАТС"
+    },
+    [ProductEnum.WEB_FORM]: {
+        iblockId: 15,
+        id: 4967,
+        name: "Веб-форма"
+    },
+    [ProductEnum.VOICE_ROBOT]: {
+        iblockId: 15,
+        id: 4940,
+        name: "Голосовой робот"
+    },
+    [ProductEnum.CHAT_BOT]: {
+        iblockId: 15,
+        id: 4965,
+        name: "Чат-бот"
+    },
+}
+
