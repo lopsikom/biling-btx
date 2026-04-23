@@ -2,14 +2,24 @@ import { ZodError } from "zod";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { vatsInputMapPrisma } from "~~/server/utils/mappers";
 import { postVatsPrisma } from "~~/server/utils/prisma/modules/Vats";
+import setProductBitrix from "~~/server/utils/setProductBitrix";
 import { entityType, VatsPost } from "~~/shared/models/APIModels";
+import { IVatsProductCreate, ProductEnum, productRecords } from "~~/shared/models/bitrixModels";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
-    const portal = event.context.portal;
+    const portal = event.context.portal as PortalDataType;
     try{
-        const Zbody = await VatsPost.transform(val => vatsInputMapPrisma(val)).parseAsync(body)
-        const vats = await postVatsPrisma(Zbody);
+        const Zbody = await VatsPost.parseAsync(body);
+        const prismaBody = vatsInputMapPrisma(Zbody);
+        const contract = await getContractById(Zbody.contract_id);
+        if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
+        const product = await setProductBitrix<IVatsProductCreate>(portal.portal.domain, portal.portal.access_token!, {contract_id : contract.bitrix_id, price : Zbody.price }, {parent_id : productRecords[ProductEnum.VATS].id, data : {name : Zbody.title, active : Zbody.active ? "Y" : "N"}} )
+        prismaBody.bitrix_id = product.productRow.result.productRow.id;
+        prismaBody.product_id = product.productCatalog.result.offer.id;
+        prismaBody.product_id = portal.portal.id;
+        const vats = await postVatsPrisma(prismaBody);
+
         eventsAudit.emit("entity.create", {
             userid : portal?.user_id,
             entity : entityType.VATS,
