@@ -21,7 +21,7 @@ export async function setProductBitrix<T extends IProductCatalogCreate>(
 export async function updateProductBitrix<T extends IProductCatalogCreate>(
     company : companyClient,
     data? : {
-        rowBody? : {row_id : number, body? : Partial<IProductCatalogCreate>},
+        rowBody? : {row_id : number, body? : Omit<Partial<IProductCatalogCreate>, "active">},
         catalogBody? : {product_id : number, body? : Partial<T>}
     }){
         console.log(data)

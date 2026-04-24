@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
                 await acquireLock(contract.bitrix_id, portal.portal.id)
                 try{
                     const company = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
-                    await updateProductBitrix<IVatsProductCreate>(company, {rowBody : {row_id : OldVats?.bitrix_id, body : {active : ZData.active ? "Y" : "N", name : ZData.title}}})
+                    await updateProductBitrix<IVatsProductCreate>(company, {rowBody : {row_id : OldVats?.bitrix_id, body : {name : ZData.title}}})
                     if(ZData.contract_id) {
                         const newContract = await getContractById(ZData.contract_id);
                         if(newContract && newContract.bitrix_id){
