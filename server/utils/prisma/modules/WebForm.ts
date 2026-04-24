@@ -171,7 +171,7 @@ export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct
         bitrix_id : productRows.id,
         product_id : productRows.productId,
         portal : {connect : {id : portal_id}},
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}},
         },
     update : {
@@ -181,7 +181,7 @@ export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct
         }}},
         price : productRows.price,
         active : true,
-        title : info.name,
+        title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
    })

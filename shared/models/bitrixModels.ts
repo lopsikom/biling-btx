@@ -867,6 +867,7 @@ export interface IAutoInfoProduct extends ISmsProduct {
 }
 
 export interface IProductRowDataCreate {
+    productName : string,
     price : number
 }
 export interface IProductCatalogCreate {

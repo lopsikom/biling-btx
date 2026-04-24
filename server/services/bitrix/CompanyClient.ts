@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
-import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IProductCatalogCreate, IProductRow, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
+import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IProductCatalogCreate, IProductRow, IProductRowDataCreate, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 import { redisClient } from "../redis";
 
@@ -153,13 +153,13 @@ export default class companyClient{
         return response.data as bitrixResponse<{ product: AnyProduct }>
     }
 
-    async addProductRow(contract_id: number, product_id: number, ownerType: string, price: number) {
+    async addProductRow(contract_id: number, product_id: number, ownerType: string, body : IProductRowDataCreate) {
         const response = await this.axiosClient.post('/rest/crm.item.productrow.add', {
             fields: {
                 ownerId:   contract_id,
                 ownerType: ownerType,
                 productId: product_id,
-                price:     price,
+                ...body,
             }
         })
         return response.data as bitrixResponse<{ productRow: IProductRow }>
