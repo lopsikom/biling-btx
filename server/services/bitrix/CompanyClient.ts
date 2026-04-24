@@ -48,6 +48,21 @@ export default class companyClient{
             }
             return config
         })
+        this.axiosClient.interceptors.response.use((response) => response,(error) => {
+            const { response, request, config, message } = error;
+
+            console.group(`❌ ERROR [${config?.method?.toUpperCase()}] ${config?.url}`);
+
+            if (response) {
+                console.error(`Status:  ${response.status} ${response.statusText}`);
+                console.error('Data:   ', response.data);
+                console.error('Headers:', response.headers);
+            }
+            else if (request) {
+                console.error('📡 Нет ответа от сервера');
+                console.error('Request:', request);
+            }
+        })
     }   
 
     async getCompanyInfo(){

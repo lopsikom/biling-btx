@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
                 const ZData = await VatsUpdate.parseAsync(body)
                 const prismaData = vatsUpdateMapPrisma(ZData)
                 const OldVats = await getVatsById(parseId);
+                console.log(ZData)
                 if(!OldVats || !OldVats.bitrix_id || !OldVats.contract_id) throw createError({statusCode : 404, statusMessage : "No found vats"})
                 const contract = await getContractById(OldVats.contract_id);
                 if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})

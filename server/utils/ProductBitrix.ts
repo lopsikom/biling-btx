@@ -24,8 +24,10 @@ export async function updateProductBitrix<T extends IProductCatalogCreate>(
         rowBody? : {row_id : number, body? : Partial<IProductCatalogCreate>},
         catalogBody? : {product_id : number, body? : Partial<T>}
     }){
+        console.log(data)
         if(data){
             const {rowBody, catalogBody} = data;
+            console.log(rowBody, catalogBody)
             if(rowBody && rowBody.body) company.updateProductRow(rowBody.row_id, rowBody.body)
             if(catalogBody && catalogBody.body) company.updateCatalogProduct(catalogBody.product_id, catalogBody.body)
         }
