@@ -145,6 +145,10 @@ export default class companyClient{
         })
         return response.data as bitrixResponse<{ productRows: IProductRow[] }>
     }
+    async getProductRowById(id : number){
+        const response = await this.axiosClient.post('crm.item.productrow.get', {id : id})
+        return response.data as bitrixResponse<{productRow : IProductRow}>
+    }
 
     async getProductInfo(id: number) {
         const response = await this.axiosClient.get('/rest/catalog.product.get', {
@@ -168,7 +172,7 @@ export default class companyClient{
     async updateProductRow(product_id: number, body: object) {
         const response = await this.axiosClient.post('/rest/crm.item.productrow.update', {
             id: product_id,
-            ...body
+            fields : body
         })
         return response.data as bitrixResponse<{ productRow: IProductRow }>
     }
@@ -179,9 +183,15 @@ export default class companyClient{
         })
         return response.data as bitrixResponse<boolean>
     }
+    async deleteProductOffer(product_id: number){
+        const response = await this.axiosClient.post(`/rest/catalog.product.offer.delete`, {
+            id : product_id
+        })
+        return response.data
+    }
 
-    async updateCatalogProduct<T extends IProductCatalogCreate>(product_id: number, data: T) {
-        const response = await this.axiosClient.post('/rest/catalog.product.update', {
+    async updateCatalogProduct<T extends IProductCatalogCreate>(product_id: number, data: Partial<T>) {
+        const response = await this.axiosClient.post('/rest/catalog.product.offer.update', {
             id:     product_id,
             fields: data
         })
