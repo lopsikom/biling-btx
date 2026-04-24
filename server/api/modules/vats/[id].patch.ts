@@ -19,13 +19,10 @@ export default defineEventHandler(async (event) => {
                 const parseId = z.coerce.number().parse(id)
                 const ZData = await VatsUpdate.parseAsync(body)
                 const prismaData = vatsUpdateMapPrisma(ZData)
-                const contract = await getContractById(parseId);
-                console.log(id)
-                console.log(parseId)
-                console.log(contract)
-                if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
                 const OldVats = await getVatsById(parseId);
-                if(!OldVats || !OldVats.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found vats"})
+                if(!OldVats || !OldVats.bitrix_id || !OldVats.contract_id) throw createError({statusCode : 404, statusMessage : "No found vats"})
+                const contract = await getContractById(OldVats.contract_id);
+                if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
                 await acquireLock(contract.bitrix_id, portal.portal.id)
                 try{
                     const company = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
