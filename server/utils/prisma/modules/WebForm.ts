@@ -73,10 +73,7 @@ export async function getWebformTypeWebformPrisma(id : number){
                 select : {
                     name : true
                 }
-            },
-            contract : {select : {
-                company_id : true
-            }}
+            }
         }
     })
     return response
