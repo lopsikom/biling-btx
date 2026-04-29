@@ -42,19 +42,20 @@ const AUTOINFO_PROPERTY308_WITH_RR = 85;
 const AUTOINFO_PROPERTY309_DEFAULT = 86;
 
 type EnumPropertyValue = { value: number | string };
-export type CatalogPropsPayload = Record<string, EnumPropertyValue | "Y" | "N">;
+export type CatalogPropsPayload = Record<string, EnumPropertyValue>;
 
 const setEnum = (id: number): EnumPropertyValue => ({ value: id });
+const setValue = (val: string): EnumPropertyValue => ({ value: val });
 
 export function chatBotPropsForCatalog(messengers: number[] | undefined): CatalogPropsPayload | undefined {
     if (!messengers) return undefined;
     const props: CatalogPropsPayload = {};
     for (const property of Object.values(CHAT_BOT_MESSENGER_PROPS)) {
-        props[property] = "N";
+        props[property] = setValue("N");
     }
     for (const id of messengers) {
         const property = CHAT_BOT_MESSENGER_PROPS[id];
-        if (property) props[property] = "Y";
+        if (property) props[property] = setValue("Y");
     }
     return props;
 }

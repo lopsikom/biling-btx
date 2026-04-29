@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc *)",
-      "Bash(node_modules/.bin/tsc --noEmit --project .)"
+      "Bash(node_modules/.bin/tsc --noEmit --project .)",
+      "mcp__b24-dev-mcp__bitrix-method-details",
+      "mcp__b24-dev-mcp__bitrix-search"
     ]
   }
 }
