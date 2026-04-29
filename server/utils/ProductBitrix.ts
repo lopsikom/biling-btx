@@ -4,6 +4,8 @@ import { IProductCatalogCreate, IProductRowDataCreate } from "../services/models
 import { CONTRACT_STRING_ID_BITRIX, getShapshotProduct, saveShapshotProduct } from "../services/webHooksEvents";
 import { acquireLock, releaseLock } from "./redis/webHookLocker";
 
+type ProductRowUpdateBody = Partial<IProductRowDataCreate>;
+
 export async function setProductBitrix<T extends IProductCatalogCreate>(
     company : companyClient,
     rowBody : {contract_id : number, data : IProductRowDataCreate}, 
@@ -21,15 +23,13 @@ export async function setProductBitrix<T extends IProductCatalogCreate>(
 export async function updateProductBitrix<T extends IProductCatalogCreate>(
     company : companyClient,
     data? : {
-        rowBody? : {row_id : number, body? : Omit<Partial<IProductCatalogCreate>, "active">},
+        rowBody? : {row_id : number, body? : ProductRowUpdateBody},
         catalogBody? : {product_id : number, body? : Partial<T>}
     }){
-        console.log(data)
         if(data){
             const {rowBody, catalogBody} = data;
-            console.log(rowBody, catalogBody)
-            if(rowBody && rowBody.body) company.updateProductRow(rowBody.row_id, rowBody.body)
-            if(catalogBody && catalogBody.body) company.updateCatalogProduct(catalogBody.product_id, catalogBody.body)
+            if(rowBody && rowBody.body) await company.updateProductRow(rowBody.row_id, rowBody.body)
+            if(catalogBody && catalogBody.body) await company.updateCatalogProduct(catalogBody.product_id, catalogBody.body)
         }
     }
 
@@ -65,4 +65,41 @@ export async function switchContractProduct(
 export async function deleteProducts(company : companyClient, row_id : number, product_id : number){
     await company.deleteProductRow(row_id);
     await company.deleteProductOffer(product_id);
+}
+
+export async function switchProductCategory<T extends IProductCatalogCreate>(
+    company : companyClient,
+    portal_id : number,
+    sourceContractId : number,
+    targetContractId : number,
+    old_row_id : number,
+    old_product_id : number,
+    catalogBody : {parent_id : number, data : T},
+    rowBody : IProductRowDataCreate,
+    newType : string
+){
+    await company.deleteProductRow(old_row_id);
+    await company.deleteProductOffer(old_product_id);
+
+    const productCatalog = await company.addCatalogProduct(catalogBody.parent_id, catalogBody.data);
+    const productRow = await company.addProductRow(targetContractId, productCatalog.result.offer.id, CONTRACT_STRING_ID_BITRIX, rowBody);
+
+    if(sourceContractId === targetContractId){
+        const snap = await getShapshotProduct(sourceContractId, portal_id);
+        const filtered = snap.filter(s => s.bitrix_id !== old_row_id);
+        await saveShapshotProduct(sourceContractId, portal_id, [
+            ...filtered,
+            {bitrix_id : productRow.result.productRow.id, portal_id : portal_id, type : newType}
+        ]);
+    } else {
+        const sourceSnap = await getShapshotProduct(sourceContractId, portal_id);
+        await saveShapshotProduct(sourceContractId, portal_id, sourceSnap.filter(s => s.bitrix_id !== old_row_id));
+        const targetSnap = await getShapshotProduct(targetContractId, portal_id);
+        await saveShapshotProduct(targetContractId, portal_id, [
+            ...targetSnap,
+            {bitrix_id : productRow.result.productRow.id, portal_id : portal_id, type : newType}
+        ]);
+    }
+
+    return {productRow, productCatalog};
 }

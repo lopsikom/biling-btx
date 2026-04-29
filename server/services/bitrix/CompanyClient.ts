@@ -161,7 +161,7 @@ export default class companyClient{
         return response.data as bitrixResponse<{ productRows: IProductRow[] }>
     }
     async getProductRowById(id : number){
-        const response = await this.axiosClient.post('crm.item.productrow.get', {id : id})
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.get', {id : id})
         return response.data as bitrixResponse<{productRow : IProductRow}>
     }
 

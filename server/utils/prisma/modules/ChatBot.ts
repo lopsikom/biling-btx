@@ -81,10 +81,7 @@ export async function getChatBotMessengersPrisma(id : number){
                 select :{
                     name : true
                 }
-            },
-            contract : {select : {
-                company_id : true
-            }}
+            }
         },
     })
     return response.map(m => m.messengers.name);
