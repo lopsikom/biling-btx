@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
                     if (newContract && newContract.bitrix_id) {
                         await acquireLock(newContract.bitrix_id, portal.portal.id);
                         try {
-                            const newRow = await switchContractProduct(company, portal.portal.id, ZData.contract_id, OldVoiceRobot.bitrix_id, ProductEnum.VOICE_ROBOT)
+                            const newRow = await switchContractProduct(company, portal.portal.id, newContract.bitrix_id, OldVoiceRobot.bitrix_id, ProductEnum.VOICE_ROBOT)
                             if (newRow) {
                                 prismaData.bitrix_id = newRow.result.productRow.id
                             }
