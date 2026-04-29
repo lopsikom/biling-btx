@@ -1,11 +1,11 @@
 import { ProductEnum } from "~~/shared/models/bitrixModels";
 
-const CHAT_BOT_MESSENGER_ENUM: Record<number, { property: string; enumId: number }> = {
-    1: { property: "property317", enumId: 119 },
-    4: { property: "property318", enumId: 120 },
-    2: { property: "property319", enumId: 121 },
-    6: { property: "property320", enumId: 122 },
-    3: { property: "property321", enumId: 123 },
+const CHAT_BOT_MESSENGER_PROPS: Record<number, string> = {
+    1: "property317",
+    4: "property318",
+    2: "property319",
+    6: "property320",
+    3: "property321",
 };
 
 const VOICE_ROBOT_LINES_ENUM: Record<number, number> = {
@@ -41,17 +41,20 @@ const AUTOINFO_PROPERTY308_WITHOUT_RR = 84;
 const AUTOINFO_PROPERTY308_WITH_RR = 85;
 const AUTOINFO_PROPERTY309_DEFAULT = 86;
 
-export type CatalogPropsPayload = Record<string, number | string>;
+type EnumPropertyValue = { value: number | string };
+export type CatalogPropsPayload = Record<string, EnumPropertyValue | "Y" | "N">;
+
+const setEnum = (id: number): EnumPropertyValue => ({ value: id });
 
 export function chatBotPropsForCatalog(messengers: number[] | undefined): CatalogPropsPayload | undefined {
     if (!messengers) return undefined;
     const props: CatalogPropsPayload = {};
-    for (const messengerInfo of Object.values(CHAT_BOT_MESSENGER_ENUM)) {
-        props[messengerInfo.property] = "";
+    for (const property of Object.values(CHAT_BOT_MESSENGER_PROPS)) {
+        props[property] = "N";
     }
     for (const id of messengers) {
-        const enumInfo = CHAT_BOT_MESSENGER_ENUM[id];
-        if (enumInfo) props[enumInfo.property] = enumInfo.enumId;
+        const property = CHAT_BOT_MESSENGER_PROPS[id];
+        if (property) props[property] = "Y";
     }
     return props;
 }
@@ -59,11 +62,11 @@ export function chatBotPropsForCatalog(messengers: number[] | undefined): Catalo
 export function voiceRobotPropsForCatalog(data: { tarrif_id?: number; lines?: number }): CatalogPropsPayload | undefined {
     const props: CatalogPropsPayload = {};
     if (data.tarrif_id !== undefined) {
-        props.property310 = data.tarrif_id === 1 ? VOICE_ROBOT_TARIFF_BASIC : VOICE_ROBOT_TARIFF_EXTENDED;
+        props.property310 = setEnum(data.tarrif_id === 1 ? VOICE_ROBOT_TARIFF_BASIC : VOICE_ROBOT_TARIFF_EXTENDED);
     }
     if (data.lines !== undefined) {
         const enumId = nearestLineEnumId(data.lines);
-        if (enumId !== undefined) props.property311 = enumId;
+        if (enumId !== undefined) props.property311 = setEnum(enumId);
     }
     return Object.keys(props).length ? props : undefined;
 }
@@ -71,7 +74,7 @@ export function voiceRobotPropsForCatalog(data: { tarrif_id?: number; lines?: nu
 export function webformPropsForCatalog(data: { tarrif_id?: number }): CatalogPropsPayload | undefined {
     if (data.tarrif_id === undefined) return undefined;
     return {
-        property314: data.tarrif_id === 1 ? WEBFORM_TARIFF_STANDARD : WEBFORM_TARIFF_INDIVIDUAL,
+        property314: setEnum(data.tarrif_id === 1 ? WEBFORM_TARIFF_STANDARD : WEBFORM_TARIFF_INDIVIDUAL),
     };
 }
 
@@ -81,8 +84,8 @@ export function autoinformationProductTypeByTypeId(type_id: number): ProductEnum
 
 export function autoinformationPropsForCatalog(type_id: number | undefined): CatalogPropsPayload | undefined {
     if (type_id === undefined) return undefined;
-    const props: CatalogPropsPayload = { property309: AUTOINFO_PROPERTY309_DEFAULT };
-    if (type_id === 1) props.property308 = AUTOINFO_PROPERTY308_WITHOUT_RR;
-    else if (type_id === 2) props.property308 = AUTOINFO_PROPERTY308_WITH_RR;
+    const props: CatalogPropsPayload = { property309: setEnum(AUTOINFO_PROPERTY309_DEFAULT) };
+    if (type_id === 1) props.property308 = setEnum(AUTOINFO_PROPERTY308_WITHOUT_RR);
+    else if (type_id === 2) props.property308 = setEnum(AUTOINFO_PROPERTY308_WITH_RR);
     return props;
 }

@@ -305,8 +305,8 @@ export function voiceRobotPatchMapPrimsa(data : IVoiceRobotUpdate) : voice_robot
     if(data.tarrif_id) robot.tariff = {connect : {id : data.tarrif_id}}
     return robot
 }
-export function chatBotInputUpdateMapPrisma(data : IChatBotUpdate) : chat_botUpdateInput;
 export function chatBotInputUpdateMapPrisma(data : IChatBotPost) : chat_botCreateInput;
+export function chatBotInputUpdateMapPrisma(data : IChatBotUpdate) : chat_botUpdateInput;
 export function chatBotInputUpdateMapPrisma(data : IChatBotPost | IChatBotUpdate) : chat_botCreateInput | chat_botUpdateInput{
     const chat = {
         lines_count : data.lines_count,
