@@ -208,7 +208,10 @@ export default class companyClient{
     async updateCatalogProduct<T extends IProductCatalogCreate>(product_id: number, data: Partial<T>) {
         const response = await this.axiosClient.post('/rest/catalog.product.offer.update', {
             id:     product_id,
-            fields: data
+            fields: {
+                iblockId: 16,
+                ...data
+            }
         })
         return response.data as bitrixResponse<{ product: AnyProduct }>
     }
