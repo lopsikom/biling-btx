@@ -181,6 +181,11 @@ export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct
         title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
+    include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
    })
    return response
 }
@@ -200,7 +205,12 @@ export async function postWebFormProducPrisma(data : {info : IWebFormProdruct, p
             portal : {connect : {id : portal_id}},
             title : info.name,
             tariff : {connect : {id : 1}},
-        }
+        },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
     return response
 }

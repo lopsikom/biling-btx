@@ -133,6 +133,11 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
         title : productRows.productName,
         tariff : {connect : {id : 1}},
     },
+    include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
    })
    return response
 }
@@ -156,6 +161,11 @@ export async function postAutoInformationProductPrisma(data : {info : ISmsProduc
             title : info.name,
             tariff : {connect : {id : 1}},
         },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
     return response
 }

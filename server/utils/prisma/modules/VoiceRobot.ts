@@ -124,7 +124,12 @@ export async function upsertVoiceRobotProductPrisma(data : {info : IVoiceRobotPr
             active : true,
             price : productRows.price,
             title : productRows.productName
-        }
+        },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
     return response
 }
@@ -146,6 +151,11 @@ export async function postVoiceRobotProductPrisma(data : {info : IVoiceRobotProd
             product_id : productRows.productId,
             portal : {connect : {id : portal_id}}
         },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
     return response
 }

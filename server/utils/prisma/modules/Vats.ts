@@ -136,6 +136,11 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
         title : productRows.productName,
         tariff : {connect : {id : 1}}
     },
+    include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
    })
    return response
 }
@@ -158,6 +163,11 @@ export async function postVatsProductPrisma(data : {info : IVatsProduct, product
             title : info.name,
             tariff : {connect : {id : 1}},
         },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
     return response
 }

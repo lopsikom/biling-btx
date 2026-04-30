@@ -750,12 +750,12 @@ export enum ProductEnum {
 }
 
 export const ProductToEntityRecord = {
-    [ProductEnum.AUTOINFO] : [entityType.AUTOINFORMATION],
-    [ProductEnum.SMS] : [entityType.AUTOINFORMATION],
-    [ProductEnum.CHAT_BOT] : [entityType.CHAT_BOT],
-    [ProductEnum.VATS] : [entityType.VATS],
-    [ProductEnum.VOICE_ROBOT] : [entityType.VOICE_ROBOT],
-    [ProductEnum.WEB_FORM] : [entityType.WEBFORM]
+    [ProductEnum.AUTOINFO] : entityType.AUTOINFORMATION,
+    [ProductEnum.SMS] : entityType.AUTOINFORMATION,
+    [ProductEnum.CHAT_BOT] : entityType.CHAT_BOT,
+    [ProductEnum.VATS] : entityType.VATS,
+    [ProductEnum.VOICE_ROBOT] : entityType.VOICE_ROBOT,
+    [ProductEnum.WEB_FORM] : entityType.WEBFORM
 }
 
 export interface ICatalogProduct {

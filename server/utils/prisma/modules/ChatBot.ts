@@ -194,6 +194,11 @@ export async function upsertChatBotProductPrisma(data : {info : IChatBotProduct,
         tariff : {connect : {id : 1}},
         chat_bot_messengers : {deleteMany : {}, create : messengers.map(m => { return {messenger_id : m}})}
     },
+    include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
    })
    return response
 }
@@ -227,6 +232,11 @@ export async function postChatBotProductPrisma(data : {info : IChatBotProduct, p
             tariff : {connect : {id : 1}},
             chat_bot_messengers : {create : messengers.map(m => { return {messenger_id : m}})}
         },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
     })
    return response
 }
