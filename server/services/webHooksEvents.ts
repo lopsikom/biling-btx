@@ -12,7 +12,7 @@ import { postVatsProductPrisma, upsertVatsProductPrisma } from "../utils/prisma/
 import { postWebFormProducPrisma, upsertWebFormProductPrisma } from "../utils/prisma/modules/WebForm";
 import { postAutoInformationProductPrisma, upsertAutoInformationProductPrisma } from "../utils/prisma/modules/AutoInfo";
 import { getAllModulesContact } from "../utils/prisma/modules";
-import { eventsAudit } from "./EventsAudit";
+import { EventEntity, eventsAudit } from "./EventsAudit";
 
 
 export type WebHooksMap = {
@@ -61,10 +61,10 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
         addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company)).then(c => {
             eventsAudit.emit("entity.create", {
                 userid : portal.user_id,
-                entityType : entityType.CONTRACT,
+                entity: entityType.CONTRACT,
                 entityName : c.name,
                 companyid : c.company_id
-            })
+            }as EventEntity)
         }),
         Promise.all(products.map(async _ => {
             try{
@@ -81,7 +81,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
                 ).then(_ => {
                     eventsAudit.emit("entity.create", {
                         userid : portal.user_id,
-                        entityType : ProductToEntityRecord[key],
+                        entity : ProductToEntityRecord[key],
                         entityName : _.name.title,
                         companyid : _.contract?.company_id
                     })
@@ -155,7 +155,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 ).then(_ => {
                     eventsAudit.emit("entity.update", {
                         userid : portal.user_id,
-                        entityType : ProductToEntityRecord[key],
+                        entity : ProductToEntityRecord[key],
                         entityName : _.name.title,
                         companyid : _.contract?.company_id
                     })
@@ -173,7 +173,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 ) => Promise<any>)(_.bitrix_id, _.portal_id).then(_ => {
                     eventsAudit.emit("entity.delete", {
                         userid : portal.user_id,
-                        entityType : ProductToEntityRecord[_.type as ProductEnum],
+                        entity : ProductToEntityRecord[_.type as ProductEnum],
                         entityName : _.name.title,
                         companyid : _.contract?.company_id
                     })
@@ -197,7 +197,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
     const contract = await deleteContractPrisma(Number(data.data.FIELDS.ID), portal.portal.id);
     eventsAudit.emit("entity.delete", {
         userid : portal.user_id,
-        entityType : entityType.CONTRACT,
+        entity : entityType.CONTRACT,
         entityName : contract.name,
         companyid : contract.company_id
     })
