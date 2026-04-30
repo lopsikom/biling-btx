@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, IChatBotProduct, ICompanyNew, IContractBitrix, IDynamicItemEvent, IProductRow, ISmsProduct, IVatsProduct, IVoiceRobotProduct, IWebFormProdruct, ProductEnum } from "./models";
+import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, IChatBotProduct, ICompanyNew, IContractBitrix, IDynamicItemEvent, IProductRow, ISmsProduct, IVatsProduct, IVoiceRobotProduct, IWebFormProdruct, ProductEnum, productByParentId } from "./models";
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
@@ -50,7 +50,9 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
             return await Promise.all(productRows.result.productRows.map(async p => {
                 const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
                 info.result.product.productName = p.productName
-                return {productRows : p, info : info}
+                const parent = info.result.product.parentId ? Number(info.result.product.parentId.value) : info.result.product.id
+                const productType = productByParentId[parent]
+                return {productRows : p, info, productType}
             }))
         })()
     ])
@@ -68,7 +70,11 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
             try{
                 const p = _.info.result.product;
                 const r = _.productRows;
-                const key = p.productName as keyof ProductFuncRecord;
+                const key = _.productType;
+                if (!key) {
+                    console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
+                    return
+                }
                 (productFuncCreateRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
                     { info: p, productRows: r },
                     portal.portal.id
@@ -79,11 +85,13 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
             }
         }))
     ])
-    await saveShapshotProduct(contract.id!, portal.portal.id, products.map((p) => ({
-        bitrix_id:   p.productRows.id,
-        portal_id : portal.portal.id,
-        type: p.productRows.productName,
-    })))
+    await saveShapshotProduct(contract.id!, portal.portal.id, products
+        .filter(p => p.productType)
+        .map((p) => ({
+            bitrix_id:   p.productRows.id,
+            portal_id : portal.portal.id,
+            type: p.productType!,
+        })))
     console.log("Contract added")
 })
 webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
@@ -107,16 +115,20 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             return await Promise.all(productRows.result.productRows.map(async p => {
                 const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
                 info.result.product.productName = p.productName
-                return {productRows : p, info : info}
+                const parent = info.result.product.parentId ? Number(info.result.product.parentId.value) : info.result.product.id
+                const productType = productByParentId[parent]
+                return {productRows : p, info, productType}
             }))
         })()
     ])
     const prev = await getShapshotProduct(contract.id!, portal.portal.id)
-    const curr = products.map((p) => ({
-        bitrix_id:   p.productRows.id,
-        portal_id: portal.portal.id,
-        type: p.productRows.productName,
-    }))
+    const curr = products
+        .filter(p => p.productType)
+        .map((p) => ({
+            bitrix_id:   p.productRows.id,
+            portal_id: portal.portal.id,
+            type: p.productType!,
+        }))
     const deleted = findDeletedRows(prev, curr)
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
     await Promise.all([
@@ -125,7 +137,11 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
             try{
                 const p = _.info.result.product;
                 const r = _.productRows;
-                const key = p.productName as keyof ProductFuncRecord;
+                const key = _.productType;
+                if (!key) {
+                    console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
+                    return
+                }
                 console.log(p)
                 console.log(key)
                 await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(

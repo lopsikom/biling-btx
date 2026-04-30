@@ -917,3 +917,9 @@ export const productRecords = {
     },
 }
 
+export const productByParentId: Record<number, ProductEnum> = Object.entries(productRecords)
+    .reduce((acc, [key, info]) => {
+        acc[info.id] = key as ProductEnum;
+        return acc;
+    }, {} as Record<number, ProductEnum>);
+
