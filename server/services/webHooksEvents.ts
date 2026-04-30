@@ -82,7 +82,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
                     eventsAudit.emit("entity.create", {
                         userid : portal.user_id,
                         entity : ProductToEntityRecord[key],
-                        entityName : _.name.title,
+                        entityName : _.title,
                         companyid : _.contract?.company_id
                     })
                 });;
@@ -156,7 +156,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                     eventsAudit.emit("entity.update", {
                         userid : portal.user_id,
                         entity : ProductToEntityRecord[key],
-                        entityName : _.name.title,
+                        entityName : _.title,
                         companyid : _.contract?.company_id
                     })
                 });
@@ -174,7 +174,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                     eventsAudit.emit("entity.delete", {
                         userid : portal.user_id,
                         entity : ProductToEntityRecord[_.type as ProductEnum],
-                        entityName : _.name.title,
+                        entityName : _.title,
                         companyid : _.contract?.company_id
                     })
                 });
