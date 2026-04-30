@@ -170,12 +170,13 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 await (productFuncDeleteRecord[_.type as ProductEnum] as (
                     id: number,
                     portal_id : number
-                ) => Promise<any>)(_.bitrix_id, _.portal_id).then(_ => {
+                ) => Promise<any>)(_.bitrix_id, _.portal_id).then(__ => {
+                    console.log(_)
                     eventsAudit.emit("entity.delete", {
                         userid : portal.user_id,
                         entity : ProductToEntityRecord[_.type as ProductEnum],
-                        entityName : _.title,
-                        companyid : _.contract?.company_id
+                        entityName : __.title,
+                        companyid : __.contract?.company_id
                     })
                 });
             }
