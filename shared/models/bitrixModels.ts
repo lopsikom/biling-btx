@@ -1,3 +1,5 @@
+import { entityType } from "./APIModels";
+
 export interface IField {
     type : string,
     isRequired : number,
@@ -745,6 +747,15 @@ export enum ProductEnum {
     WEB_FORM = "Веб-форма",
     VOICE_ROBOT = "Голосовой робот",
     CHAT_BOT = "Чат-бот"
+}
+
+export const ProductToEntityRecord = {
+    [ProductEnum.AUTOINFO] : [entityType.AUTOINFORMATION],
+    [ProductEnum.SMS] : [entityType.AUTOINFORMATION],
+    [ProductEnum.CHAT_BOT] : [entityType.CHAT_BOT],
+    [ProductEnum.VATS] : [entityType.VATS],
+    [ProductEnum.VOICE_ROBOT] : [entityType.VOICE_ROBOT],
+    [ProductEnum.WEB_FORM] : [entityType.WEBFORM]
 }
 
 export interface ICatalogProduct {

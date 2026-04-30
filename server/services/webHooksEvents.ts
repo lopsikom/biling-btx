@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, IChatBotProduct, ICompanyNew, IContractBitrix, IDynamicItemEvent, IProductRow, ISmsProduct, IVatsProduct, IVoiceRobotProduct, IWebFormProdruct, ProductEnum, productByParentId } from "./models";
+import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, IChatBotProduct, ICompanyNew, IContractBitrix, IDynamicItemEvent, IProductRow, ISmsProduct, IVatsProduct, IVoiceRobotProduct, IWebFormProdruct, ProductEnum, ProductToEntityRecord, productByParentId } from "./models";
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
@@ -75,10 +75,17 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
                     console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
                     return
                 }
-                (productFuncCreateRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
+                (productFuncCreateRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<any>)(
                     { info: p, productRows: r },
                     portal.portal.id
-                );
+                ).then(_ => {
+                    eventsAudit.emit("entity.create", {
+                        userid : portal.user_id,
+                        entityType : ProductToEntityRecord[key],
+                        entityName : _.name.title,
+                        companyid : _.contract?.company_id
+                    })
+                });;
             }
             catch(e){
                 console.error(e);
@@ -142,12 +149,17 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                     console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
                     return
                 }
-                console.log(p)
-                console.log(key)
-                await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
+                await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<any>)(
                     { info: p, productRows: r },
                     portal.portal.id
-                );
+                ).then(_ => {
+                    eventsAudit.emit("entity.update", {
+                        userid : portal.user_id,
+                        entityType : ProductToEntityRecord[key],
+                        entityName : _.name.title,
+                        companyid : _.contract?.company_id
+                    })
+                });
             }
             catch(e){
                 console.error(e);
@@ -158,7 +170,14 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 await (productFuncDeleteRecord[_.type as ProductEnum] as (
                     id: number,
                     portal_id : number
-                ) => Promise<void>)(_.bitrix_id, _.portal_id)
+                ) => Promise<any>)(_.bitrix_id, _.portal_id).then(_ => {
+                    eventsAudit.emit("entity.delete", {
+                        userid : portal.user_id,
+                        entityType : ProductToEntityRecord[_.type as ProductEnum],
+                        entityName : _.name.title,
+                        companyid : _.contract?.company_id
+                    })
+                });
             }
             catch(e) {
                 console.error(e)
@@ -175,7 +194,13 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
     if(!portal) return
     const token = await getBitrixTokenByRedis(portal);
     if(!token) return
-    await deleteContractPrisma(Number(data.data.FIELDS.ID), portal.portal.id);
+    const contract = await deleteContractPrisma(Number(data.data.FIELDS.ID), portal.portal.id);
+    eventsAudit.emit("entity.delete", {
+        userid : portal.user_id,
+        entityType : entityType.CONTRACT,
+        entityName : contract.name,
+        companyid : contract.company_id
+    })
     console.log("Contract deleted");
 })
 
@@ -192,33 +217,33 @@ type ProductDataMap = {
   [ProductEnum.AUTOINFO] : {info : IAutoInfoProduct, productRows : IProductRow};
 }
 type ProductFuncRecord = {
-  [K in keyof ProductDataMap]: (data: ProductDataMap[K], portal_id: number) => Promise<void>;
+  [K in keyof ProductDataMap]: (data: ProductDataMap[K], portal_id: number) => Promise<any>;
 };
 
 const productFuncUpsertRecord: ProductFuncRecord = {
-  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {await upsertChatBotProductPrisma(data, portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {await upsertVoiceRobotProductPrisma(data, portal_id)},
-  [ProductEnum.VATS] : async (data, portal_id) => {await upsertVatsProductPrisma(data, portal_id)},
-  [ProductEnum.WEB_FORM] : async (data, portal_id) => {await upsertWebFormProductPrisma(data, portal_id)},
-  [ProductEnum.SMS] : async (data, portal_id) => {await upsertAutoInformationProductPrisma(data, portal_id)},
-  [ProductEnum.AUTOINFO] : async (data, portal_id) => {await upsertAutoInformationProductPrisma(data, portal_id)}
+  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {return await upsertChatBotProductPrisma(data, portal_id)},
+  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {return await upsertVoiceRobotProductPrisma(data, portal_id)},
+  [ProductEnum.VATS] : async (data, portal_id) => {return await upsertVatsProductPrisma(data, portal_id)},
+  [ProductEnum.WEB_FORM] : async (data, portal_id) => {return await upsertWebFormProductPrisma(data, portal_id)},
+  [ProductEnum.SMS] : async (data, portal_id) => {return await upsertAutoInformationProductPrisma(data, portal_id)},
+  [ProductEnum.AUTOINFO] : async (data, portal_id) => {return await upsertAutoInformationProductPrisma(data, portal_id)}
 };
 const productFuncCreateRecord: ProductFuncRecord = {
-  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {await postChatBotProductPrisma(data, portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {await postVoiceRobotProductPrisma(data, portal_id)},
-  [ProductEnum.VATS] : async (data, portal_id) => {await postVatsProductPrisma(data, portal_id)},
-  [ProductEnum.WEB_FORM] : async (data, portal_id) => {await postWebFormProducPrisma(data, portal_id)},
-  [ProductEnum.SMS] : async (data, portal_id) => {await postAutoInformationProductPrisma(data, portal_id)},
-  [ProductEnum.AUTOINFO] : async (data, portal_id) => {await postAutoInformationProductPrisma(data, portal_id)}
+  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {return await postChatBotProductPrisma(data, portal_id)},
+  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {return await postVoiceRobotProductPrisma(data, portal_id)},
+  [ProductEnum.VATS] : async (data, portal_id) => {return await postVatsProductPrisma(data, portal_id)},
+  [ProductEnum.WEB_FORM] : async (data, portal_id) => {return await postWebFormProducPrisma(data, portal_id)},
+  [ProductEnum.SMS] : async (data, portal_id) => {return await postAutoInformationProductPrisma(data, portal_id)},
+  [ProductEnum.AUTOINFO] : async (data, portal_id) => {return await postAutoInformationProductPrisma(data, portal_id)}
 };
 
 const productFuncDeleteRecord = {
-  [ProductEnum.CHAT_BOT]: async (id : number, portal_id : number) => {await deleteChatBotPrisma(id,portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (id : number, portal_id : number) => {await deleteVoiceRobotPrisma(id,portal_id)},
-  [ProductEnum.VATS] : async (id : number, portal_id : number) => {await deleteVatsPrisma(id,portal_id)},
-  [ProductEnum.WEB_FORM] : async (id : number, portal_id : number) => {await deleteWebForm(id,portal_id)},
-  [ProductEnum.SMS] : async (id : number, portal_id : number) => {await deleteAutoInforPrisma(id,portal_id)},
-  [ProductEnum.AUTOINFO] : async (id : number, portal_id : number) => {await deleteAutoInforPrisma(id,portal_id)}
+  [ProductEnum.CHAT_BOT]: async (id : number, portal_id : number) => {return await deleteChatBotPrisma(id,portal_id)},
+  [ProductEnum.VOICE_ROBOT]: async (id : number, portal_id : number) => {return await deleteVoiceRobotPrisma(id,portal_id)},
+  [ProductEnum.VATS] : async (id : number, portal_id : number) => {return await deleteVatsPrisma(id,portal_id)},
+  [ProductEnum.WEB_FORM] : async (id : number, portal_id : number) => {return await deleteWebForm(id,portal_id)},
+  [ProductEnum.SMS] : async (id : number, portal_id : number) => {return await deleteAutoInforPrisma(id,portal_id)},
+  [ProductEnum.AUTOINFO] : async (id : number, portal_id : number) => {return await deleteAutoInforPrisma(id,portal_id)}
 }
 
 function findDeletedRows(prev: { bitrix_id : number, portal_id : number, type: string }[], curr: {bitrix_id : number, portal_id : number, type : string}[]): {bitrix_id : number, portal_id : number, type : string}[] {

@@ -83,7 +83,7 @@ export async function deleteContractPrisma(id : number, portal_id? : number){
             where : portal_id ? {portal_id_bitrix_id : {bitrix_id : id, portal_id : portal_id}} : {id : id}
         })
     ])
-    return response
+    return response[5]
 }
 
 export async function patchContractPrisma(id : number, data : contractUpdateInput){
