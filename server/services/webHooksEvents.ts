@@ -3,7 +3,7 @@ import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, ICh
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
-import { ICacheCompany } from "~~/shared/models/APIModels";
+import { entityType, ICacheCompany } from "~~/shared/models/APIModels";
 import { upsertContractPrisma } from "../utils/prisma/modules/Contract";
 import getMyCompanysCache from "../utils/redis/getMyCompanys";
 import { postChatBotProductPrisma, upsertChatBotProductPrisma } from "../utils/prisma/modules/ChatBot";
@@ -12,6 +12,7 @@ import { postVatsProductPrisma, upsertVatsProductPrisma } from "../utils/prisma/
 import { postWebFormProducPrisma, upsertWebFormProductPrisma } from "../utils/prisma/modules/WebForm";
 import { postAutoInformationProductPrisma, upsertAutoInformationProductPrisma } from "../utils/prisma/modules/AutoInfo";
 import { getAllModulesContact } from "../utils/prisma/modules";
+import { eventsAudit } from "./EventsAudit";
 
 
 export type WebHooksMap = {
@@ -55,7 +56,14 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     ])
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
     await Promise.all([
-        addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company)),
+        addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company)).then(c => {
+            eventsAudit.emit("entity.create", {
+                userid : portal.user_id,
+                entityType : entityType.CONTRACT,
+                entityName : c.name,
+                companyid : c.company_id
+            })
+        }),
         Promise.all(products.map(async _ => {
             try{
                 const p = _.info.result.product;
@@ -118,6 +126,8 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
                 const p = _.info.result.product;
                 const r = _.productRows;
                 const key = p.productName as keyof ProductFuncRecord;
+                console.log(p)
+                console.log(key)
                 await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<void>)(
                     { info: p, productRows: r },
                     portal.portal.id

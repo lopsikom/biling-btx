@@ -608,6 +608,7 @@ export interface IBitrixWebhookPayload<T> {
     status: string;
     client_endpoint: string;
     member_id: string;
+    user_id : string,
     refresh_token: string;
     application_token: string;
   };
