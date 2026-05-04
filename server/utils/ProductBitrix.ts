@@ -1,8 +1,6 @@
-import bitrixAPI from "../services/bitrix/bitrixAPI";
 import companyClient from "../services/bitrix/CompanyClient";
 import { IProductCatalogCreate, IProductRowDataCreate } from "../services/models";
 import { CONTRACT_STRING_ID_BITRIX, getShapshotProduct, saveShapshotProduct } from "../services/webHooksEvents";
-import { acquireLock, releaseLock } from "./redis/webHookLocker";
 
 type ProductRowUpdateBody = Partial<IProductRowDataCreate>;
 
@@ -63,8 +61,16 @@ export async function switchContractProduct(
 }
 
 export async function deleteProducts(company : companyClient, row_id : number, product_id : number){
-    await company.deleteProductRow(row_id);
-    await company.deleteProductOffer(product_id);
+    try {
+        await company.deleteProductRow(row_id);
+    } catch (e) {
+        console.warn(`[deleteProductsRow] not exist`, e);
+    }
+    try {
+        await company.deleteProductOffer(product_id);
+    } catch (e) {
+        console.warn(`[deleteProductsOffer] not exist`, e);
+    }
 }
 
 export async function switchProductCategory<T extends IProductCatalogCreate>(
