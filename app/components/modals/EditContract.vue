@@ -32,6 +32,7 @@ onMounted(() => {
     if(!EditContract.value) {modalStore.hideModal(); return}
     contract.value = structuredClone(toRaw(EditContract.value))
     SelectStatus.value = selectStatusItems.value.find(s => s.value === EditContract.value!.status)
+    selectOrgName.value = EditContract.value.org_name
     const date1 = new Date(EditContract.value.date_begin)
     dateBegin.value = new CalendarDate(date1.getFullYear(), date1.getMonth() + 1, date1.getDate())
     const date2 = new Date(EditContract.value.date_close);
