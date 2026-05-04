@@ -19,6 +19,12 @@ export class Bitrix {
             id : id ?? this.bitrixFrame.placement.options.ID
         })).getData().result as ICompnany
     }
+    async getItems<T>(entityTypeId : string | number, filter? : object){
+        return (await this.bitrixFrame.callMethod("crm.item.list",{
+        entityTypeId,
+        filter 
+    })).getData() as IResponseArrayNewBitrix<T>
+    }
     async companyContacts(id? : string | number) : Promise<IContact[]>{
         return ( await this.bitrixFrame.callMethod("crm.contact.list", {
             filter : {

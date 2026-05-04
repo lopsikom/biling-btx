@@ -127,7 +127,7 @@ export class bitrixAPI {
         })
         return response.data as IResponseNewBitrix<T>
     }
-    async getItems<T>(domain : string, token : string, entityTypeId : string, filter? : object){
+    async getItems<T>(domain : string, token : string, entityTypeId : string | number, filter? : object){
         const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.list`, {
             filter : filter,    
         }, {

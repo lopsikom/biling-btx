@@ -360,7 +360,7 @@ export interface IStage {
 
 export interface IResponseArrayNewBitrix<T>{
     result : {
-        items : T
+        items : T[]
     },
     total : number,
     time : any

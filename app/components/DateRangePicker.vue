@@ -28,13 +28,21 @@ const model = defineModel<CalendarDate>()
 const props = defineProps<{
     title? : string
 }>()
+
+const open = ref(false)
+
+watch(model, (newVal) => {
+  if (newVal) {
+    open.value = false
+  }
+})
 </script>
 
 <template>
   <div class="df-wrapper">
     <Label for="date-field" class="df-label" v-if="title">{{ title }}</Label>
 
-    <DatePickerRoot id="date-field" granularity="day" locale="ru" v-model="model">
+    <DatePickerRoot id="date-field" granularity="day" locale="ru" v-model="model" v-model:open="open">
       <DatePickerField v-slot="{ segments }" class="df-field">
         <!-- Отображаем сегменты как интерактивные поля (literal / segment) -->
         <template v-for="seg in segments">

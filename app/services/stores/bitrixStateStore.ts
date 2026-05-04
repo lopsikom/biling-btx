@@ -1,12 +1,13 @@
 import { Bitrix } from "../bitrix"
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice, type InvoiceGrid, type IDeal } from "../models"
+import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice, type InvoiceGrid, type IDeal, type ICompanyNew } from "../models"
 
 const useBitrixStateStore = defineStore('bitrixState', () => {
 
     let bitrixClient : Bitrix | undefined = undefined;
 
     const bitrixCompany = ref<ICompnany>();
+    const bitrixisMyCompanys = ref<ICompanyNew[]>([]);
     const companyContacts = ref<IContact[]>();
     const companyRequisite = ref<IRequisite[]>();
     const companyAssignUser = ref<IUser>();
@@ -94,6 +95,7 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     
     return {
         bitrixCompany,
+        bitrixisMyCompanys,
         companyContacts,
         companyAssignUser,
         companyRequisite,

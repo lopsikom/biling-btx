@@ -40,7 +40,7 @@ export default defineNuxtConfig({
     ContractStringIdBitrix : "T422",
     DatabaseUrl : "",
     public : {
-      dev : process.env.DEV ?? false,
+      dev : false,
       BaseUri : "http://localhost:3000",
       BaseUrl : "/billing"
     }

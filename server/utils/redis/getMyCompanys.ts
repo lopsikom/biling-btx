@@ -12,7 +12,7 @@ export default async function getMyCompanysCache(portal : PortalDataType, access
     const myCompanyCache = await redisClient.get("myCompanyBitrix")
     let myCompany : ICacheCompany[]
     if(!myCompanyCache){
-        const myCompanys = (await bitrixAPI.getItems<ICompanyNew[]>(portal.portal.domain, access_token, "4", {
+        const myCompanys = (await bitrixAPI.getItems<ICompanyNew>(portal.portal.domain, access_token, 4, {
             "isMyCompany" : "Y"
         })).result.items
         const cache = myCompanys.map(c => {return {id : c.id, title : c.title} as ICacheCompany})

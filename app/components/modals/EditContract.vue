@@ -25,6 +25,8 @@ const dateBegin = ref<CalendarDate>()
 const dateClose = ref<CalendarDate>()
 const SelectStatus = ref<SelectorObject>()
 const selectStatusItems = computed(() => billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
+const selectOrgName = ref<string>()
+const selectorOrgNames = computed(() => bitrixStateStore.bitrixisMyCompanys.map(c => {return c.title}))
 
 onMounted(() => {
     if(!EditContract.value) {modalStore.hideModal(); return}
@@ -68,7 +70,7 @@ async function saveData(){
             index : contract.value.index?.toString(),
             date_begin : `${dateBegin.value.year}-${String(dateBegin.value.month).padStart(2, '0')}-${String(dateBegin.value.day).padStart(2, '0')}T00:00:00.000Z`,
             date_close : `${dateClose.value.year}-${String(dateClose.value.month).padStart(2, '0')}-${String(dateClose.value.day).padStart(2, '0')}T00:00:00.000Z`,
-            org_name : contract.value.org_name
+            org_name : selectOrgName.value
         } as IContractPost
         if(begin.getTime() > close.getTime()) throw new Error("Validation Error")
         if(!isValidData(data)) throw new Error("Validation Error")
@@ -116,8 +118,7 @@ async function deleteData(){
                 </InputBox>
                 <Selector v-model="SelectStatus" style="width: 50%;" title="Статус договора" :items="selectStatusItems" />
                 </div>
-                <InputBox placeholder="Введите название организации..." v-model="contract.org_name" :resize="false" title="Название организация">
-                </InputBox>
+                <Selector v-model="selectOrgName" style="width: 100%;" title="Организация" :items="selectorOrgNames" />
                 <div class="flex gap-[20px]">
                     <DateRangePicker v-model="dateBegin" title="Дата начала"></DateRangePicker>
                     <DateRangePicker v-model="dateClose" title="Дата окончания"></DateRangePicker>

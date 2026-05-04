@@ -7,10 +7,10 @@ import OpenIn40Icon from '@bitrix24/b24icons-vue/actions/OpenIn40Icon'
 import BoxIcon from '@bitrix24/b24icons-vue/outline/BoxIcon'
 import KeyIcon from '@bitrix24/b24icons-vue/outline/KeyIcon'
 import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
-import { bilingPagesEnum } from '~/services/models'
+import { bilingPagesEnum, type ICompanyNew, type ICompnany } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser } from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser, myCompanysMock} from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
@@ -44,6 +44,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         if(!isCompany) throw new Error("Invalid Company")
         bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
         bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
+        bitrixStateStore.bitrixisMyCompanys = (await bitrix.getItems<ICompanyNew>(4, {"isMyCompany" : "Y"})).result.items
         billingStateStore.messengers = await $axios.getMessengers();
         billingStateStore.contractStatuses = await $axios.getContractStatuses();
         billingStateStore.integrations = await $axios.getIntegrations();
@@ -67,11 +68,13 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         return {bitrix, Company}
     }catch(e){
         console.error(e)
+        console.log(useNuxtApp().$config.public.dev);
         if(useNuxtApp().$config.public.dev){
             bitrixStateStore.bitrixCompany = mockCompany;
             bitrixStateStore.companyRequisite = mockRequisite;
             bitrixStateStore.companyContacts = mockContact;
             bitrixStateStore.companyAssignUser = mockUser;
+            bitrixStateStore.bitrixisMyCompanys = myCompanysMock;
             bitrixStateStore.addresTypes = mockAddressTypes;
             bitrixStateStore.companyAddress = mockAddress;
             bitrixStateStore.companyInvoice = mockInvoice;
