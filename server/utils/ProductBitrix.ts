@@ -36,12 +36,13 @@ export async function switchContractProduct(
     portal_id : number,
     newContractId : number,
     row_id : number,
-    type : string
+    type : string 
 ){
     const productRow = await company.getProductRowById(row_id);
     if(!productRow) return
     const {id, ownerId, ownerType, productId, ...rest} = productRow.result.productRow;
-    await company.deleteProductRow(row_id);
+    const data = await company.deleteProductRow(row_id);
+    console.log("delete row", data)
     const newProductRow = await company.addProductRow(newContractId, productId, ownerType, rest);
     getShapshotProduct(ownerId, portal_id)
     .then(s => {

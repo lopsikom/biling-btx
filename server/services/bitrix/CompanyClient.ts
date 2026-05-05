@@ -174,6 +174,7 @@ export default class companyClient{
     }
 
     async addProductRow(contract_id: number, product_id: number, ownerType: string, body : IProductRowDataCreate) {
+        console.log("add row", contract_id)
         const response = await this.axiosClient.post('/rest/crm.item.productrow.add', {
             fields: {
                 ownerId:   contract_id,
@@ -197,6 +198,7 @@ export default class companyClient{
         const response = await this.axiosClient.post('/rest/crm.item.productrow.delete', {
             id: product_id
         })
+        console.log("response delete", response)
         return response.data as bitrixResponse<boolean>
     }
     async deleteProductOffer(product_id: number){
