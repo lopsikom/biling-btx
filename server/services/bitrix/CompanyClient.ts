@@ -195,9 +195,7 @@ export default class companyClient{
     }
 
     async deleteProductRow(product_id: number) {
-        const response = await this.axiosClient.post('/rest/crm.item.productrow.delete', {
-            id: product_id
-        })
+        const response = await this.axiosClient.get('/rest/crm.item.productrow.delete', {params : {id: product_id}})
         console.log("response delete", response)
         return response.data as bitrixResponse<boolean>
     }
