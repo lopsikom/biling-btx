@@ -3,6 +3,7 @@ import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
 import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IProductCatalogCreate, IProductRow, IProductRowDataCreate, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 import { redisClient } from "../redis";
+import { b24RateLimiter } from "~~/server/utils/rateLimiter";
 
 export default class companyClient{
     domain : string;
@@ -17,12 +18,12 @@ export default class companyClient{
             'Content-Type': 'application/json'
         }});
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
+            await b24RateLimiter.acquire(this.domain);
             if (!config.params) {
                 config.params = {};
             }
             if(!config.params.auth) {
                 const parseToken = await redisClient.get(`token:${this.portal_id}`);
-                console.log("parseToken ", parseToken)
                 if(parseToken) {
                     const token = JSON.parse(parseToken) as IBitrixToken;
                     config.params.auth = token.access_token;

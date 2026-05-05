@@ -3,6 +3,7 @@ import { AnyProduct, IAppInfo, IBitrixToken, ICatalogProduct, ICompnany, IContra
 import { bitrixTokens } from "~~/server/utils/getBitrixToken"
 import { config } from "process"
 import { useNuxtApp } from "nuxt/app"
+import { b24RateLimiter, extractHost } from "~~/server/utils/rateLimiter"
 
 export interface bitrixResponse<T>{
     result : T,
@@ -25,6 +26,10 @@ export class bitrixAPI {
         this.AxiosClient = axios.create({headers: {
             'Content-Type': 'application/json'
         }});
+        this.AxiosClient.interceptors.request.use(async (cfg) => {
+            await b24RateLimiter.acquire(extractHost(cfg));
+            return cfg;
+        });
         this.AxiosClient.interceptors.response.use((response) => response,(error) => {
             const { response, request, config, message } = error;
 
