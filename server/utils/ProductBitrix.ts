@@ -45,7 +45,7 @@ export async function switchContractProduct(
     const newProductRow = await company.addProductRow(newContractId, productId, ownerType, rest);
     getShapshotProduct(ownerId, portal_id)
     .then(s => {
-        const del = s.findIndex(ss => ss.bitrix_id === newProductRow.result.productRow.id)
+        const del = s.findIndex(ss => ss.bitrix_id === row_id)
         if(del > -1) {
             s.splice(del, 1)
             return saveShapshotProduct(ownerId, portal_id, s)

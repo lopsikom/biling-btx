@@ -23,6 +23,7 @@ import { redisClient } from "~~/server/services/redis"
  */
 
 const LOCK_TTL = 30 // seconds, защита от утечки при падении процесса
+const RELEASE_GRACE_MS = 2000 // отложенное снятие лока — ловим поздние webhook'и B24 (доставляются через 0.5–2 сек после API-вызова)
 
 const RELEASE_LUA = `
 local count = redis.call('DECR', KEYS[1])
@@ -38,7 +39,6 @@ function lockKey(contractId: number, portalId: number): string {
 
 export async function acquireLock(contractId: number, portalId: number): Promise<void> {
     const key = lockKey(contractId, portalId)
-    console.log(key)
     await redisClient.incr(key)
     // Освежаем TTL на каждый acquire — пока идут запросы в burst, ключ не успевает истечь.
     await redisClient.expire(key, LOCK_TTL)
@@ -46,5 +46,13 @@ export async function acquireLock(contractId: number, portalId: number): Promise
 
 export async function releaseLock(contractId: number, portalId: number): Promise<void> {
     const key = lockKey(contractId, portalId)
-    await redisClient.eval(RELEASE_LUA, 1, key)
+    // Откладываем фактический DECR на RELEASE_GRACE_MS, чтобы поздние webhook'и B24
+    // (которые B24 доставляет с задержкой ~0.5–2 сек после нашего API-вызова) ещё застали лок
+    // и были скипнуты. Семафор-счётчик корректно работает с параллельными отложенными DECR'ами:
+    // ключ удаляется только когда счётчик дошёл до нуля.
+    setTimeout(() => {
+        redisClient.eval(RELEASE_LUA, 1, key).catch(err => {
+            console.error(`[releaseLock] failed to release ${key}:`, err)
+        })
+    }, RELEASE_GRACE_MS)
 }
