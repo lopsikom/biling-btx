@@ -4,6 +4,44 @@ import { CONTRACT_STRING_ID_BITRIX, getShapshotProduct, saveShapshotProduct } fr
 
 type ProductRowUpdateBody = Partial<IProductRowDataCreate>;
 
+const DELETE_VERIFY_DELAY_MS = 300;
+const DELETE_MAX_RETRIES = 3;
+
+/**
+ * Удаляет productRow и проверяет что B24 действительно его удалил.
+ *
+ * Известная проблема B24: при быстрых последовательных операциях над productRow
+ * (например update + delete) внутренний индекс отстаёт, и delete возвращает
+ * 200 OK, но строка остаётся. Здесь мы после delete делаем GET и, если строка
+ * всё ещё видна, повторяем delete до DELETE_MAX_RETRIES раз.
+ */
+async function deleteProductRowVerified(company: companyClient, row_id: number): Promise<boolean> {
+    for (let attempt = 1; attempt <= DELETE_MAX_RETRIES; attempt++) {
+        try {
+            await company.deleteProductRow(row_id);
+        } catch (e) {
+            // axios-интерсептор глотает HTTP-ошибки → возвращает undefined → response.data бросает TypeError.
+            // Любая ошибка тут не критична — проверка дальше скажет, удалилось ли.
+            console.warn(`[deleteRow ${row_id}] delete throw on attempt ${attempt}:`, e);
+        }
+        await new Promise(r => setTimeout(r, DELETE_VERIFY_DELAY_MS));
+        let stillExists = false;
+        try {
+            const check = await company.getProductRowById(row_id);
+            stillExists = !!check?.result?.productRow;
+        } catch {
+            // Ошибка на GET = строки нет (B24 вернул 4xx) → считаем удалённой.
+            stillExists = false;
+        }
+        if (!stillExists) return true;
+        if (attempt < DELETE_MAX_RETRIES) {
+            console.warn(`[deleteRow ${row_id}] B24 проигнорировал delete, повтор ${attempt + 1}/${DELETE_MAX_RETRIES}`);
+        }
+    }
+    console.error(`[deleteRow ${row_id}] B24 не удалил строку за ${DELETE_MAX_RETRIES} попыток`);
+    return false;
+}
+
 export async function setProductBitrix<T extends IProductCatalogCreate>(
     company : companyClient,
     rowBody : {contract_id : number, data : IProductRowDataCreate}, 
@@ -41,8 +79,7 @@ export async function switchContractProduct(
     const productRow = await company.getProductRowById(row_id);
     if(!productRow) return
     const {id, ownerId, ownerType, productId, ...rest} = productRow.result.productRow;
-    const data = await company.deleteProductRow(row_id);
-    console.log("delete row", data)
+    await deleteProductRowVerified(company, row_id);
     const newProductRow = await company.addProductRow(newContractId, productId, ownerType, rest);
     getShapshotProduct(ownerId, portal_id)
     .then(s => {
@@ -62,11 +99,7 @@ export async function switchContractProduct(
 }
 
 export async function deleteProducts(company : companyClient, row_id : number, product_id : number){
-    try {
-        await company.deleteProductRow(row_id);
-    } catch (e) {
-        console.warn(`[deleteProductsRow] not exist`, e);
-    }
+    await deleteProductRowVerified(company, row_id);
     try {
         await company.deleteProductOffer(product_id);
     } catch (e) {
@@ -85,8 +118,12 @@ export async function switchProductCategory<T extends IProductCatalogCreate>(
     rowBody : IProductRowDataCreate,
     newType : string
 ){
-    await company.deleteProductRow(old_row_id);
-    await company.deleteProductOffer(old_product_id);
+    await deleteProductRowVerified(company, old_row_id);
+    try {
+        await company.deleteProductOffer(old_product_id);
+    } catch (e) {
+        console.warn(`[switchProductCategory] не удалось удалить старый offer ${old_product_id}:`, e);
+    }
 
     const productCatalog = await company.addCatalogProduct(catalogBody.parent_id, catalogBody.data);
     const productRow = await company.addProductRow(targetContractId, productCatalog.result.offer.id, CONTRACT_STRING_ID_BITRIX, rowBody);
