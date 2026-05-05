@@ -38,6 +38,7 @@ function lockKey(contractId: number, portalId: number): string {
 
 export async function acquireLock(contractId: number, portalId: number): Promise<void> {
     const key = lockKey(contractId, portalId)
+    console.log(key)
     await redisClient.incr(key)
     // Освежаем TTL на каждый acquire — пока идут запросы в burst, ключ не успевает истечь.
     await redisClient.expire(key, LOCK_TTL)

@@ -106,6 +106,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     const portal = await getPortalByUserBitrix(data.auth.access_token);
     if(!portal) return
         const locked = await redisClient.get(`lock:contract:${data.data.FIELDS.ID}_${portal.portal.id}`)
+        console.log(`lock:contract:${data.data.FIELDS.ID}_${portal.portal.id}`)
     if (locked) {
         console.log(`[webhook] пропускаем — изменение инициировано нами`)
         return
