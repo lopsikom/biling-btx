@@ -9,7 +9,7 @@ import { PaginationList, PaginationListItem, PaginationNext, PaginationPrev, Pag
 import { entityType, EventType, type IEvent, type IEventFilter } from '~~/shared/models/APIModels'
 import useToastStore from '~/services/stores/toastStore'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { type IUser, type IDeal, type IStage, StageStatus, type SelectorObject } from '~/services/models'
+import { type IUser, type IDeal, type IStage, type SelectorObject, DealStageStatus } from '~/services/models'
 import type { CalendarDate } from '@internationalized/date'
 
 
@@ -60,13 +60,111 @@ const EntityRecord : Record<string, string> = {
 }
 
 const StageRecord : Record<string, string> ={ 
-    [StageStatus.STAGE_NEW] : "Создание новой сделки",
-    [StageStatus.STAGE_PREPARATION] : "Переход на подготовку документов",
-    [StageStatus.STAGE_PREPAYMENT_INVOICE] : "Переход на предоплату счёта",
-    [StageStatus.STAGE_EXECUTING] : "Передача в работу",
-    [StageStatus.STAGE_FINAL_INVOICE] : "Выставление финального счёта",
-    [StageStatus.STAGE_LOSE] : "Неудачное завершщение сделки",
-    [StageStatus.STAGE_WON] : "Удачное завершение сделки"
+// === Воронка 0 (общая) ===
+    [DealStageStatus.STAGE_NEW]: "Создание новой сделки",
+    [DealStageStatus.STAGE_NDS]: "Переход на стадию НДЗ",
+    [DealStageStatus.STAGE_VKS]: "Переход на стадию ВКС",
+    [DealStageStatus.STAGE_NAZVANIE]: "Переход на стадию Название",
+    [DealStageStatus.STAGE_WON]: "Удачное завершение сделки",
+    [DealStageStatus.STAGE_LOSE]: "Неудачное завершение сделки",
+
+    // === Воронка 9 ===
+    [DealStageStatus.C9_NEW]: "Создание новой сделки",
+    [DealStageStatus.C9_RAZBOR]: "Передача на разбор",
+    [DealStageStatus.C9_OTLOJILI]: "Сделка отложена",
+    [DealStageStatus.C9_HOTYAT_NE_MOGUT]: "Клиент хочет, но пока не готов",
+    [DealStageStatus.C9_PREZENTACIYA]: "Назначена презентация",
+    [DealStageStatus.C9_KP_OTPRAVLENO]: "Отправлено коммерческое предложение",
+    [DealStageStatus.C9_NA_RESHENII]: "Сделка на принятии решения",
+    [DealStageStatus.C9_PREPARATION]: "Отправлен договор",
+    [DealStageStatus.C9_DOGOVOR_PODPISAN]: "Договор подписан",
+    [DealStageStatus.C9_VNEDRENIE]: "Передача на внедрение",
+    [DealStageStatus.C9_RABOTA_VYPOLNENA]: "Работа выполнена",
+    [DealStageStatus.C9_PODPISANIE_AKTA]: "Подписание акта приёма-передачи",
+    [DealStageStatus.C9_PREZENTACIYA_PROVEDENA]: "Презентация проведена",
+    [DealStageStatus.C9_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C9_LOSE]: "Неудачное завершение сделки",
+
+    // === Воронка 10 ===
+    [DealStageStatus.C10_RABOTAYUT]: "Клиент в работе",
+    [DealStageStatus.C10_OTKAZALIS]: "Клиент отказался от работы",
+    [DealStageStatus.C10_USLOVNYY_OTKAZ]: "Условный отказ клиента",
+    [DealStageStatus.C10_OTLOJILI]: "Сделка отложена",
+    [DealStageStatus.C10_RABOTAYUT_KZ]: "Клиент в работе (Казахстан)",
+    [DealStageStatus.C10_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C10_LOSE]: "Неудачное завершение сделки",
+
+    // === Воронка 12 ===
+    [DealStageStatus.C12_NEW]: "Создание новой сделки",
+    [DealStageStatus.C12_OTLOJILI]: "Сделка отложена",
+    [DealStageStatus.C12_PREZENTACIYA]: "Назначена презентация",
+    [DealStageStatus.C12_PREZENTACIYA_PROVEDENA]: "Презентация проведена",
+    [DealStageStatus.C12_KP_OTPRAVLENO]: "Отправлено коммерческое предложение",
+    [DealStageStatus.C12_NA_PAUZE]: "Сделка поставлена на паузу",
+    [DealStageStatus.C12_NA_RESHENII]: "Сделка на принятии решения",
+    [DealStageStatus.C12_DOGOVOR_OTPRAVLEN]: "Договор отправлен клиенту",
+    [DealStageStatus.C12_DOGOVOR_PODPISAN]: "Договор подписан",
+    [DealStageStatus.C12_VNEDRENIE]: "Передача на внедрение",
+    [DealStageStatus.C12_RABOTA_VYPOLNENA]: "Работа выполнена",
+    [DealStageStatus.C12_SCHET_OPLACHEN]: "Счёт оплачен",
+    [DealStageStatus.C12_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C12_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C12_APOLOGY]: "Анализ причины провала сделки",
+
+    // === Воронка 15 ===
+    [DealStageStatus.C15_NEW]: "Первое касание с клиентом",
+    [DealStageStatus.C15_NDZ]: "Переход на стадию НДЗ",
+    [DealStageStatus.C15_VKS]: "Переход на стадию ВКС",
+    [DealStageStatus.C15_KP]: "Подготовка коммерческого предложения",
+    [DealStageStatus.C15_DOGOVOR]: "Переход на стадию договора",
+    [DealStageStatus.C15_VNEDRENIE]: "Передача на внедрение",
+    [DealStageStatus.C15_AKTY_PO]: "Подписание актов приёма-передачи ПО",
+    [DealStageStatus.C15_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C15_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C15_APOLOGY]: "Анализ причины провала сделки",
+
+    // === Воронка 16 ===
+    [DealStageStatus.C16_NEW]: "Необработанная входящая заявка",
+    [DealStageStatus.C16_NDZ]: "Переход на стадию НДЗ",
+    [DealStageStatus.C16_OTLOJILI]: "Сделка отложена",
+    [DealStageStatus.C16_PRESALE]: "Передача на пресейл",
+    [DealStageStatus.C16_VKS]: "Переход на стадию ВКС",
+    [DealStageStatus.C16_KP]: "Подготовка коммерческого предложения",
+    [DealStageStatus.C16_DOGOVOR]: "Переход на стадию договора",
+    [DealStageStatus.C16_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C16_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C16_APOLOGY]: "Анализ причины провала сделки",
+
+    // === Воронка 17 ===
+    [DealStageStatus.C17_NEW]: "Создание новой сделки",
+    [DealStageStatus.C17_VKS]: "Переход на стадию ВКС",
+    [DealStageStatus.C17_KP]: "Подготовка коммерческого предложения",
+    [DealStageStatus.C17_DOGOVOR]: "Переход на стадию договора",
+    [DealStageStatus.C17_VNEDRENIE]: "Передача на внедрение",
+    [DealStageStatus.C17_AKTY_PO]: "Подписание актов приёма-передачи ПО",
+    [DealStageStatus.C17_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C17_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C17_APOLOGY]: "Анализ причины провала сделки",
+
+    // === Воронка 18 ===
+    [DealStageStatus.C18_NEW]: "Создание новой сделки",
+    [DealStageStatus.C18_PODGOTOVKA_KP]: "Подготовка коммерческого предложения",
+    [DealStageStatus.C18_KP_OTPRAVLENO]: "Коммерческое предложение отправлено",
+    [DealStageStatus.C18_FORMIROVANIE_DOGOVORA]: "Формирование договора",
+    [DealStageStatus.C18_DOGOVOR_PODPISAN]: "Договор подписан",
+    [DealStageStatus.C18_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C18_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C18_APOLOGY]: "Анализ причины провала сделки",
+
+    // === Воронка 19 ===
+    [DealStageStatus.C19_NEW]: "Создание новой сделки",
+    [DealStageStatus.C19_PODGOTOVKA_DOCS]: "Подготовка документов",
+    [DealStageStatus.C19_SCHET_PREDOPLATA]: "Выставление счёта на предоплату",
+    [DealStageStatus.C19_V_RABOTE]: "Передача в работу",
+    [DealStageStatus.C19_FINALNYY_SCHET]: "Выставление финального счёта",
+    [DealStageStatus.C19_WON]: "Удачное завершение сделки",
+    [DealStageStatus.C19_LOSE]: "Неудачное завершение сделки",
+    [DealStageStatus.C19_APOLOGY]: "Анализ причины провала сделки",
 }
 
 const StageSemantic : Record<string, string> = {

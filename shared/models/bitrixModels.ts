@@ -355,7 +355,7 @@ export interface IStage {
     CREATED_TIME : string,
     CATEGORY_ID : number,
     STAGE_SEMANTIC_ID : string,
-    STAGE_ID : StageStatus
+    STAGE_ID : DealStageStatus
 }
 
 export interface IResponseArrayNewBitrix<T>{
@@ -423,14 +423,112 @@ export interface IDeal{
   UF_CRM_1721244482250: string;
 }
 
-export enum StageStatus  {
+export enum DealStageStatus {
+    // === Воронка 0 (DEAL_STAGE — общая) ===
     STAGE_NEW = "NEW",
-    STAGE_PREPARATION = "PREPARATION",
-    STAGE_PREPAYMENT_INVOICE = "PREPAYMENT_INVOICE",
-    STAGE_EXECUTING = "EXECUTING",
-    STAGE_FINAL_INVOICE = "FINAL_INVOICE",
-    STAGE_WON = "WON",
-    STAGE_LOSE = "LOSE"
+    STAGE_NDS = "UC_60MINX",          // НДЗ
+    STAGE_VKS = "UC_I9CU0Z",          // ВКС
+    STAGE_NAZVANIE = "UC_8V6KDC",     // Название
+    STAGE_WON = "WON",                // Сделка успешна
+    STAGE_LOSE = "LOSE",              // Сделка провалена
+
+    // === Воронка 9 (DEAL_STAGE_9) ===
+    C9_NEW = "C9:NEW",                       // Новая сделка
+    C9_RAZBOR = "C9:6",                      // Разобрать (Газ с фото)
+    C9_OTLOJILI = "C9:11",                   // Отложили
+    C9_HOTYAT_NE_MOGUT = "C9:UC_7AK1KN",    // Хотят но пока не могут
+    C9_PREZENTACIYA = "C9:1",               // Назначена презентация
+    C9_KP_OTPRAVLENO = "C9:2",              // Отправлено КП
+    C9_NA_RESHENII = "C9:3",               // На решении
+    C9_PREPARATION = "C9:PREPARATION",      // Отправлен договор
+    C9_DOGOVOR_PODPISAN = "C9:PREPAYMENT_INVOICE", // Договор подписан
+    C9_VNEDRENIE = "C9:FINAL_INVOICE",      // Внедрение
+    C9_RABOTA_VYPOLNENA = "C9:10",          // Работа выполнена
+    C9_PODPISANIE_AKTA = "C9:UC_ZI0S81",   // Подписание Акта ПО
+    C9_PREZENTACIYA_PROVEDENA = "C9:7",    // Презентация проведена
+    C9_WON = "C9:WON",                     // Сделка успешна
+    C9_LOSE = "C9:LOSE",                   // Сделка провалена
+
+    // === Воронка 10 (DEAL_STAGE_10) ===
+    C10_RABOTAYUT = "C10:NEW",                    // Работают
+    C10_OTKAZALIS = "C10:UC_U0BNPJ",             // Отказались работать
+    C10_USLOVNYY_OTKAZ = "C10:PREPARATION",      // Условный отказ
+    C10_OTLOJILI = "C10:UC_CVNGGA",              // Отложили
+    C10_RABOTAYUT_KZ = "C10:UC_DPBIN7",          // Работают Казахстан
+    C10_WON = "C10:WON",                         // Сделка успешна
+    C10_LOSE = "C10:LOSE",                        // Сделка провалена
+
+    // === Воронка 12 (DEAL_STAGE_12) ===
+    C12_NEW = "C12:NEW",                          // Новая сделка
+    C12_OTLOJILI = "C12:PREPAYMENT_INVOIC",       // Отложили
+    C12_PREZENTACIYA = "C12:EXECUTING",           // Назначена презентация
+    C12_PREZENTACIYA_PROVEDENA = "C12:UC_2Z7KEI", // Презентация проведена
+    C12_KP_OTPRAVLENO = "C12:FINAL_INVOICE",      // Отправлено КП
+    C12_NA_PAUZE = "C12:UC_XC8R7Y",              // Встали на паузу
+    C12_NA_RESHENII = "C12:UC_8Q70MV",           // На решении
+    C12_DOGOVOR_OTPRAVLEN = "C12:UC_PYCJYT",     // Отправлен договор
+    C12_DOGOVOR_PODPISAN = "C12:UC_Z05R0D",      // Договор подписан
+    C12_VNEDRENIE = "C12:UC_2FDYLM",             // Внедрение
+    C12_RABOTA_VYPOLNENA = "C12:UC_TJQ81I",      // Работа выполнена
+    C12_SCHET_OPLACHEN = "C12:UC_XFGT2R",        // Счёт оплачен
+    C12_WON = "C12:WON",                         // Сделка успешна
+    C12_LOSE = "C12:LOSE",                        // Сделка провалена
+    C12_APOLOGY = "C12:APOLOGY",                  // Анализ причины провала
+
+    // === Воронка 15 (DEAL_STAGE_15) ===
+    C15_NEW = "C15:NEW",                          // Первое касание
+    C15_NDZ = "C15:PREPARATION",                  // НДЗ
+    C15_VKS = "C15:PREPAYMENT_INVOIC",            // ВКС
+    C15_KP = "C15:EXECUTING",                     // КП
+    C15_DOGOVOR = "C15:FINAL_INVOICE",            // Договор
+    C15_VNEDRENIE = "C15:UC_BPG9T4",             // Внедрение
+    C15_AKTY_PO = "C15:UC_P8V01H",              // Акты ПО
+    C15_WON = "C15:WON",                          // Сделка успешна
+    C15_LOSE = "C15:LOSE",                         // Сделка провалена
+    C15_APOLOGY = "C15:APOLOGY",                   // Анализ причины провала
+
+    // === Воронка 16 (DEAL_STAGE_16) ===
+    C16_NEW = "C16:NEW",                          // Не обработано
+    C16_NDZ = "C16:PREPARATION",                  // НДЗ
+    C16_OTLOJILI = "C16:PREPAYMENT_INVOIC",       // Отложили
+    C16_PRESALE = "C16:EXECUTING",                // Пресейл
+    C16_VKS = "C16:FINAL_INVOICE",               // ВКС
+    C16_KP = "C16:UC_FEQIOQ",                    // КП
+    C16_DOGOVOR = "C16:UC_WTAQ5Y",               // Договор
+    C16_WON = "C16:WON",                          // Сделка успешна
+    C16_LOSE = "C16:LOSE",                         // Сделка провалена
+    C16_APOLOGY = "C16:APOLOGY",                   // Анализ причины провала
+
+    // === Воронка 17 (DEAL_STAGE_17) ===
+    C17_NEW = "C17:NEW",                          // Новая
+    C17_VKS = "C17:PREPARATION",                  // ВКС
+    C17_KP = "C17:PREPAYMENT_INVOIC",             // КП
+    C17_DOGOVOR = "C17:UC_QJCFAU",               // Договор
+    C17_VNEDRENIE = "C17:UC_W1KDYO",             // Внедрение
+    C17_AKTY_PO = "C17:EXECUTING",               // Акты ПО
+    C17_WON = "C17:WON",                          // Сделка успешна
+    C17_LOSE = "C17:LOSE",                         // Сделка провалена
+    C17_APOLOGY = "C17:APOLOGY",                   // Анализ причины провала
+
+    // === Воронка 18 (DEAL_STAGE_18) ===
+    C18_NEW = "C18:NEW",                          // Новая
+    C18_PODGOTOVKA_KP = "C18:PREPARATION",        // Подготовка КП
+    C18_KP_OTPRAVLENO = "C18:PREPAYMENT_INVOIC",  // КП отправлено
+    C18_FORMIROVANIE_DOGOVORA = "C18:EXECUTING",  // Формирование договора
+    C18_DOGOVOR_PODPISAN = "C18:FINAL_INVOICE",   // Договор подписан
+    C18_WON = "C18:WON",                          // Сделка успешна
+    C18_LOSE = "C18:LOSE",                         // Сделка провалена
+    C18_APOLOGY = "C18:APOLOGY",                   // Анализ причины провала
+
+    // === Воронка 19 (DEAL_STAGE_19) ===
+    C19_NEW = "C19:NEW",                          // Новая
+    C19_PODGOTOVKA_DOCS = "C19:PREPARATION",      // Подготовка документов
+    C19_SCHET_PREDOPLATA = "C19:PREPAYMENT_INVOIC", // Счёт на предоплату
+    C19_V_RABOTE = "C19:EXECUTING",               // В работе
+    C19_FINALNYY_SCHET = "C19:FINAL_INVOICE",     // Финальный счёт
+    C19_WON = "C19:WON",                          // Сделка успешна
+    C19_LOSE = "C19:LOSE",                         // Сделка провалена
+    C19_APOLOGY = "C19:APOLOGY",                   // Анализ причины провала
 }
 export enum Bitrix24Event {
     // // App

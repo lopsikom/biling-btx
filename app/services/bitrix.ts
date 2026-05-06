@@ -133,7 +133,7 @@ export class Bitrix {
             select : data?.select,
             start : data?.start
         })
-        return response.getData() as IResponseArrayNewBitrix<IStage[]>
+        return response.getData() as IResponseArrayNewBitrix<IStage>
     }
     async getDeals(data? : {filter? : object, order? : object, select? : string[], start? : number }){
         const response = await this.bitrixFrame.callMethod("crm.deal.list", {
