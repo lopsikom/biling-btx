@@ -8,25 +8,32 @@ import usebillingStateStore from '~/services/stores/billingStateStore';
 import useModalStore from '~/services/stores/modalStore';
 import { diffObject, isDiffArraySimple, isValidData } from '~/services/utils/utils';
 import useToastStore from '~/services/stores/toastStore';
-import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
+import { ModalEnum, ModuleEnum } from '~/services/models/enums/billing/ModalsEnum';
 import useMenuStore from '~/services/stores/menuStores';
+
+const modalStore = useModalStore()
+
+
+const ModalArgs = modalStore.argsModal
+
+
 const openModulsMenu = ref({
-    vats : false,
-    voiceRobot : false,
-    chatBot : false,
-    autoinfo : false,
-    autoinfo_with_voice : false,
-    autoinfo_without_voice : false,
-    autoinfo_sms : false,
-    webForm : false
+    vats : (ModalArgs[ModuleEnum.VATS] as boolean) ?? false,
+    voiceRobot : (ModalArgs[ModuleEnum.VOICE_ROBOT] as boolean) ?? false,
+    chatBot : (ModalArgs[ModuleEnum.CHAT_BOT] as boolean) ?? false,
+    autoinfo : (ModalArgs[ModuleEnum.AUTOINFORMATION] as boolean) ?? false,
+    autoinfo_with_voice : (ModalArgs[ModuleEnum.AUTOINFORMATION] as boolean) ?? false,
+    autoinfo_without_voice : (ModalArgs[ModuleEnum.AUTOINFORMATION] as boolean) ?? false,
+    autoinfo_sms : (ModalArgs[ModuleEnum.AUTOINFORMATION] as boolean) ?? false,
+    webForm : (ModalArgs[ModuleEnum.WEBFORM] as boolean) ?? false
 })
 
 onBeforeMount(async () => {
     const data = await $axios.getContracts({});
     billingStateStore.contractsTariff = data;
     const ContractsSelect = billingStateStore.contractsTariff
-        .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
-        .map(c => ({
+    .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
+    .map(c => ({
         label: c.id,
         value: `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`
     }))
@@ -48,15 +55,34 @@ onBeforeMount(async () => {
 
 })
 
+const scrollTargets = {
+    [ModuleEnum.VATS] : ref<HTMLElement | null>(null),
+    [ModuleEnum.VOICE_ROBOT] : ref<HTMLElement | null>(null),
+    [ModuleEnum.CHAT_BOT] : ref<HTMLElement | null>(null),
+    [ModuleEnum.AUTOINFORMATION] : ref<HTMLElement | null>(null),
+    [ModuleEnum.WEBFORM] : ref<HTMLElement | null>(null),
+}
+
+const scrollContainer = ref<HTMLElement | null>(null)
+
+onMounted(() =>{
+    const arg  = modalStore.findModalArg()
+    if(scrollContainer.value && (arg && arg.value)) {
+        const target = scrollTargets[arg.key as ModuleEnum]
+        const parentScroll = scrollContainer.value.parentElement
+        if(target.value && parentScroll) parentScroll.scrollTop = target.value.offsetTop
+    }
+
+})
+
 const toastStore = useToastStore()
 
 const {$axios} = useNuxtApp()
 
-const modalStore = useModalStore()
+const billingStateStore = usebillingStateStore();
 
 const menuStore = useMenuStore();
 
-const billingStateStore = usebillingStateStore();
 
 const tarrifs = ref(billingStateStore.tariff)
 
@@ -526,7 +552,7 @@ finally{
 
 </script>
 <template>
-<div class="flex flex-col" >
+<div class="flex flex-col" ref="scrollContainer">
     <div class="flex flex-col mb-[15px]">
         <h1 class="font-semibold select-none">Тарифный план</h1>
         <span class="text-gray-500 text-sm select-none">Измените, добавте или продлите тарифный план или модули</span>
@@ -537,7 +563,7 @@ finally{
                 <p class="font-semibold select-none hover-item">ВАТС</p>
                 <Icon style="margin-left: auto;" class="hover-item" :icon="openModulsMenu.vats ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"/>
             </div>
-            <div class="flex flex-col" v-if="openModulsMenu.vats">
+            <div class="flex flex-col" v-if="openModulsMenu.vats" :ref="scrollTargets[ModuleEnum.VATS]">
                 <div v-for="item in vats" >
                 <div class="item-module blue-hover cursor-pointer mt-[10px]" @click="item.active = !item.active" v-if="!item.isDeleted" @mouseleave="item.isEditMenu = false">
                     <div class="flex items-center gap-[20px]">
@@ -599,7 +625,7 @@ finally{
                 <p class="font-semibold select-none hover-item">Голосовой робот</p>
                 <Icon style="margin-left: auto;" class="hover-item" :icon="openModulsMenu.voiceRobot ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"/>
             </div>
-            <div class="flex flex-col" v-if="openModulsMenu.voiceRobot">
+            <div class="flex flex-col" v-if="openModulsMenu.voiceRobot" :ref="scrollTargets[ModuleEnum.VOICE_ROBOT]">
                 <!-- изменить if на show -->
                 <div v-for="item in voiceRobotComputed">
                     <div class="item-module blue-hover cursor-pointer mt-[10px]" @click="item.active = !item.active" v-if="!item.isDeleted" @mouseleave="item.isEditMenu = false">
@@ -660,7 +686,7 @@ finally{
                 <p class="font-semibold select-none hover-item">Чат-бот</p>
                 <Icon style="margin-left: auto;" class="hover-item" :icon="openModulsMenu.chatBot ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"/>
             </div>
-            <div class="flex flex-col" v-if="openModulsMenu.chatBot">
+            <div class="flex flex-col" v-if="openModulsMenu.chatBot" :ref="scrollTargets[ModuleEnum.CHAT_BOT]">
                 <div v-for="item in chatBotComputed">
                     <div class="item-module blue-hover cursor-pointer mt-[10px]" @click="item.active = !item.active" v-if="!item.isDeleted" @mouseleave="item.isEditMenu = false">
                     <div class="flex items-center gap-[20px]">
@@ -747,7 +773,7 @@ finally{
                 <p class="font-semibold select-none hover-item">Автоинформирование</p>
                 <Icon style="margin-left: auto;" class="hover-item" :icon="openModulsMenu.autoinfo ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"/>
             </div>
-            <div class="flex flex-col" v-if="openModulsMenu.autoinfo">
+            <div class="flex flex-col" v-if="openModulsMenu.autoinfo" :ref="scrollTargets[ModuleEnum.AUTOINFORMATION]">
                     <div class="item-module blue-hover cursor-pointer mt-[15px]" @click="openModulsMenu.autoinfo_with_voice = !openModulsMenu.autoinfo_with_voice">
                         <div class="flex items-center gap-[20px]">
                         <span class="select-none">Исходящие звонки с разпознования речи</span>
@@ -935,7 +961,7 @@ finally{
             <p class="font-semibold select-none hover-item">Web-форма</p>
             <Icon style="margin-left: auto;" class="hover-item" :icon="openModulsMenu.webForm ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"/>
         </div>
-        <div class="flex flex-col" v-if="openModulsMenu.webForm">
+        <div class="flex flex-col" v-if="openModulsMenu.webForm" :ref="scrollTargets[ModuleEnum.WEBFORM]">
             <div v-for="item in webFormsComputed">
                 <div class="item-module blue-hover cursor-pointer mt-[10px]" @click="item.active = !item.active" v-if="!item.isDeleted" @mouseleave="item.isEditMenu = false">
                     <div class="flex items-center gap-[20px]">
