@@ -53,4 +53,9 @@ export async function connectionDeletePrisma(id : number){
     return response;
 }
 
+export async function requireConnection(id: number, portal_id: number) {
+    const response = await prisma.connection.findFirst({ where: { id, company: { portal_id } } })
+    return !!response
+}
+
 export type connectionPrisma = Awaited<ReturnType<typeof connectionPostPrisma>>

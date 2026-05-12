@@ -5,7 +5,7 @@ import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { voiceRobotPatchMapPrimsa } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { getContractById } from "~~/server/utils/prisma/modules/Contract";
-import { getVoiceRobotByIdPrisma, patchVoiceRobotPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
+import { getVoiceRobotByIdPrisma, patchVoiceRobotPrisma, requireVoiceRobot } from "~~/server/utils/prisma/modules/VoiceRobot";
 import { switchContractProduct, updateProductBitrix } from "~~/server/utils/ProductBitrix";
 import { voiceRobotPropsForCatalog } from "~~/server/utils/bitrixProductProps";
 import { acquireLock, releaseLock } from "~~/server/utils/redis/webHookLocker";
@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     if (id) {
         try {
             const parseId = z.coerce.number().parse(id)
+            const verify = await requireVoiceRobot(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const ZData = await VoiceRobotUpdate.parseAsync(body)
             const prismaData = voiceRobotPatchMapPrimsa(ZData)
             const OldVoiceRobot = await getVoiceRobotByIdPrisma(parseId);

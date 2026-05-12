@@ -208,6 +208,11 @@ export async function getMessengersPrisma(){
     return response
 }
 
+export async function requireChatBot(id: number, portal_id: number) {
+    const response = await prisma.chat_bot.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export async function postChatBotProductPrisma(data : {info : IChatBotProduct, productRows : IProductRow}, portal_id : number){
    const {info, productRows} = data
    const messengers : number[] = []

@@ -190,6 +190,11 @@ export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct
    return response
 }
 
+export async function requireWebform(id: number, portal_id: number) {
+    const response = await prisma.webform.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export async function postWebFormProducPrisma(data : {info : IWebFormProdruct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
     const response = prisma.webform.create({

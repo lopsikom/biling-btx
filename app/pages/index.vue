@@ -36,40 +36,69 @@ const selectPage = ref<string>(bilingPagesEnum.Main);
 
 const {data, pending, error} = useAsyncData('bitrix', async () => {
     menuStore.fetchDataLoad = true
-    try{
+    try {
         const bitrix = await initBitrix();
         bitrixStateStore.setBitrixClient(bitrix);
         $axios.setBitrixFrame = bitrix.bitrixFrame;
+
         const isCompany = await $axios.getCheckCompany();
-        if(!isCompany) throw new Error("Invalid Company")
-        bitrixStateStore.bitrixCompany = await bitrix.companyInfo();
-        bitrixStateStore.companyAssignUser = (await bitrix.getUser(bitrixStateStore.bitrixCompany.ASSIGNED_BY_ID))[0];
-        bitrixStateStore.bitrixisMyCompanys = (await bitrix.getItems<ICompanyNew>(4, {"isMyCompany" : "Y"})).result.items
-        billingStateStore.messengers = await $axios.getMessengers();
-        billingStateStore.contractStatuses = await $axios.getContractStatuses();
-        billingStateStore.integrations = await $axios.getIntegrations();
-        billingStateStore.tariff = await $axios.getTariff();
-        const vats = await $axios.getVats({bitrix_id : bitrix.bitrixFrame.placement.options.ID})
-        billingStateStore.vats.push(...vats);
-        const voiceRobot = await $axios.getVoiceRobots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-        billingStateStore.voiceRobots.push(...voiceRobot);
-        const chatBot = await $axios.getChatBots({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-        billingStateStore.chatBots.push(...chatBot);
-        const autoinfo = await $axios.getAutoInfos({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-        billingStateStore.autoinformations.push(...autoinfo);
-        const webForm = await $axios.getWebforms({bitrix_id : bitrix.bitrixFrame.placement.options.ID});
-        billingStateStore.webform.push(...webForm)
-        const connection_statuses = await $axios.getConnectionStatus();
-        billingStateStore.connection_statuses = connection_statuses;
-        const connection_type = await $axios.getConnectionType();
-        billingStateStore.connection_types = connection_type;
-        const connections = await $axios.getConnectionList({company_id : bitrix.bitrixFrame.placement.options.ID});
+        if (!isCompany) throw new Error("Invalid Company")
+
+        const companyId = bitrix.bitrixFrame.placement.options.ID
+
+        const [
+            company,
+            myCompanys,
+            messengers,
+            contractStatuses,
+            integrations,
+            tariff,
+            vats,
+            voiceRobots,
+            chatBots,
+            autoInfos,
+            webForms,
+            connectionStatuses,
+            connectionTypes,
+            connections,
+        ] = await Promise.all([
+            bitrix.companyInfo(),
+            bitrix.getItems<ICompanyNew>(4, { "isMyCompany": "Y" }),
+            $axios.getMessengers(),
+            $axios.getContractStatuses(),
+            $axios.getIntegrations(),
+            $axios.getTariff(),
+            $axios.getVats({ bitrix_id: companyId }),
+            $axios.getVoiceRobots({ bitrix_id: companyId }),
+            $axios.getChatBots({ bitrix_id: companyId }),
+            $axios.getAutoInfos({ bitrix_id: companyId }),
+            $axios.getWebforms({ bitrix_id: companyId }),
+            $axios.getConnectionStatus(),
+            $axios.getConnectionType(),
+            $axios.getConnectionList({ company_id: companyId }),
+        ])
+
+        bitrixStateStore.bitrixCompany = company
+        bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
+        billingStateStore.messengers = messengers
+        billingStateStore.contractStatuses = contractStatuses
+        billingStateStore.integrations = integrations
+        billingStateStore.tariff = tariff
+        billingStateStore.vats.push(...vats)
+        billingStateStore.voiceRobots.push(...voiceRobots)
+        billingStateStore.chatBots.push(...chatBots)
+        billingStateStore.autoinformations.push(...autoInfos)
+        billingStateStore.webform.push(...webForms)
+        billingStateStore.connection_statuses = connectionStatuses
+        billingStateStore.connection_types = connectionTypes
         billingStateStore.connections = connections
-        return {bitrix, Company}
-    }catch(e){
+
+        bitrixStateStore.companyAssignUser = (await bitrix.getUser(company.ASSIGNED_BY_ID))[0]
+
+        return { bitrix, Company }
+    } catch(e) {
         console.error(e)
-        console.log(useNuxtApp().$config.public.dev);
-        if(useNuxtApp().$config.public.dev){
+        if (useNuxtApp().$config.public.dev) {
             bitrixStateStore.bitrixCompany = mockCompany;
             bitrixStateStore.companyRequisite = mockRequisite;
             bitrixStateStore.companyContacts = mockContact;
@@ -78,36 +107,55 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrixStateStore.addresTypes = mockAddressTypes;
             bitrixStateStore.companyAddress = mockAddress;
             bitrixStateStore.companyInvoice = mockInvoice;
-            billingStateStore.messengers = await $axios.getMessengers();
-            billingStateStore.integrations = await $axios.getIntegrations();
-            billingStateStore.contractStatuses = await $axios.getContractStatuses();
-            billingStateStore.tariff = await $axios.getTariff();
-            const vats = await $axios.getVats({bitrix_id : "2"})
-            billingStateStore.vats.push(...vats);
-            const voiceRobot = await $axios.getVoiceRobots({bitrix_id : "2"});
-            billingStateStore.voiceRobots.push(...voiceRobot);
-            const chatBot = await $axios.getChatBots({bitrix_id : "2"});
-            billingStateStore.chatBots.push(...chatBot);
-            const autoinfo = await $axios.getAutoInfos({bitrix_id : "2"});
-            billingStateStore.autoinformations.push(...autoinfo);
-            const webForm = await $axios.getWebforms({bitrix_id : "2"});
-            billingStateStore.webform.push(...webForm)
-            const connection_statuses = await $axios.getConnectionStatus();
-            billingStateStore.connection_statuses = connection_statuses;
-            const connection_type = await $axios.getConnectionType();
-            billingStateStore.connection_types = connection_type;
-            const connections = await $axios.getConnectionList({company_id : "2"});
+
+            const [
+                messengers,
+                integrations,
+                contractStatuses,
+                tariff,
+                vats,
+                voiceRobots,
+                chatBots,
+                autoInfos,
+                webForms,
+                connectionStatuses,
+                connectionTypes,
+                connections,
+            ] = await Promise.all([
+                $axios.getMessengers(),
+                $axios.getIntegrations(),
+                $axios.getContractStatuses(),
+                $axios.getTariff(),
+                $axios.getVats({ bitrix_id: "2" }),
+                $axios.getVoiceRobots({ bitrix_id: "2" }),
+                $axios.getChatBots({ bitrix_id: "2" }),
+                $axios.getAutoInfos({ bitrix_id: "2" }),
+                $axios.getWebforms({ bitrix_id: "2" }),
+                $axios.getConnectionStatus(),
+                $axios.getConnectionType(),
+                $axios.getConnectionList({ company_id: "2" }),
+            ])
+
+            billingStateStore.messengers = messengers
+            billingStateStore.integrations = integrations
+            billingStateStore.contractStatuses = contractStatuses
+            billingStateStore.tariff = tariff
+            billingStateStore.vats.push(...vats)
+            billingStateStore.voiceRobots.push(...voiceRobots)
+            billingStateStore.chatBots.push(...chatBots)
+            billingStateStore.autoinformations.push(...autoInfos)
+            billingStateStore.webform.push(...webForms)
+            billingStateStore.connection_statuses = connectionStatuses
+            billingStateStore.connection_types = connectionTypes
             billingStateStore.connections = connections
-            console.log(connections)
-        }
-        else{
+        } else {
             errorModal.showError({message : 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e}, "Ошибка Bitrix");
         }
         return
-    }finally{
+    } finally {
         menuStore.fetchDataLoad = false;
     }
-}, { server: false}
+}, { server: false }
 )
 
 

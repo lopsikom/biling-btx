@@ -16,6 +16,7 @@ export default async function getPortalByUserBitrix(token : string){
                 if(!user_bitrix.result) return
                 user = await upsertUserPrisma(portal.id, userMapUpsertPrisma(portal.id, user_bitrix.result))
         }
+
         return {portal, user_id : user.id, bitrix_user_id : user.bitrix_id}
 }
 export type PortalDataType = NonNullable<Awaited<ReturnType<typeof getPortalByUserBitrix>>>

@@ -145,6 +145,11 @@ export async function upsertVatsProductPrisma(data : {info : IVatsProduct, produ
    return response
 }
 
+export async function requireVats(id: number, portal_id: number) {
+    const response = await prisma.vats.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export async function postVatsProductPrisma(data : {info : IVatsProduct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
     const response = await prisma.vats.create({

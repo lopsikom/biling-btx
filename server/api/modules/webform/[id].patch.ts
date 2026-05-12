@@ -5,7 +5,7 @@ import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { webformGetMapPrisma, webformInputUpdateMapPrisma } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { getContractById } from "~~/server/utils/prisma/modules/Contract";
-import { getWebformByIdPrisma, patchWebformPrisma } from "~~/server/utils/prisma/modules/WebForm";
+import { getWebformByIdPrisma, patchWebformPrisma, requireWebform } from "~~/server/utils/prisma/modules/WebForm";
 import { switchContractProduct, updateProductBitrix } from "~~/server/utils/ProductBitrix";
 import { webformPropsForCatalog } from "~~/server/utils/bitrixProductProps";
 import { acquireLock, releaseLock } from "~~/server/utils/redis/webHookLocker";
@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     if (id) {
         try {
             const parseId = z.coerce.number().parse(id)
+            const verify = await requireWebform(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const ZData = await WebFormFilterUpdate.parseAsync(body)
             const prismaData = webformInputUpdateMapPrisma(ZData)
             const OldWebform = await getWebformByIdPrisma(parseId);

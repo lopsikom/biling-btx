@@ -3,7 +3,7 @@ import companyClient from "~~/server/services/bitrix/CompanyClient";
 import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { getContractById } from "~~/server/utils/prisma/modules/Contract";
-import { deleteVoiceRobotPrisma, getVoiceRobotByIdPrisma } from "~~/server/utils/prisma/modules/VoiceRobot";
+import { deleteVoiceRobotPrisma, getVoiceRobotByIdPrisma, requireVoiceRobot } from "~~/server/utils/prisma/modules/VoiceRobot";
 import { deleteProducts } from "~~/server/utils/ProductBitrix";
 import { acquireLock, releaseLock } from "~~/server/utils/redis/webHookLocker";
 import { entityType } from "~~/shared/models/APIModels";
@@ -13,6 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if (id) {
         const parseId = z.coerce.number().parse(id)
+        const verify = await requireVoiceRobot(parseId, portal.portal.id)
+        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldVoiceRobot = await getVoiceRobotByIdPrisma(parseId);
         if (!OldVoiceRobot || !OldVoiceRobot.bitrix_id || !OldVoiceRobot.contract_id) throw createError({ statusCode: 404, statusMessage: "No found voice robot" })
         const contract = await getContractById(OldVoiceRobot.contract_id);

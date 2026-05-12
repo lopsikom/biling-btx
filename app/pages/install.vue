@@ -6,7 +6,7 @@ import { unbindAllEvent, unbindAllPlacement } from '~/services/utils/utils';
 
 const badInstall = ref(false)
 const errorTitle = ref()
-const dev = process.env.NUXT_PUBLIC_DEV
+const dev = useRuntimeConfig().public.dev
 
 onMounted( async () => {
     try{

@@ -1,7 +1,9 @@
-import { connectionGetByIdPrisma } from "~~/server/utils/prisma/Connection";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { connectionGetByIdPrisma, requireConnection } from "~~/server/utils/prisma/Connection";
 
 export default defineEventHandler(async (event) =>{
     const id = getRouterParams(event).id;
+    const portal = event.context.portal as PortalDataType
     let parseId : number;
     if(id){
         try{
@@ -13,6 +15,8 @@ export default defineEventHandler(async (event) =>{
                 statusMessage : "Invalid id"
             });
         }
+        const verify = await requireConnection(parseId, portal.portal.id)
+        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const connection = await connectionGetByIdPrisma(parseId);
             if(!connection){
                 throw createError({

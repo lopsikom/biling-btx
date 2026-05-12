@@ -9,14 +9,14 @@ export default async function getMyCompanysCache(portal : PortalDataType, access
     if(!access_token){
         access_token = (await getBitrixTokenByRedis(portal))!.access_token;
     }
-    const myCompanyCache = await redisClient.get("myCompanyBitrix")
+    const myCompanyCache = await redisClient.get(`myCompanyBitrix:${portal.portal.id}`)
     let myCompany : ICacheCompany[]
     if(!myCompanyCache){
         const myCompanys = (await bitrixAPI.getItems<ICompanyNew>(portal.portal.domain, access_token, 4, {
             "isMyCompany" : "Y"
         })).result.items
         const cache = myCompanys.map(c => {return {id : c.id, title : c.title} as ICacheCompany})
-        await redisClient.set("myCompanyBitrix", JSON.stringify(cache));
+        await redisClient.set(`myCompanyBitrix:${portal.portal.id}`, JSON.stringify(cache));
         myCompany = cache
     }
     else myCompany = JSON.parse(myCompanyCache) as ICacheCompany[]

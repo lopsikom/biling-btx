@@ -22,7 +22,6 @@ export class bitrixAPI {
     private AuthURI : string
     constructor(){
         this.AuthURI = useRuntimeConfig().AuthUri + "rest/";
-        console.log(this.AuthURI);
         this.AxiosClient = axios.create({headers: {
             'Content-Type': 'application/json'
         }});

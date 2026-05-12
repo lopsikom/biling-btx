@@ -13,44 +13,45 @@ export default defineEventHandler(async (event) => {
         if(process.env.NUXT_PUBLIC_DEV){
             event.context.portal = {
                 portal : {
-                    id : 4,
-                    client_id : "local.6992c7695033b3.26687139",
-                    client_secret : "9NHC5JN4QgR5nLVs6EOc3stJrhh9sbBd0dOIlk2kGiItA6RNTX",
-                    domain : "b24-sxsxo9.bitrix24.ru",  
-                    refresh_token : "b165ba690080f1620080f13200000001000007e01813a5991cec1c608fb3d43c3bd614"
+                    id : Number(process.env.NUXT_DEV_PORTAL_ID),
+                    client_id : process.env.NUXT_DEV_CLIENT_ID,
+                    client_secret : process.env.NUXT_DEV_CLIENT_SECRET,
+                    domain : process.env.NUXT_DEV_DOMAIN,  
+                    refresh_token : process.env.NUXT_DEV_REFRESH_TOKEN
                 },
-                user_id : 2,
-                bitrix_user_id : "1"
+                user_id : Number(process.env.NUXT_DEV_USER_ID),
+                bitrix_user_id : process.env.NUXT_DEV_USER_BITRIX_ID
             } as PortalDataType;
             return
         }
         else{
             throw createError({
                 statusCode: 401,
-                statusMessage: 'Bad Auth',
+                statusMessage: 'Unauthorized',
                 message : 'none token'
             })
         }
     }
     try{
-        console.log("middleware ", token)
-        const cachePortal = await redisClient.get(`token:${token}`)
+        const cachePortal = await redisClient.get(`token:${token}`) //решить проблему с client_secret
         if(cachePortal){
-            console.log("cachePortal ", cachePortal)
             event.context.portal = JSON.parse(cachePortal);
             return
         }
-        console.log("no cachePortal")
         const portal = await getPortalByUserBitrix(token)
         if(!portal) throw createError({
             statusCode : 404,
-            statusMessage : "Bad Auth",
+            statusMessage : "Unauthorized",
             message : 'none find portal'
         })
         await redisClient.set(`token:${token}`, JSON.stringify(portal), "EX", 300)
         event.context.portal = portal;
     }catch(e){
         console.log(e);
-
+        throw createError({
+            statusCode: 500,
+            statusMessage: 'Unauthorized',
+            message : 'app error'
+        })
     }
 })

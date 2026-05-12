@@ -4,7 +4,7 @@ import companyClient from "~~/server/services/bitrix/CompanyClient";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { chatBotGetMapPrisma, chatBotInputUpdateMapPrisma } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
-import { getChatBotById, patchChatBotPrisma } from "~~/server/utils/prisma/modules/ChatBot";
+import { getChatBotById, patchChatBotPrisma, requireChatBot } from "~~/server/utils/prisma/modules/ChatBot";
 import { getContractById } from "~~/server/utils/prisma/modules/Contract";
 import { switchContractProduct, updateProductBitrix } from "~~/server/utils/ProductBitrix";
 import { chatBotPropsForCatalog } from "~~/server/utils/bitrixProductProps";
@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     if (id) {
         try {
             const parseId = z.coerce.number().parse(id)
+            const verify = await requireChatBot(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const ZData = await ChatBotUpdate.parseAsync(body)
             const prismaData = chatBotInputUpdateMapPrisma(ZData)
             const OldChatBot = await getChatBotById(parseId);

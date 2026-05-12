@@ -136,6 +136,11 @@ export async function getTariffs(){
     const response = await prisma.tariff.findMany();
     return response
 }
+export async function requireContract(id: number, portal_id: number) {
+    const response = await prisma.contract.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export type contractPrismaGet = Awaited<ReturnType<typeof addContractPrisma>>
 export type contractPrismaWithPagination = {
     data : contractPrismaGet[],

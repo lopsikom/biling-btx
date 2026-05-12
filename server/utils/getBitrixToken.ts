@@ -16,7 +16,7 @@ export async function getBitrixTokenByCode(code : string, server_domain : string
             })
         }
         const token = await bitrixAPI.getPortalToken(code.toString(), portal.client_id, portal.client_secret, server_domain.toString());
-        patchPortal(portal.id, token.refresh_token, token.access_token)
+        await patchPortal(portal.id, token.refresh_token, token.access_token)
         const data = {
             accessToken : token.access_token,
             refresh : token.refresh_token,

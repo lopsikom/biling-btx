@@ -20,8 +20,6 @@ async function deleteProductRowVerified(company: companyClient, row_id: number):
         try {
             await company.deleteProductRow(row_id);
         } catch (e) {
-            // axios-интерсептор глотает HTTP-ошибки → возвращает undefined → response.data бросает TypeError.
-            // Любая ошибка тут не критична — проверка дальше скажет, удалилось ли.
             console.warn(`[deleteRow ${row_id}] delete throw on attempt ${attempt}:`, e);
         }
         await new Promise(r => setTimeout(r, DELETE_VERIFY_DELAY_MS));

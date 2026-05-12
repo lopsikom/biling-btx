@@ -5,7 +5,7 @@ import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
 import { autoinformationInputMapPrisma } from "~~/server/utils/mappers";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { getContractById } from "~~/server/utils/prisma/modules/Contract";
-import { getAutoinformationByIdPrisma, patchAutoinfromationPrisma } from "~~/server/utils/prisma/modules/AutoInfo";
+import { getAutoinformationByIdPrisma, patchAutoinfromationPrisma, requireAutoInfo } from "~~/server/utils/prisma/modules/AutoInfo";
 import { switchContractProduct, switchProductCategory, updateProductBitrix } from "~~/server/utils/ProductBitrix";
 import { autoinformationProductTypeByTypeId, autoinformationPropsForCatalog } from "~~/server/utils/bitrixProductProps";
 import { acquireLock, releaseLock } from "~~/server/utils/redis/webHookLocker";
@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     if (id) {
         try {
             const parseId = z.coerce.number().parse(id)
+            const verify = await requireAutoInfo(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const ZData = await AutoInformationFilterUpdate.parseAsync(body)
             const prismaData = autoinformationInputMapPrisma(ZData)
             const OldAutoinformation = await getAutoinformationByIdPrisma(parseId);

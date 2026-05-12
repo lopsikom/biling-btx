@@ -4,7 +4,6 @@ export default defineEventHandler(async (event) => {
     const code = query.code;
     const server_domain = query.server_domain;
     const state = query.state;  
-    console.log("state ", state)
     if(code && state && server_domain){
         try{
             const data = await getBitrixTokenByCode(code.toString(), server_domain.toString(), Number(state));
@@ -15,7 +14,6 @@ export default defineEventHandler(async (event) => {
                 })
             }
             setResponseStatus(event, 202)
-            console.log(data);
             return data 
             
         }

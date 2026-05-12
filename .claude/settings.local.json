@@ -4,7 +4,8 @@
       "Bash(npx tsc *)",
       "Bash(node_modules/.bin/tsc --noEmit --project .)",
       "mcp__b24-dev-mcp__bitrix-method-details",
-      "mcp__b24-dev-mcp__bitrix-search"
+      "mcp__b24-dev-mcp__bitrix-search",
+      "Bash(git -C /home/lopsik/biling-btx ls-files)"
     ]
   }
 }

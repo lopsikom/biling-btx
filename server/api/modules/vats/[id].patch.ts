@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 import { vatsUpdateInput } from "~~/server/services/models/generated/prisma/models";
-import { patchVatsPrisma } from "~~/server/utils/prisma/modules/Vats";
+import { patchVatsPrisma, requireVats } from "~~/server/utils/prisma/modules/Vats";
 import { entityType, VatsUpdate } from "~~/shared/models/APIModels";
 import * as z from "zod"
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
@@ -17,6 +17,8 @@ export default defineEventHandler(async (event) => {
         if(id){
             try{ // Рефактор обновления сущности в битриксе с разделением полей на разные запросы
                 const parseId = z.coerce.number().parse(id)
+                const verify = await requireVats(parseId, portal.portal.id)
+                if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
                 const ZData = await VatsUpdate.parseAsync(body)
                 const prismaData = vatsUpdateMapPrisma(ZData)
                 const OldVats = await getVatsById(parseId);

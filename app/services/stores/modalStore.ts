@@ -1,8 +1,9 @@
 import type { IConnection, IContract, IContractUpdate } from "~~/shared/models/APIModels";
-import { ModalEnum } from "../models/enums/billing/ModalsEnum";
+import { ModalEnum, ModuleEnum } from "../models/enums/billing/ModalsEnum";
 import type { SelectorObject } from "../models";
 
 const useModalStore = defineStore('modal', () => {
+        const argsModal = ref<Record<string, unknown>>({})
         const openModal = ref(false);
         const modalID = ref<ModalEnum | null>();
         const openModalHigher = ref(false);
@@ -14,7 +15,8 @@ const useModalStore = defineStore('modal', () => {
     value: string;
 } | undefined} | null>(null);
 
-        function showModal(id : ModalEnum){
+        function showModal(id : ModalEnum, ...args : {key : string, data : unknown}[]){
+            args.forEach(a => argsModal.value[a.key] = a.data)
             modalID.value = id;
             openModal.value = true;
         }
@@ -24,7 +26,7 @@ const useModalStore = defineStore('modal', () => {
         }
 
         function hideModal(){
-            
+            argsModal.value = {}
             if(openModalHigher.value){
                 
                 openModalHigher.value = false;
@@ -36,7 +38,22 @@ const useModalStore = defineStore('modal', () => {
                 modalID.value = null;
             }
         }
+        function findModalArg(): { key: string; value: unknown } | undefined { //Поменять логику поиска
+            const moduleValues = Object.values(ModuleEnum) as string[];
+            
+            const foundKey = Object.keys(argsModal.value).find((key) =>
+                moduleValues.includes(key)
+            );
+
+            if (!foundKey) return undefined;
+
+            return {
+                key: foundKey as ModuleEnum,
+                value: argsModal.value[foundKey],
+            };
+            }
         return {
+            argsModal,
             openModal,
             modalID,
             openModalHigher,
@@ -47,6 +64,7 @@ const useModalStore = defineStore('modal', () => {
             showModal,
             hideModal,
             showHigherModal,
+            findModalArg
         }
 })
 

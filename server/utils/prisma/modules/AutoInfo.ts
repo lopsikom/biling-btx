@@ -169,3 +169,8 @@ export async function postAutoInformationProductPrisma(data : {info : ISmsProduc
     })
     return response
 }
+
+export async function requireAutoInfo(id : number, portal_id : number){
+    const response = await prisma.autoinformation_module.findFirst({where :  {id, portal_id}})
+    return !!response
+}

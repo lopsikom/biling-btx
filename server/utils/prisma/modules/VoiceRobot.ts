@@ -160,4 +160,9 @@ export async function postVoiceRobotProductPrisma(data : {info : IVoiceRobotProd
     return response
 }
 
+export async function requireVoiceRobot(id: number, portal_id: number) {
+    const response = await prisma.voice_robot.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export type VoiceRobotPrisma = NonNullable<Awaited<ReturnType<typeof getVoiceRobotByIdPrisma>>>

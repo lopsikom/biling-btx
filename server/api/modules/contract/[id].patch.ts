@@ -1,6 +1,6 @@
 import { contractUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { contractMapBitrix, contractUpdateMapPrisma } from "~~/server/utils/mappers";
-import { patchContractPrisma } from "~~/server/utils/prisma/modules/Contract";
+import { patchContractPrisma, requireContract } from "~~/server/utils/prisma/modules/Contract";
 import * as z from "zod"
 import { ContractUpdate, entityType } from "~~/shared/models/APIModels";
 import { eventsAudit, EventEntity } from "~~/server/services/EventsAudit";
@@ -17,8 +17,11 @@ export default defineEventHandler(async (event) => {
     if (!id) throw createError({ statusCode: 404, statusMessage: "none id" })
 
     try {
+        const parseId = z.coerce.number().parse(id)
+        const verify = await requireContract(parseId, portal.portal.id)
+        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const data = await ContractUpdate.parseAsync(body)
-        const contract = await patchContractPrisma(z.coerce.number().parse(id), contractUpdateMapPrisma(data));
+        const contract = await patchContractPrisma(parseId, contractUpdateMapPrisma(data));
 
         if (!contract) throw createError({ statusCode: 404, statusMessage: "no found contract" })
 
