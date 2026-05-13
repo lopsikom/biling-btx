@@ -20,7 +20,6 @@ onMounted( async () => {
         try{
             await unbindAllEvent(frame)
             const eventsKeys = Object.values(Bitrix24Event);
-            console.log(eventsKeys)
             await Promise.all(eventsKeys.map(async e => {
                 try{
                     await frame.callMethod("event.bind", {
@@ -28,7 +27,7 @@ onMounted( async () => {
                     handler : `${url}api/bitrix/webhook`
                     })
                 }catch(e){
-                    console.log(e)
+                    console.error(e)
                 }
             }))
             await unbindAllPlacement(frame)

@@ -381,7 +381,6 @@ async function saveData(){ //Дальнейший рефактор получе�
             ...v.item,
             integrations : v.integrations.filter(m => m.active).map(m => m.item.id)
         } as IWebformPost
-        console.log(data);
         return await $axios.postWebform(data);
     }))
 
@@ -390,14 +389,11 @@ async function saveData(){ //Дальнейший рефактор получе�
     const diffVats = vats.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
         
         v.item.additional_users = parseInt(v.item.additional_users.toString())
-        console.log(v.item.price)
         const diff = diffObject(v.old_item, v.item, false);
-        console.log(diff)
         if(v.selected_contract?.label !== v.item.contract_id) diff.contract_id = v.selected_contract?.label 
         if(v.selected_tarrif?.label !== v.item.tarrif_id) diff.tarrif_id = v.selected_tarrif?.label
         return {id : v.item.id, item : diff}
     })
-    console.log(diffVats)
     const diffVoiceRobot = voiceRobotComputed.value.filter(v => v.item.id != 0 && !v.isDeleted).map(v => {
         
         v.item.lines = parseInt(v.item.lines.toString())
@@ -505,7 +501,6 @@ async function saveData(){ //Дальнейший рефактор получе�
     })
     chatBot2.forEach(v => {
         let vv = billingStateStore.chatBots.findIndex(vvv => v.id === vvv.id)
-        console.log(v)
         if(vv > -1){
             billingStateStore.chatBots[vv] = {...v}
         }
@@ -540,7 +535,7 @@ async function saveData(){ //Дальнейший рефактор получе�
     modalStore.hideModal();
 
 }catch(e) {
-    console.log(e)
+    console.error(e)
     if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно заполнены или заполнены некорректно")
 }
 finally{

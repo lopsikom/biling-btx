@@ -51,7 +51,6 @@ watch(() => dateBegin.value, () => {
 watch(() => dateClose.value, () => {
     if(!dateBegin.value || !dateClose.value) return
     if(dateBegin.value.year.toString().length < 4 || dateClose.value.year.toString().length < 4) return
-    console.log(dateClose.value.year.toString().length)
     const begin = new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day)
     const close =new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day)
     if(begin.getTime() > close.getTime()) {

@@ -29,18 +29,8 @@ export default class companyClient{
                     config.params.auth = token.access_token;
                     return config;
                 }
-                const parsePortal = await redisClient.get(`portal:${this.portal_id}`)
-                if(!parsePortal) {
-                    const portal = await getPortal({id : this.portal_id})
-                    if(!portal || !portal.refresh_token) return config;
-                    redisClient.set(`portal:${this.portal_id}`, JSON.stringify(portal));
-                    const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
-                    if(!token) return config
-                    redisClient.set(`token:${this.portal_id}`, JSON.stringify(token), "EX", 3000);
-                    config.params.auth = token.access_token;
-                    return config
-                }
-                const portal = JSON.parse(parsePortal)
+                const portal = await getPortal({id : this.portal_id})
+                if(!portal || !portal.refresh_token) return config;
                 const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
                 if(!token) return config
                 redisClient.set(`token:${this.portal_id}`, JSON.stringify(token), "EX", 3000);

@@ -51,21 +51,39 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
     }
 }
 
-export async function getContractById(id : number){
-    const response = await prisma.contract.findFirst({
-        where : {
-            id : id
-        },
-        include : {
-            contract_status : true,
-            company : {select : {
-                id : true,
-                title : true,
-                bitrix_id : true
-            }}
-        }
-    })
-    return response
+export async function getContractById(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.contract.findFirst({
+            where : {
+                portal_id : portal_id,
+                bitrix_id : id
+            },
+            include : {
+                contract_status : true,
+                company : {select : {
+                    id : true,
+                    title : true,
+                    bitrix_id : true
+                }}
+            }
+        })
+        return response
+    }else{
+        const response = await prisma.contract.findFirst({
+            where : {
+                id : id
+            },
+            include : {
+                contract_status : true,
+                company : {select : {
+                    id : true,
+                    title : true,
+                    bitrix_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 
 export async function deleteContractPrisma(id : number, portal_id? : number){

@@ -57,6 +57,22 @@ export function companyMapUpsertPrisma(portal_id : number, users : user_bitrix[]
     })
 }
 
+export function compnayMapPostPrisma(portal_id : number, company : NewBitrixCompany) : companyCreateInput{
+    const data : companyCreateInput = {
+        bitrix_id : company.id.toString(),
+        title : company.title,
+        company_type : company.typeId,
+        industry : company.industry,
+        opened : company.opened === 'Y',
+        is_my_company : company.isMyCompany === 'Y',
+        date_create : company.createdTime,
+        date_modify : company.updatedTime,
+        portal : {connect : {id : portal_id}},
+        user_bitrix_company_assigned_by_idTouser_bitrix : {connect : {bitrix_id_portal_id : {bitrix_id : company.assignedById.toString(), portal_id : portal_id}}}
+    }
+    return data
+}
+
 export function requisiteMapUpsertPrisma(portal_id : number, company_id : number, ...requisites : IRequisite[]) : requisiteCreateInput[] {
     return requisites.map(r =>{
         return {

@@ -87,41 +87,32 @@ async function saveEditCompany(){
     const diffReq = diffArray(companyRequisite.value!, editRequisite.value!, "ID");
     const diffAdresses = diffAdress(companyAddress.value!, editAddress.value!)
     if(Object.keys(diffComp!).length > 0){
-        console.log(diffComp);
         try{
             bitrixClient?.companyUpdate(diffComp!)
         }catch(e){
             openToast("Ошибка сохранения данных");
-            console.log(e)
+            console.error(e)
             return
         }
         bitrixCompany.value = {...editCompany.value!};
     }
     if(diffReq.length > 0){
-        console.log(diffReq);
         diffReq.forEach(r => {
             try{
                 bitrixClient?.updateRequisite(r.data, r.id)
             }catch(e){
                 openToast("Ошибка сохранения данных");
-                console.log(e)
+                console.error(e)
                 return
             }
         })
         companyRequisite.value = structuredClone(toRaw(editRequisite.value));
     }
     if(diffAdresses.length > 0){
-        console.log(diffAdresses)
         await Promise.all(diffAdresses.map(async a => {
             try{
                 if(a.data.ADDRESS_2?.trim() === ''){
-                    console.log("adwa")
                     const i = editAddress.value!.findIndex(a2 => a2.TYPE_ID === a.TYPE_ID && a2.ENTITY_ID === a.ENTITY_ID && a2.ENTITY_TYPE_ID && a.ENTITY_TYPE_ID);
-                    console.log(i);
-                    if (i > -1){
-                        console.log(a);
-                        console.log(i);
-                    }
                     // deletedList.add(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
                     const b = await bitrixClient?.deleteAddress(a)
                     if(b!.result){
@@ -134,7 +125,7 @@ async function saveEditCompany(){
                 else await bitrixClient?.updateAdress(a);
             }catch(e){
                 openToast("Ошибка сохранения данных");
-                console.log(e)
+                console.error(e)
                 return
             }
         }))
@@ -208,7 +199,7 @@ function saveEditContacts (){
             try{
                 bitrixClient?.updateContact(c.data, c.id!);
             }catch(e){
-                console.log(e)
+                console.error(e)
             }
         })
         companyContacts.value = structuredClone(mappedEditContacts);

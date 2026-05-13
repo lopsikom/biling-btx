@@ -15,7 +15,7 @@ import { addressMapUpsertPrisma, companyMapUpsertPrisma, contactMapUpsertPrisma,
 import { upsertUserPrisma } from "../utils/prisma/UserBitrix";
 
 
-export class syncService{
+export class syncService{ // Фикс с добавление динмического добавление нового портала
     private portals : Record<string, number> = {}
     constructor(portals? : Record<string, number>){
         if(portals) this.portals =  portals;

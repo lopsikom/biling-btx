@@ -302,7 +302,7 @@ async function getEventDeals(){
         eventsDeal.value = data.result.items;
         countEvent.value = data.total;
     }catch(e){
-        console.log(e);
+        console.error(e);
         toastStore.openToast("Ошибка получения событий");
     }finally{ isLoad.value = false}
 }

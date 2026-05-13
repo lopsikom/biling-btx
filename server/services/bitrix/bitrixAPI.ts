@@ -121,7 +121,7 @@ export class bitrixAPI {
         })
         return response.data as bitrixResponse<IUser>;
     }
-    async getItem<T>(domain : string, token : string, entityTypeId : string, id : string){
+    async getItem<T>(domain : string, token : string, entityTypeId : number, id : string | number){
         const response = await this.AxiosClient.get(`https://${domain}/rest/crm.item.get`, {
             params : {
                 entityTypeId : entityTypeId,

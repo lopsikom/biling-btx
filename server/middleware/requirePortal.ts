@@ -9,8 +9,9 @@ export default defineEventHandler(async (event) => {
     if(event.path.startsWith("/api/oauth")) return
     if(event.path.startsWith("/api/bitrix/webhook")) return
     const token = getHeader(event, "Authorization");
+    console.log("middleware token ", token)
     if(!token){
-        if(process.env.NUXT_PUBLIC_DEV){
+        if(process.env.NUXT_PUBLIC_DEV && process.env.NUXT_DEV_SKIP_AUTH){
             event.context.portal = {
                 portal : {
                     id : Number(process.env.NUXT_DEV_PORTAL_ID),
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
         }
     }
     try{
-        const cachePortal = await redisClient.get(`token:${token}`) //решить проблему с client_secret
+        const cachePortal = await redisClient.get(`token:${token}`) 
         if(cachePortal){
             event.context.portal = JSON.parse(cachePortal);
             return
@@ -44,10 +45,12 @@ export default defineEventHandler(async (event) => {
             statusMessage : "Unauthorized",
             message : 'none find portal'
         })
-        await redisClient.set(`token:${token}`, JSON.stringify(portal), "EX", 300)
-        event.context.portal = portal;
+        const {client_secret, ...data} = portal.portal
+        const newPortal = {portal : data, user_id : portal.user_id, bitrix_user_id : portal.bitrix_user_id}
+        await redisClient.set(`token:${token}`, JSON.stringify(newPortal), "EX", 300)
+        event.context.portal = newPortal;
     }catch(e){
-        console.log(e);
+        console.error(e);
         throw createError({
             statusCode: 500,
             statusMessage: 'Unauthorized',

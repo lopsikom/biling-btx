@@ -14,8 +14,6 @@ export class axiosClient{
             'Content-Type': 'application/json'
         }});
         this.AxiosClient.interceptors.request.use(async (config) => {
-            console.log(config.baseURL, config.url)
-            console.log(config.params)
             if(!config.headers.Authorization){
                 if(this.BitrixFrame){
                     const auth = this.BitrixFrame.auth.getAuthData();
