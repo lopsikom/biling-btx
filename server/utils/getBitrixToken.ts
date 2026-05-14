@@ -49,7 +49,9 @@ export async function getBitrixTokenByRedis(portal : PortalDataType){
     if(!portal || !portal.portal.refresh_token) return
     const parseToken = await redisClient.get(`token:${portal.portal.id}`)
     if(parseToken) return JSON.parse(parseToken) as IBitrixToken
-    const token = await bitrixAPI.getAccesToken(portal.portal.client_id, portal.portal.client_secret, portal.portal.refresh_token);
+    const newPortal = await getPortalPrisma({id : portal.portal.id})
+    if(!newPortal || !newPortal.refresh_token) return
+    const token = await bitrixAPI.getAccesToken(newPortal.client_id, newPortal.client_secret, newPortal.refresh_token);
     if(!token) return
     redisClient.set(`token:${portal.portal.id}`, JSON.stringify(token), "EX", 3000)
     return token

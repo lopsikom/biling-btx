@@ -229,10 +229,9 @@ export default class companyClient{
 
 }
 
-export async function initCompanyClient(bitrix_id : number, portal : number | portalPrisma){
+export async function initCompanyClient(bitrix_id : number, portal : number){
     let portalPrisma : portalPrisma
-    if(typeof portal === "number") portalPrisma = await getPortal({id : portal})
-    else portalPrisma = portal
+    portalPrisma = await getPortal({id : portal})
     if(!portalPrisma || !portalPrisma.refresh_token) return 
     const token = await bitrixAPI.getAccesToken(portalPrisma.client_id, portalPrisma.client_secret, portalPrisma.refresh_token);
     const company = await bitrixAPI.getCompany(bitrix_id, token.access_token, portalPrisma.domain);
