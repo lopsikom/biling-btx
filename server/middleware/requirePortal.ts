@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     if(event.path.startsWith("/api/bitrix/webhook")) return
     const token = getHeader(event, "Authorization");
     console.log("middleware token ", token)
+    console.dir(event, { depth: null, colors: true })
     if(!token){
         if(process.env.NUXT_PUBLIC_DEV && process.env.NUXT_DEV_SKIP_AUTH){
             event.context.portal = {
