@@ -25,8 +25,6 @@ export default defineEventHandler(async (event) => {
             return
         }
         else{
-            console.log("middleware token ", token)
-            console.dir(event, { depth: null, colors: true })
             throw createError({
                 statusCode: 401,
                 statusMessage: 'Unauthorized',
