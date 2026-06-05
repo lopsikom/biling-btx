@@ -22,7 +22,13 @@ jobs:
                 password: ${{secrets.GHCR_TOKEN}}
             - name: Build Docker image
               run: |
-                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL}}" --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL}}" --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI}}" --target prod -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }} .
+                  docker build --build-arg NUXT_DATABASE_URL="${{secrets.DATABASE_URL}}" \
+                  --build-arg NUXT_AUTH_URI="${{secrets.AUTH_URI}}" \
+                  --build-arg NUXT_PUBLIC_BASE_URL="${{secrets.BASE_URL}}" \
+                  --build-arg NUXT_PUBLIC_BASE_URI="${{secrets.BASE_URI}}" \
+                  --build-arg NUXT_REDIS_URL="${{secrets.REDIS_URL}}" \
+                  --target prod \
+                  -t ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }} .
                   docker push ghcr.io/${{ github.repository_owner }}/${{secrets.DOCKER_IMAGE_NAME}}:${{ github.sha }}
 
     deploy:
@@ -38,6 +44,9 @@ jobs:
                     command: |
                         docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }};
                         docker pull ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
+                        docker stop redis-prod;
+                        docker rm redis-prod;
+                        docker run -d --name redis-prod --network billing_network-prod redis;
                         docker stop ${{secrets.DOCKER_CONTAINER_NAME}};
                         docker rm ${{secrets.DOCKER_CONTAINER_NAME}};
-                        docker run -p 5000:3000 -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
+                        docker run -p 5000:3000 --network billing_network-prod -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
