@@ -9,7 +9,8 @@ export default defineNuxtConfig({
   nitro : {
     plugins : [
       './plugins/prisma-check.ts',
-      './plugins/syncService-init.ts'
+      './plugins/syncService-init.ts',
+      './plugins/redis-check.ts'
     ],
     serveStatic : false
   },
@@ -30,12 +31,16 @@ export default defineNuxtConfig({
       }
     }
   },
-
+ 
   runtimeConfig: {
     AuthUri : "https://oauth.bitrix.info/",
+    RedisUrl : "redis",
+    RedisPort : 6379,
+    ContractIdBitrix : 1058,
+    ContractStringIdBitrix : "T422",
     DatabaseUrl : "",
     public : {
-      dev : process.env.DEV ?? false,
+      dev : false,
       BaseUri : "http://localhost:3000",
       BaseUrl : "/billing"
     }

@@ -1,4 +1,4 @@
-import {  type IVoiceRobot,  type IVats,   type IContract,  type IChatBot, type IAutoinformation, type IWebform, type IMessengers, type Integrations, type ITarrifs, type IContractStatus, type IConnection, type IConnectionStatus, type IConnectionType } from "~~/shared/models/APIModels";
+import {  type IVoiceRobot,  type IVats,   type IContract,  type IChatBot, type IAutoinformation, type IWebform, type IMessengers, type Integrations, type ITarrifs, type IContractStatus, type IConnection, type IConnectionStatus, type IConnectionType, type IUser } from "~~/shared/models/APIModels";
 import type { IContact } from "../models";
 
 const usebillingStateStore = defineStore("billingState", () => {
@@ -16,6 +16,7 @@ const usebillingStateStore = defineStore("billingState", () => {
     const connections = ref<IConnection[]>([]);
     const connection_statuses = ref<IConnectionStatus[]>([]);
     const connection_types = ref<IConnectionType[]>([]);
+    const companyUsers = ref<IUser[]>([]);
 
     const isRefreshContracts = ref<boolean>(false);
 
@@ -34,7 +35,8 @@ const usebillingStateStore = defineStore("billingState", () => {
         contractStatuses,
         connections,
         connection_statuses,
-        connection_types
+        connection_types,
+        companyUsers
     }
 })
 

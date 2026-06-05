@@ -15,10 +15,10 @@ export default defineEventHandler(async (event) =>{
         if(!portal){
             return false
         }
-        if(!portal.refresh_token) {
+        if(!portal.portal.refresh_token) {
             return false
         }
-        const sync = await syncService.installSync(portal.id);
+        const sync = await syncService.installSync(portal.portal.id);
         if(!sync) return false
         return true
     }catch(e){

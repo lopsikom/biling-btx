@@ -7,3 +7,11 @@ export enum ModalEnum {
     EDIT_CONNECTION = "Изменить подключение",
     INVOCIE_MODAL = "Счёт"
 }
+
+export enum ModuleEnum {
+    VATS = "ВАТС",
+    VOICE_ROBOT = "Голосовой робот",
+    CHAT_BOT = "Чат-бот",
+    AUTOINFORMATION = "Автоинформирование",
+    WEBFORM = "Web-форма"
+}

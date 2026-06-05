@@ -29,7 +29,16 @@ onMounted(async () => {
         bitrixClient = await initBitrix(frame);
         bitrixStateStore.setBitrixClient(bitrixClient);
     }
-});
+    try{
+        menuStore.fetchDataLoad = true
+        if(!bitrixStateStore.companyContacts) bitrixStateStore.companyContacts = await bitrixClient.companyContacts();
+        if(!bitrixStateStore.addresTypes) bitrixStateStore.addresTypes = await bitrixClient.getAddresTypes();
+        if(!bitrixStateStore.companyAddress) bitrixStateStore.companyAddress = await bitrixClient.companyAdress();
+        if(!bitrixStateStore.companyRequisite) bitrixStateStore.companyRequisite = await bitrixClient.companyRequisite();
+    }catch(e){
+        console.error(e)
+    }finally {menuStore.fetchDataLoad = false}
+})
 
 
 const editCompany = ref<ICompnany>();
@@ -78,41 +87,32 @@ async function saveEditCompany(){
     const diffReq = diffArray(companyRequisite.value!, editRequisite.value!, "ID");
     const diffAdresses = diffAdress(companyAddress.value!, editAddress.value!)
     if(Object.keys(diffComp!).length > 0){
-        console.log(diffComp);
         try{
             bitrixClient?.companyUpdate(diffComp!)
         }catch(e){
             openToast("Ошибка сохранения данных");
-            console.log(e)
+            console.error(e)
             return
         }
         bitrixCompany.value = {...editCompany.value!};
     }
     if(diffReq.length > 0){
-        console.log(diffReq);
         diffReq.forEach(r => {
             try{
                 bitrixClient?.updateRequisite(r.data, r.id)
             }catch(e){
                 openToast("Ошибка сохранения данных");
-                console.log(e)
+                console.error(e)
                 return
             }
         })
         companyRequisite.value = structuredClone(toRaw(editRequisite.value));
     }
     if(diffAdresses.length > 0){
-        console.log(diffAdresses)
         await Promise.all(diffAdresses.map(async a => {
             try{
                 if(a.data.ADDRESS_2?.trim() === ''){
-                    console.log("adwa")
                     const i = editAddress.value!.findIndex(a2 => a2.TYPE_ID === a.TYPE_ID && a2.ENTITY_ID === a.ENTITY_ID && a2.ENTITY_TYPE_ID && a.ENTITY_TYPE_ID);
-                    console.log(i);
-                    if (i > -1){
-                        console.log(a);
-                        console.log(i);
-                    }
                     // deletedList.add(makeKey(i!.TYPE_ID.toString(), i!.ENTITY_ID.toString(), i!.ENTITY_TYPE_ID.toString()));
                     const b = await bitrixClient?.deleteAddress(a)
                     if(b!.result){
@@ -125,7 +125,7 @@ async function saveEditCompany(){
                 else await bitrixClient?.updateAdress(a);
             }catch(e){
                 openToast("Ошибка сохранения данных");
-                console.log(e)
+                console.error(e)
                 return
             }
         }))
@@ -199,7 +199,7 @@ function saveEditContacts (){
             try{
                 bitrixClient?.updateContact(c.data, c.id!);
             }catch(e){
-                console.log(e)
+                console.error(e)
             }
         })
         companyContacts.value = structuredClone(mappedEditContacts);
@@ -251,12 +251,12 @@ function saveEditContacts (){
         </div>
         <div class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ИНН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует'}}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite ? (companyRequisite[0]?.RQ_INN?.trim() !== '' ? companyRequisite![0]?.RQ_INN : 'Отсутсвует') : "Отсутсвует"}}</span>
             <InputBox v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_INN" :rows="1"/>
         </div>
-        <div class="flex flex-col gap-1">
+        <div v-if="companyRequisite" class="flex flex-col gap-1">
             <span class="text-gray-500 text-sm">ОГРН</span>
-            <span v-if="!openEditMode.companyInfo">{{ companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует' }}</span>
+            <span v-if="!openEditMode.companyInfo">{{ companyRequisite ? (companyRequisite![0]?.RQ_OGRN?.trim() !== '' ? companyRequisite![0]?.RQ_OGRN : 'Отсуствует') : "Отсуствует"}}</span>
             <InputBox  v-else-if="editRequisite" type="text" v-model="editRequisite[0]!.RQ_OGRN" :rows="1" />
         </div>
         <!-- Продумать изменение адрессов -->
@@ -275,7 +275,7 @@ function saveEditContacts (){
         </div>
         <div style="margin-left: auto; position: relative;">
             <div  v-if="!openEditMode.userInfo">
-                <MoreBox @click.stop="() => openEditSelector.usersInfo = !openEditSelector.usersInfo" >
+                <MoreBox @click.stop="() => {if(companyContacts && companyContacts?.length > 0) openEditSelector.usersInfo = !openEditSelector.usersInfo}" >
                 </MoreBox>
                 <Transition name="openEditSelector">
                     <div class="menu-edit-container any-white-container" v-if="openEditSelector.usersInfo" @click.stop>
@@ -298,7 +298,7 @@ function saveEditContacts (){
             </div>
         </div>
     </div>
-    <div class="flex flex-col px-5 mt-5 gap-5">
+    <div class="flex flex-col px-5 mt-5 gap-5" v-if="companyContacts && companyContacts?.length > 0">
         <div class="flex flex-col gap-5 pb-5" style="border-bottom: 1px solid #e7eaee;" v-for="(value, index) in companyContacts" :key="index">
             <div class="contacts-info-grid">
                 <div class="firt-row-grid">
@@ -329,6 +329,9 @@ function saveEditContacts (){
                 </div>
             </div>
         </div>
+    </div>
+    <div class="flex justify-center items-center h-[200px]" v-else>
+        <span class="select-none text-lg font-semibold">Контакты отсуствуют</span>
     </div>
 </div>
 </template>

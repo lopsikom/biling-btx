@@ -8,7 +8,10 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
     const {portal_id, filter} = data
     const args = {
         where : {
-            name : filter?.name,
+            name : {
+                startsWith : filter?.name,
+                mode : "insensitive"
+            },
             company_id : filter?.company_id,
             contract_status : {
                 name : filter?.status
@@ -48,47 +51,57 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
     }
 }
 
-export async function getContractById(id : number){
-    const response = await prisma.contract.findFirst({
-        where : {
-            id : id
-        },
-        include : {
-            contract_status : true
-        }
-    })
-    return response
-}
-
-export async function deleteContractPrisma(id : number){
-    const response = await prisma.$transaction([
-        prisma.webform.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.autoinformation_module.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.vats.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null},
-        }),
-        prisma.voice_robot.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.chat_bot.updateMany({
-            where : {contract_id : id},
-            data : {contract_id : null}
-        }),
-        prisma.contract.delete({
+export async function getContractById(id : number, portal_id? : number){
+    if(portal_id){
+        const response = await prisma.contract.findFirst({
             where : {
-                id : id
+                portal_id : portal_id,
+                bitrix_id : id
+            },
+            include : {
+                contract_status : true,
+                company : {select : {
+                    id : true,
+                    title : true,
+                    bitrix_id : true
+                }}
             }
         })
+        return response
+    }else{
+        const response = await prisma.contract.findFirst({
+            where : {
+                id : id
+            },
+            include : {
+                contract_status : true,
+                company : {select : {
+                    id : true,
+                    title : true,
+                    bitrix_id : true
+                }}
+            }
+        })
+        return response
+    }
+}
+
+export async function deleteContractPrisma(id : number, portal_id? : number){
+    const config = {
+        where : portal_id ? {contract : {bitrix_id : id}} : {contract_id : id},
+        data : {contract_id : null}
+    }
+    const response = await prisma.$transaction([
+        prisma.webform.updateMany(config),
+        prisma.autoinformation_module.updateMany(config),
+        prisma.vats.updateMany(config),
+        prisma.voice_robot.updateMany(config),
+        prisma.chat_bot.updateMany(config),
+        prisma.contract.delete({
+            where : portal_id ? {portal_id_bitrix_id : {bitrix_id : id, portal_id : portal_id}} : {id : id}
+        })
     ])
-    return response
+    return response[5]
 }
 
 export async function patchContractPrisma(id : number, data : contractUpdateInput){
@@ -98,10 +111,29 @@ export async function patchContractPrisma(id : number, data : contractUpdateInpu
         },
         data : data,
         include : { 
-            contract_status : true
+            contract_status : true,
+            company : {
+                select : {
+                    bitrix_id : true
+                }
+            }
         }
     })
     return response
+}
+
+export async function upsertContractPrisma(portal_id : number, data : contractCreateInput){
+    const response = await prisma.contract.upsert({
+        where : {
+            portal_id_bitrix_id : {
+                bitrix_id : data.bitrix_id!,
+                portal_id : portal_id
+            }
+        },
+        update : data,
+        create : data
+    })
+    return response;
 }
 
 export  async function addContractPrisma(data : contractCreateInput) {
@@ -122,6 +154,11 @@ export async function getTariffs(){
     const response = await prisma.tariff.findMany();
     return response
 }
+export async function requireContract(id: number, portal_id: number) {
+    const response = await prisma.contract.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
 export type contractPrismaGet = Awaited<ReturnType<typeof addContractPrisma>>
 export type contractPrismaWithPagination = {
     data : contractPrismaGet[],

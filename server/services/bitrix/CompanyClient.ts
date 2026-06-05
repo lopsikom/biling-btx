@@ -1,9 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 import bitrixAPI, { bitrixResponse } from "./bitrixAPI";
-import { IAddress, ICompnany, IContact, Invoice, IRequisite } from "../models";
-import { config } from "process";
-import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitrix, Invoice, IProductCatalogCreate, IProductRow, IProductRowDataCreate, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix } from "../models";
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
+import { redisClient } from "../redis";
+import { b24RateLimiter } from "~~/server/utils/rateLimiter";
+import { productByParentId } from "~~/shared/models/bitrixModels";
+import { ICacheCompany } from "~~/shared/models/APIModels";
+import { productFuncCreateRecord } from "~~/server/utils/prisma/modules/productFuncs";
+import { contractInputMapPrisma } from "~~/server/utils/mappers";
+import { addContractPrisma } from "~~/server/utils/prisma/modules/Contract";
+import { saveShapshotProduct } from "../webHooksEvents";
 
 export default class companyClient{
     domain : string;
@@ -18,14 +24,41 @@ export default class companyClient{
             'Content-Type': 'application/json'
         }});
         this.axiosClient.interceptors.request.use(async (config) => { //Поменять логику токенов
+            await b24RateLimiter.acquire(this.domain);
+            if (!config.params) {
+                config.params = {};
+            }
             if(!config.params.auth) {
+                const parseToken = await redisClient.get(`token:${this.portal_id}`);
+                if(parseToken) {
+                    const token = JSON.parse(parseToken) as IBitrixToken;
+                    config.params.auth = token.access_token;
+                    return config;
+                }
                 const portal = await getPortal({id : this.portal_id})
-                if(!portal || !portal.refresh_token) return config
+                if(!portal || !portal.refresh_token) return config;
                 const token = await bitrixAPI.getAccesToken(portal.client_id, portal.client_secret, portal.refresh_token);
                 if(!token) return config
+                redisClient.set(`token:${this.portal_id}`, JSON.stringify(token), "EX", 3000);
                 config.params.auth = token.access_token;
+                return config
             }
             return config
+        })
+        this.axiosClient.interceptors.response.use((response) => response,(error) => {
+            const { response, request, config, message } = error;
+
+            console.group(`❌ ERROR [${config?.method?.toUpperCase()}] ${config?.url}`);
+
+            if (response) {
+                console.error(`Status:  ${response.status} ${response.statusText}`);
+                console.error('Data:   ', response.data);
+                console.error('Headers:', response.headers);
+            }
+            else if (request) {
+                console.error('📡 Нет ответа от сервера');
+                console.error('Request:', request);
+            }
         })
     }   
 
@@ -94,17 +127,208 @@ export default class companyClient{
         })
         return response.data as bitrixResponse<{items : Invoice[]}>
     }
-    
+    async addContract(data : IContractBitrix){
+        const entityTypeId = useRuntimeConfig().ContractIdBitrix;
+        const response = await this.axiosClient.post(`/rest/crm.item.add`,{}, {
+            params : {
+                entityTypeId : entityTypeId,
+                fields : data
+            }
+        })
+        return response.data as IResponseNewBitrix<IContractBitrix>
+    }
+    async patchContract(data : Omit<Partial<IContractBitrix>, "id">, id : number){
+        const entityTypeId = useRuntimeConfig().ContractIdBitrix;
+        const response = await this.axiosClient.post('/rest/crm.item.update', {}, {
+            params : {
+                entityTypeId : entityTypeId,
+                id : id,
+                fields : data
+            }
+        })
+        return response.data as IResponseNewBitrix<IContractBitrix>
+    }
+    async getProductRowContract(ownerId: string, ownerType: string) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.list', {
+            filter: {
+                "=ownerId": ownerId,
+                "=ownerType": ownerType
+            }
+        })
+        return response.data as bitrixResponse<{ productRows: IProductRow[] }>
+    }
+    async getProductRowById(id : number){
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.get', {id : id})
+        return response.data as bitrixResponse<{productRow : IProductRow}>
+    }
+
+    async getProductInfo(id: number) {
+        const response = await this.axiosClient.get('/rest/catalog.product.get', {
+            params: { id }
+        })
+        return response.data as bitrixResponse<{ product: AnyProduct }>
+    }
+
+    async addProductRow(contract_id: number, product_id: number, ownerType: string, body : IProductRowDataCreate) {
+        console.log("add row", contract_id)
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.add', {
+            fields: {
+                ownerId:   contract_id,
+                ownerType: ownerType,
+                productId: product_id,
+                ...body,
+            }
+        })
+        return response.data as bitrixResponse<{ productRow: IProductRow }>
+    }
+
+    async updateProductRow(product_id: number, body: object) {
+        const response = await this.axiosClient.post('/rest/crm.item.productrow.update', {
+            id: product_id,
+            fields : body
+        })
+        return response.data as bitrixResponse<{ productRow: IProductRow }>
+    }
+
+    async deleteProductRow(product_id: number) {
+        const response = await this.axiosClient.get('/rest/crm.item.productrow.delete', {params : {id: product_id}})
+        console.log("response delete", response)
+        return response.data as bitrixResponse<boolean>
+    }
+    async deleteProductOffer(product_id: number){
+        const response = await this.axiosClient.post(`/rest/catalog.product.offer.delete`, {
+            id : product_id
+        })
+        return response.data
+    }
+
+    async updateCatalogProduct<T extends IProductCatalogCreate>(product_id: number, data: Partial<T>) {
+        const response = await this.axiosClient.post('/rest/catalog.product.offer.update', {
+            id:     product_id,
+            fields: data
+        })
+        return response.data as bitrixResponse<{ product: AnyProduct }>
+    }
+
+    async addCatalogProduct<T extends IProductCatalogCreate>(parentId: number, body: T) {
+        const response = await this.axiosClient.post('/rest/catalog.product.offer.add', {
+            fields: {
+                iblockId: 16,
+                parentId: parentId,
+                ...body
+            }
+        })
+        return response.data as bitrixResponse<{ offer: AnyProduct }>
+    }
+
+    async setCatalogPrice(productId: number, price: number, currency = "RUB", catalogGroupId = 1) {
+        const response = await this.axiosClient.post('/rest/catalog.price.add', {
+            fields: {
+                productId:      productId,
+                catalogGroupId: catalogGroupId,
+                price:          price,
+                currency:       currency,
+            }
+        })
+        return response.data as bitrixResponse<{ price: { id: number } }>
+    }
 
 }
 
-export async function initCompanyClient(bitrix_id : number, portal : number | portalPrisma){
+export async function initCompanyClient(bitrix_id : number, portal : number){
     let portalPrisma : portalPrisma
-    if(typeof portal === "number") portalPrisma = await getPortal({id : portal})
-    else portalPrisma = portal
-    if(!portalPrisma || !portalPrisma.refresh_token) return 
+    portalPrisma = await getPortal({id : portal})
+    if(!portalPrisma || !portalPrisma.refresh_token) return
     const token = await bitrixAPI.getAccesToken(portalPrisma.client_id, portalPrisma.client_secret, portalPrisma.refresh_token);
     const company = await bitrixAPI.getCompany(bitrix_id, token.access_token, portalPrisma.domain);
-    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result));
+    console.log(company);
+    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result.item));
+
+    await syncCompanyContractsAndProducts(portalPrisma.domain, token.access_token, portalPrisma.id, bitrix_id);
+
     return new companyClient(portalPrisma.domain, companyPrsima[0].id, bitrix_id.toString())
+}
+
+/**
+ * Подтягивает в БД все договоры указанной компании вместе с их
+ * товарами-модулями. Вызывается при первом открытии виджета в карточке компании,
+ * когда компания только добавлена в БД и нужно синхронизировать связанные сущности.
+ * Логика повторяет обработчик CRM_DYNAMIC_ITEM_ADD, но идёт от компании, а не от
+ * одного договора: перебирает все её договоры.
+ */
+async function syncCompanyContractsAndProducts(domain : string, token : string, portal_id : number, companyBitrixId : number){
+    const config = useRuntimeConfig();
+    const CONTRACT_ID_BITRIX = config.ContractIdBitrix;
+    const CONTRACT_STRING_ID_BITRIX = config.ContractStringIdBitrix;
+
+    const contracts = (await bitrixAPI.getItems<IContractBitrix>(domain, token, CONTRACT_ID_BITRIX, {
+        companyId : companyBitrixId
+    })).result.items;
+    if(!contracts.length) return;
+    let myCompanys : ICacheCompany[] = [];
+    try{
+        const cache = await redisClient.get(`myCompanyBitrix:${portal_id}`);
+        if(cache) myCompanys = JSON.parse(cache) as ICacheCompany[];
+        else{
+            myCompanys = (await bitrixAPI.getItems<{id : number, title : string}>(domain, token, 4, {isMyCompany : "Y"}))
+                .result.items.map(c => ({id : c.id, title : c.title} as ICacheCompany));
+            await redisClient.set(`myCompanyBitrix:${portal_id}`, JSON.stringify(myCompanys));
+        }
+    }catch(e){
+        console.error("[syncCompany] не удалось получить myCompany", e);
+    }
+
+    await Promise.all(contracts.map(async contract => {
+        try{
+            if(!contract.id || !contract.companyId) return;
+
+            const productRows = (await bitrixAPI.getProductRowContract(
+                domain, token, contract.id.toString(), CONTRACT_STRING_ID_BITRIX
+            )).result.productRows;
+
+            const products = await Promise.all(productRows.map(async p => {
+                const info = await bitrixAPI.getProductInfo(domain, token, p.productId);
+                info.result.product.productName = p.productName;
+                const parent = info.result.product.parentId
+                    ? Number(info.result.product.parentId.value)
+                    : info.result.product.id;
+                const productType = productByParentId[parent];
+                return {productRows : p, info, productType};
+            }));
+
+            const myCompany = myCompanys.find(c => c.id === contract.mycompanyId);
+
+            await addContractPrisma(contractInputMapPrisma(contract, portal_id, myCompany));
+
+            await Promise.all(products.map(async _ => {
+                try{
+                    const p = _.info.result.product;
+                    const r = _.productRows;
+                    const key = _.productType;
+                    if(!key){
+                        console.warn(`[syncCompany] не удалось определить тип товара по parentId для productId=${r.productId}`);
+                        return;
+                    }
+                    await (productFuncCreateRecord[key] as (data : {info : typeof p; productRows : IProductRow}, portal_id : number) => Promise<any>)(
+                        {info : p, productRows : r},
+                        portal_id
+                    );
+                }catch(e){
+                    console.error("[syncCompany] ошибка добавления товара", e);
+                }
+            }));
+
+            await saveShapshotProduct(contract.id, portal_id, products
+                .filter(p => p.productType)
+                .map(p => ({
+                    bitrix_id : p.productRows.id,
+                    portal_id : portal_id,
+                    type : p.productType!
+                })));
+        }catch(e){
+            console.error(`[syncCompany] ошибка обработки договора ${contract.id}`, e);
+        }
+    }));
+
+    console.log(`[syncCompany] синхронизировано договоров: ${contracts.length}`);
 }

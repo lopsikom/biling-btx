@@ -1,6 +1,7 @@
 import * as z from "zod"
 import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { requireConnection } from "~~/server/utils/prisma/Connection";
 import { ConnectionPatch, entityType } from "~~/shared/models/APIModels";
 
 
@@ -10,8 +11,11 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     if(id){
         try{
+            const parseId = z.coerce.number().parse(id)
+            const verify = await requireConnection(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const data = await ConnectionPatch.parseAsync(body)
-            const connection = await connectionPatchPrisma(z.coerce.number().parse(id), data);
+            const connection = await connectionPatchPrisma(parseId, data);
             if(!connection){
                 throw createError({
                     statusCode : 404,
@@ -22,7 +26,7 @@ export default defineEventHandler(async (event) => {
                     userid : portal?.user_id,
                     entity : entityType.CONNECTION,
                     entityName : connection.title,
-                    companyid : data.company_id
+                    companyid : connection.company_id
             } as EventEntity)
             return connection
         }catch(e){

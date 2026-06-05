@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
+import { Bitrix24Event } from '~/services/models';
+import { unbindAllEvent, unbindAllPlacement } from '~/services/utils/utils';
 
 
 const badInstall = ref(false)
 const errorTitle = ref()
+const dev = useRuntimeConfig().public.dev
 
 onMounted( async () => {
     try{
@@ -13,24 +16,36 @@ onMounted( async () => {
         const data = frame.auth.getAuthData()
         if(!data) {badInstall.value = true; return}
         const verify = await $axios.verifyBitrixUser(data.access_token);
-        
         if(!verify) {badInstall.value = true; return}
         try{
-            await frame.callMethod('placement.bind',{
-            PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
-            HANDLER : url,
-            DESCRIPTION : "DESCRIPTION",
-            LANG_ALL : {
-                en : {
-                    TITLE : "Billing",
-                    DESCRIPTION : "DESCRIPTION"
-                },
-                ru : {
-                    TITLE : "Billing",
-                    DESCRIPTION : "Описание"
+            await unbindAllEvent(frame)
+            const eventsKeys = Object.values(Bitrix24Event);
+            await Promise.all(eventsKeys.map(async e => {
+                try{
+                    await frame.callMethod("event.bind", {
+                    event : e,
+                    handler : `${url}api/bitrix/webhook`
+                    })
+                }catch(e){
+                    console.error(e)
                 }
-            }        
-        })
+            }))
+            await unbindAllPlacement(frame)
+            await frame.callMethod('placement.bind',{
+                PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
+                HANDLER : url,
+                DESCRIPTION : "DESCRIPTION",
+                LANG_ALL : {
+                    en : {
+                        TITLE : dev ? "Billing-dev" : "Billing",
+                        DESCRIPTION : "DESCRIPTION"
+                    },
+                    ru : {
+                        TITLE : dev ? "Биллинг-dev" : "Биллинг",
+                        DESCRIPTION : "Описание"
+                    }
+                }        
+            })
         }
         catch(e){
             console.error(e)

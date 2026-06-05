@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IUser, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IResponseArrayNewBitrix } from "~~/shared/models/bitrixModels";
+
 
 
 export class axiosClient{
@@ -12,8 +14,6 @@ export class axiosClient{
             'Content-Type': 'application/json'
         }});
         this.AxiosClient.interceptors.request.use(async (config) => {
-            console.log(config.baseURL, config.url)
-            console.log(config.params)
             if(!config.headers.Authorization){
                 if(this.BitrixFrame){
                     const auth = this.BitrixFrame.auth.getAuthData();
@@ -59,9 +59,9 @@ export class axiosClient{
         const response = await this.AxiosClient.get("modules/tariff.list")
         return response.data as ITarrifs[]
     }
-    async getContracts(data : {filter? : IContractFilter}) : Promise<IContract[]>;
-    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
-    async getContracts(data : {filter? : IContractFilter, pagination? : {skip : number, limit : number}}) {
+    async getContracts(data : {filter? : Partial<IContractFilter>}) : Promise<IContract[]>;
+    async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
+    async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) {
         const params : any = {}
         const filter = {...data.filter, bitrxi_company_id : this.BitrixFrame?.placement.options.ID ?? (useNuxtApp().$config.public.dev ? "2" : "0")}
         params.filter = JSON.stringify(filter)
@@ -271,6 +271,10 @@ export class axiosClient{
         })
         if(data.pagination) return response.data as IPagionationResponse<IEvent>
         else return response.data as IEvent[]
+    }
+    async getUsers(){
+        const response = await this.AxiosClient.get<IUser[]>(`bitrix/user.list`);
+        return response.data;
     }
     
 

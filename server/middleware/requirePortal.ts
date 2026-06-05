@@ -1,44 +1,59 @@
 import { useNuxtApp } from "nuxt/app"
 import bitrixAPI from "../services/bitrix/bitrixAPI"
 import getPortalByUserBitrix, { PortalDataType } from "../utils/prisma/getPortalByUserBitrix";
+import redisCheck from "../plugins/redis-check";
+import { redisClient } from "../services/redis";
 
 export default defineEventHandler(async (event) => {
     if(!event.path.startsWith("/api")) return
     if(event.path.startsWith("/api/oauth")) return
+    if(event.path.startsWith("/api/bitrix/webhook")) return
     const token = getHeader(event, "Authorization");
     if(!token){
-        if(process.env.NUXT_PUBLIC_DEV){
+        if(process.env.NUXT_PUBLIC_DEV && process.env.NUXT_DEV_SKIP_AUTH){
             event.context.portal = {
                 portal : {
-                    id : 4,
-                    client_id : "local.6992c7695033b3.26687139",
-                    client_secret : "9NHC5JN4QgR5nLVs6EOc3stJrhh9sbBd0dOIlk2kGiItA6RNTX",
-                    domain : "b24-sxsxo9.bitrix24.ru",
-                    refresh_token : "b165ba690080f1620080f13200000001000007e01813a5991cec1c608fb3d43c3bd614"
+                    id : Number(process.env.NUXT_DEV_PORTAL_ID),
+                    client_id : process.env.NUXT_DEV_CLIENT_ID,
+                    client_secret : process.env.NUXT_DEV_CLIENT_SECRET,
+                    domain : process.env.NUXT_DEV_DOMAIN,  
+                    refresh_token : process.env.NUXT_DEV_REFRESH_TOKEN
                 },
-                user_id : 2,
-                bitrix_user_id : "1"
+                user_id : Number(process.env.NUXT_DEV_USER_ID),
+                bitrix_user_id : process.env.NUXT_DEV_USER_BITRIX_ID
             } as PortalDataType;
-            return 
+            return
         }
         else{
             throw createError({
                 statusCode: 401,
-                statusMessage: 'Bad Auth',
+                statusMessage: 'Unauthorized',
                 message : 'none token'
             })
         }
     }
     try{
+        const cachePortal = await redisClient.get(`token:${token}`) 
+        if(cachePortal){
+            event.context.portal = JSON.parse(cachePortal);
+            return
+        }
         const portal = await getPortalByUserBitrix(token)
         if(!portal) throw createError({
             statusCode : 404,
-            statusMessage : "Bad Auth",
+            statusMessage : "Unauthorized",
             message : 'none find portal'
         })
-        event.context.portal = portal;
+        const {client_secret, ...data} = portal.portal
+        const newPortal = {portal : data, user_id : portal.user_id, bitrix_user_id : portal.bitrix_user_id}
+        await redisClient.set(`token:${token}`, JSON.stringify(newPortal), "EX", 300)
+        event.context.portal = newPortal;
     }catch(e){
-        console.log(e);
-
+        console.error(e);
+        throw createError({
+            statusCode: 500,
+            statusMessage: 'Unauthorized',
+            message : 'app error'
+        })
     }
 })

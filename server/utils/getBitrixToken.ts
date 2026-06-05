@@ -1,10 +1,13 @@
 import bitrixAPI from "../services/bitrix/bitrixAPI";
 import getPortalPrisma from "./prisma/getPortal";
+import type {PortalDataType} from "./prisma/getPortalByUserBitrix"
+import {redisClient} from "../services/redis"
+import {IBitrixToken} from "../services/models"
 
 
-export async function getBitrixTokenByCode(code : string, domain : string, server_domain : string){
+export async function getBitrixTokenByCode(code : string, server_domain : string, state : number){
     const portal = await getPortalPrisma({
-        domain : domain.toString()
+        id : state
     });
         if(!portal){
             throw createError({
@@ -13,7 +16,7 @@ export async function getBitrixTokenByCode(code : string, domain : string, serve
             })
         }
         const token = await bitrixAPI.getPortalToken(code.toString(), portal.client_id, portal.client_secret, server_domain.toString());
-        patchPortal(portal.id, token.refresh_token, token.access_token)
+        await patchPortal(portal.id, token.refresh_token, token.access_token)
         const data = {
             accessToken : token.access_token,
             refresh : token.refresh_token,
@@ -40,6 +43,19 @@ export async function getBitrixTokenByRefresh(portal_id : number){
     } 
 }
 
+
+
+export async function getBitrixTokenByRedis(portal : PortalDataType){
+    if(!portal || !portal.portal.refresh_token) return
+    const parseToken = await redisClient.get(`token:${portal.portal.id}`)
+    if(parseToken) return JSON.parse(parseToken) as IBitrixToken
+    const newPortal = await getPortalPrisma({id : portal.portal.id})
+    if(!newPortal || !newPortal.refresh_token) return
+    const token = await bitrixAPI.getAccesToken(newPortal.client_id, newPortal.client_secret, newPortal.refresh_token);
+    if(!token) return
+    redisClient.set(`token:${portal.portal.id}`, JSON.stringify(token), "EX", 3000)
+    return token
+}
 
 export type bitrixTokens = ReturnType<typeof getBitrixTokenByCode>
 

@@ -10,12 +10,13 @@ export default async function getPortalByUserBitrix(token : string){
                 client_id : client_id
         });
         if(!portal) return
-        let user = await getUserPrisma(data.result.user_id.toString())
+        let user = await getUserPrisma(data.result.user_id.toString(), portal.id)
         if(!user) {
                 const user_bitrix = await bitrixAPI.getBitrixUser(install.domain, token)
                 if(!user_bitrix.result) return
                 user = await upsertUserPrisma(portal.id, userMapUpsertPrisma(portal.id, user_bitrix.result))
         }
+
         return {portal, user_id : user.id, bitrix_user_id : user.bitrix_id}
 }
-export type PortalDataType = Awaited<ReturnType<typeof getPortalByUserBitrix>>
+export type PortalDataType = NonNullable<Awaited<ReturnType<typeof getPortalByUserBitrix>>>

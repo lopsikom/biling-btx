@@ -1,6 +1,7 @@
 import { webform_webform_typeCreateManyInput, webformCreateInput, webformUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IWebFormFilterUpdate } from "~~/shared/models/APIModels";
+import { IProductRow, IWebFormProdruct } from "~~/shared/models/bitrixModels";
 
 export async function getWebformListPrisma(data : {portal_id? : number, filter? : IWebFormFilterUpdate}){
     const {portal_id, filter} = data
@@ -72,17 +73,15 @@ export async function getWebformTypeWebformPrisma(id : number){
                 select : {
                     name : true
                 }
-            },
-            contract : {select : {
-                company_id : true
-            }}
+            }
         }
     })
     return response
 }
-export  async function deleteWebForm(id : number){
-    const response = await prisma.webform.delete({
-        where : {id : id},
+export  async function deleteWebForm(id : number, portal_id? : number){
+if(portal_id){
+        const response = await prisma.webform.delete({
+        where : {portal_id_bitrix_id : {portal_id : portal_id, bitrix_id : id}},
         include : {
             contract : {select : {
                 company_id : true
@@ -90,6 +89,17 @@ export  async function deleteWebForm(id : number){
         }
     })
     return response
+    }else{
+        const response = await prisma.webform.delete({
+        where : {id : id},
+        include : {
+            contract : {select : {
+                company_id : true
+                }}
+            }
+        })
+        return response
+    }
 }
 
 export  async function getIntegrations(){
@@ -139,4 +149,73 @@ export async function postWebFormTypePrisma(id : number, types : number[]){
     })
     const  webformData = await getWebformTypeWebformPrisma(id);
     return webformData
+}
+
+export async function upsertWebFormProductPrisma(data : {info : IWebFormProdruct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = prisma.webform.upsert({
+    where : {portal_id_bitrix_id :{
+        bitrix_id : productRows.id,
+        portal_id : portal_id
+    }},
+    create : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        active : true,
+        bitrix_id : productRows.id,
+        product_id : productRows.productId,
+        portal : {connect : {id : portal_id}},
+        title : productRows.productName,
+        tariff : {connect : {id : 1}},
+        },
+    update : {
+        contract : {connect : {portal_id_bitrix_id : {
+            bitrix_id : productRows.ownerId,
+            portal_id : portal_id
+        }}},
+        price : productRows.price,
+        active : true,
+        title : productRows.productName,
+        tariff : {connect : {id : 1}},
+    },
+    include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
+   })
+   return response
+}
+
+export async function requireWebform(id: number, portal_id: number) {
+    const response = await prisma.webform.findFirst({ where: { id, portal_id } })
+    return !!response
+}
+
+export async function postWebFormProducPrisma(data : {info : IWebFormProdruct, productRows : IProductRow}, portal_id : number){
+    const {info, productRows} = data
+    const response = prisma.webform.create({
+        data : {
+            contract : {connect : {portal_id_bitrix_id : {
+                bitrix_id : productRows.ownerId,
+                portal_id : portal_id
+            }}},
+            price : productRows.price,
+            active : true,
+            bitrix_id : productRows.id,
+            product_id : productRows.productId,
+            portal : {connect : {id : portal_id}},
+            title : info.name,
+            tariff : {connect : {id : 1}},
+        },
+        include : {
+        contract : {select : {
+                company_id : true
+            }}
+    }
+    })
+    return response
 }

@@ -14,8 +14,8 @@ export const Contract = z.object({
     company_id : z.number(),
     status : z.string(),
     index : z.string(),
-    date_begin : z.string(),
-    date_close : z.string(),
+    date_begin : z.string().optional(),
+    date_close : z.string().optional(),
     org_name : z.string()
 })
 
@@ -311,14 +311,14 @@ export const EventFilter = z.object({
     action : z.enum(EventType).optional(),
     entity : z.enum(entityType).optional(),
     entityName : z.string().optional(),
-    createdAt : z.date().optional()
+    createdAt : z.string().optional()
 })
 export const Event = z.object({
     userId : z.number(),
     action : z.enum(EventType),
     entity : z.enum(entityType),
     entityName : z.string(),
-    createdAt : z.date(),
+    createdAt : z.string(),
     user_bitrix : z.object({
         id : z.number(),
         name : z.string(),
@@ -330,6 +330,13 @@ export const Event = z.object({
 export type IEvent = z.infer<typeof Event>
 export type IEventFilter = z.infer<typeof EventFilter>
 
+export interface IUser{
+    id : number,
+    name : string,
+    last_name : string,
+    second_name : string
+
+}
 
 export interface IMessengers{
     id : number,
@@ -346,6 +353,10 @@ export enum connectionTypesEnum {
     SMS = "sms",
     VATS = "vats",
     ANOTHER = "another"
+}
+export type ICacheCompany = {
+    id : number,
+    title : string,
 }
 
 

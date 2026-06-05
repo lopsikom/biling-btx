@@ -1,5 +1,5 @@
 import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
-import { connectionDeletePrisma } from "~~/server/utils/prisma/Connection";
+import { connectionDeletePrisma, requireConnection } from "~~/server/utils/prisma/Connection";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { entityType } from "~~/shared/models/APIModels";
 
@@ -17,6 +17,8 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "Invalid id"
             });
         }
+        const verify = await requireConnection(parseId, portal.portal.id)
+        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const data = await connectionDeletePrisma(parseId);
         if(!data){
             return false;

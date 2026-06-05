@@ -4,7 +4,7 @@ import MoreIcon from '@bitrix24/b24icons-vue/actions/MoreIcon'
 import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore';
 import useModalStore from '~/services/stores/modalStore';
-import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum';
+import { ModalEnum, ModuleEnum } from '~/services/models/enums/billing/ModalsEnum';
 import usebillingStateStore from '~/services/stores/billingStateStore';
 import { Icon } from '@iconify/vue';
 import  { connectionTypesEnum, type IConnection, type IConnectionStatus, type IConnectionType } from '~~/shared/models/APIModels';
@@ -25,36 +25,38 @@ const modulesComputed = computed(() => {
     const data : ModuleType[] = []
     if(billingStateStore.vats.filter(v => v.active).length > 0) {
         data.push({
-            title : "ВАТС",
+            title : ModuleEnum.VATS,
             count : billingStateStore.vats.filter(v => v.active).length
         })
     }
     if(billingStateStore.voiceRobots.filter(v => v.active).length > 0) {
         data.push({
-            title : "Голосовой робот",
+            title : ModuleEnum.VOICE_ROBOT,
             count : billingStateStore.voiceRobots.filter(v => v.active).length
         })
     }
     if(billingStateStore.chatBots.filter(c => c.active).length > 0) {
         data.push({
-            title : "Чат-бот",
+            title : ModuleEnum.CHAT_BOT,
             count : billingStateStore.chatBots.filter(c => c.active).length
         })
     }
     if(billingStateStore.autoinformations.filter(a => a.active).length > 0){
         data.push({
-            title : "Автоинформирование",
+            title : ModuleEnum.AUTOINFORMATION,
             count : billingStateStore.autoinformations.filter(a => a.active).length
         })
     }
     if(billingStateStore.webform.filter(w => w.active).length > 0){
         data.push({
-            title : "Web-форма",
+            title : ModuleEnum.WEBFORM,
             count : billingStateStore.webform.filter(w => w.active).length
         })
     }
     return data
 })
+ 
+const ModulesCount = computed(() => billingStateStore.vats.length + billingStateStore.voiceRobots.length + billingStateStore.chatBots.length + billingStateStore.autoinformations.length + billingStateStore.webform.length)
 
 interface IConnectionWithType extends IConnection {
     typeData : IConnectionType
@@ -82,7 +84,6 @@ const connectionsComputed = computed(() => {
             data[type.type].push(_c)
         }
     })
-    console.log(data)
     return data
 })
 
@@ -108,11 +109,11 @@ async function deleteConnection(item : IConnection) {
     <div class="main-info-grid">
         <div class="main-info-item any-white-container blue-hover" @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)">
             <div>
-                <span class="font-semibold select-none">Тариф</span>
+                <span class="font-semibold select-none">Модули</span>
             </div>
             <div class="flex flex-col">
                 <span class="text-2xl cursor-default">Корп</span>
-                <span class="text-gray-500 text-sm cursor-default">Активен до: 31.12.2025</span>
+                <span class="text-gray-500 text-sm cursor-default">Общее количество модулей: {{ModulesCount}}</span>
             </div>
         </div>
         <div class="main-info-item any-white-container">
@@ -144,8 +145,8 @@ async function deleteConnection(item : IConnection) {
             <span class="text-gray-500 text-sm select-none">Активные модули организации</span>
         </div>
         <div class="connected-modules-box" v-if="modulesComputed.length > 0">
-            <div class="flex flex-col p-[12px] any-white-container gap-[10px]" v-for="value in modulesComputed">
-                <div class="flex items-center gap-[12px]">
+            <div class="flex flex-col p-[12px] any-white-container gap-[10px] blue-hover" v-for="value in modulesComputed">
+                <div class="flex items-center gap-[12px]" @click="modalStore.showModal(ModalEnum.TARIFF_MODAL, {key : value.title, data : true})">
                     <Icon class="text-sky-600 w-5 h-5" icon="solar:box-linear" />
                     <div class="flex flex-col">
                         <span>{{ value.title }}</span>

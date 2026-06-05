@@ -1,8 +1,10 @@
 import { webformGetMapPrisma } from "~~/server/utils/mappers";
-import { getWebformByIdPrisma } from "~~/server/utils/prisma/modules/WebForm";
+import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { getWebformByIdPrisma, requireWebform } from "~~/server/utils/prisma/modules/WebForm";
 
 export default defineEventHandler(async (event) => {
     const id = getRouterParams(event).id;
+    const portal = event.context.portal as PortalDataType
         let parseId : number;
         if(id){
             try{
@@ -14,6 +16,8 @@ export default defineEventHandler(async (event) => {
                     statusMessage : "Invalid id"
                 });
             }
+            const verify = await requireWebform(parseId, portal.portal.id)
+            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
             const webform = await getWebformByIdPrisma(parseId)
                 if(!webform){
                     throw createError({

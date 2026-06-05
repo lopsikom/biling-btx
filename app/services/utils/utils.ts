@@ -1,6 +1,8 @@
 import { useClipboard } from "@vueuse/core";
-import type { DiffWithID } from "../models";
+import type { DiffWithID, IEventBitrix } from "../models";
 import useToastStore from "../stores/toastStore";
+import type { B24Frame } from '@bitrix24/b24jssdk'
+import type { bitrixResponse } from "~~/server/services/bitrix/bitrixAPI";
 
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -130,4 +132,24 @@ export function isValidData(obj: Record<string, any>): boolean {
 
 export function reloadFrame(){
     window.location.reload()
+}
+
+export async function unbindAllEvent(frame : B24Frame){
+    const event = (await frame.callMethod("event.get")).getData() as bitrixResponse<IEventBitrix[]>
+    await Promise.all(event.result.map(async e => {
+        await frame.callMethod("event.unbind", {
+            event : e.event,
+            handler : e.handler
+        })
+    }))
+}
+export async function unbindAllPlacement(frame : B24Frame){
+    const event = (await frame.callMethod("placement.get")).getData() as bitrixResponse<{placement : string, handler : string}[]>
+    console.log(event.result)
+    await Promise.all(event.result.map(async e => {
+        await frame.callMethod("placement.unbind", {
+            PLACEMENT : e.placement,
+            HANDLER : e.handler
+        })
+    }))
 }

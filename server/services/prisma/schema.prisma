@@ -36,9 +36,15 @@ model autoinformation_module {
   active               Boolean
   tarrif_id            Int?
   title                String
+  bitrix_id            Int?
+  product_id           Int?
+  portal_id            Int?
   contract             contract?            @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff               tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   autoinformation_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal               portal?              @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
+
+  @@unique([portal_id, bitrix_id], map: "autoinformation_module_bitrix_id_portal_id")
 }
 
 model autoinformation_type {
@@ -55,9 +61,15 @@ model chat_bot {
   active              Boolean
   price               Float                 @db.Real
   title               String
+  bitrix_id           Int?
+  product_id          Int?
+  portal_id           Int?
   contract            contract?             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff              tariff?               @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal              portal?               @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   chat_bot_messengers chat_bot_messengers[]
+
+  @@unique([portal_id, bitrix_id], map: "chat_bot_bitrix_id_portal_id")
 }
 
 model chat_bot_messengers {
@@ -70,32 +82,29 @@ model chat_bot_messengers {
 }
 
 model company {
-  id                                              Int          @id @default(autoincrement())
-  bitrix_id                                       String
-  portal_id                                       Int
-  title                                           String
-  type                                            String?      @db.Char(10)
-  company_type                                    String?      @db.Char(10)
-  industry                                        String?      @db.Char(10)
-  assigned_by_id                                  Int?
-  created_by_id                                   Int?
-  modify_by_id                                    Int?
-  opened                                          Boolean?
-  is_my_company                                   Boolean?
-  date_create                                     DateTime?    @db.Date
-  date_modify                                     DateTime?    @db.Date
-  raw_json                                        Json?
-  address                                         address[]
-  user_bitrix_company_assigned_by_idTouser_bitrix user_bitrix? @relation("company_assigned_by_idTouser_bitrix", fields: [assigned_by_id], references: [id], onUpdate: NoAction)
-  user_bitrix_company_created_by_idTouser_bitrix  user_bitrix? @relation("company_created_by_idTouser_bitrix", fields: [created_by_id], references: [id], onUpdate: NoAction)
-  user_bitrix_company_modify_by_idTouser_bitrix   user_bitrix? @relation("company_modify_by_idTouser_bitrix", fields: [modify_by_id], references: [id], onUpdate: NoAction)
-  portal                                          portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  connection                                      connection[]
-  contact                                         contact[]
-  contract                                        contract[]
-  events                                          events[]
-  invoice                                         invoice[]
-  requisite                                       requisite[]
+  id             Int          @id @default(autoincrement())
+  bitrix_id      String
+  portal_id      Int
+  title          String
+  type           String?      @db.Char(10)
+  company_type   String?      @db.Char(10)
+  industry       String?      @db.Char(10)
+  assigned_by_id Int?
+  created_by_id  Int?
+  modify_by_id   Int?
+  opened         Boolean?
+  is_my_company  Boolean?
+  date_create    DateTime?    @db.Date
+  date_modify    DateTime?    @db.Date
+  raw_json       Json?
+  address        address[]
+  portal         portal       @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  connection     connection[]
+  contact        contact[]
+  contract       contract[]
+  events         events[]
+  invoice        invoice[]
+  requisite      requisite[]
 
   @@unique([bitrix_id, portal_id])
 }
@@ -164,16 +173,21 @@ model contract {
   company_id             Int
   status                 Int
   index                  String?
-  date_begin             DateTime                 @db.Date
-  date_close             DateTime                 @db.Date
+  date_begin             DateTime?                @db.Date
+  date_close             DateTime?                @db.Date
   org_name               String
+  bitrix_id              Int?
+  portal_id              Int?
   autoinformation_module autoinformation_module[]
   chat_bot               chat_bot[]
   company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal                 portal?                  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contract_portal_id_fk")
   contract_status        contract_status          @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
   vats                   vats[]
   voice_robot            voice_robot[]
   webform                webform[]
+
+  @@unique([portal_id, bitrix_id], map: "bitrix_id_portal_id")
 }
 
 model invoice {
@@ -214,20 +228,26 @@ model messengers {
 }
 
 model portal {
-  id             Int              @id @default(autoincrement())
-  client_id      String
-  client_secret  String
-  domain         String
-  refresh_token  String?
-  access_token   String?
-  address        address[]
-  company        company[]
-  contact        contact[]
-  contact_email  contact_email[]
-  contact_phones contact_phones[]
-  invoice        invoice[]
-  requisite      requisite[]
-  user_bitrix    user_bitrix[]
+  id                     Int                      @id @default(autoincrement())
+  client_id              String
+  client_secret          String
+  domain                 String
+  refresh_token          String?
+  access_token           String?
+  address                address[]
+  autoinformation_module autoinformation_module[]
+  chat_bot               chat_bot[]
+  company                company[]
+  contact                contact[]
+  contact_email          contact_email[]
+  contact_phones         contact_phones[]
+  contract               contract[]
+  invoice                invoice[]
+  requisite              requisite[]
+  user_bitrix            user_bitrix[]
+  vats                   vats[]
+  voice_robot            voice_robot[]
+  webform                webform[]
 }
 
 model requisite {
@@ -278,9 +298,6 @@ model user_bitrix {
   work_departament                             String?
   personal_gender                              String?   @db.Char(1)
   bitrix_id                                    String
-  company_company_assigned_by_idTouser_bitrix  company[] @relation("company_assigned_by_idTouser_bitrix")
-  company_company_created_by_idTouser_bitrix   company[] @relation("company_created_by_idTouser_bitrix")
-  company_company_modify_by_idTouser_bitrix    company[] @relation("company_modify_by_idTouser_bitrix")
   contact_contact_assigned_by_idTouser_bitrix  contact[] @relation("contact_assigned_by_idTouser_bitrix")
   contact_contact_created_by_idTouser_bitrix   contact[] @relation("contact_created_by_idTouser_bitrix")
   contact_contact_modify_by_idTouser_bitrix    contact[] @relation("contact_modify_by_idTouser_bitrix")
@@ -303,8 +320,14 @@ model vats {
   price            Float     @db.Real
   duration         Int
   title            String
+  bitrix_id        Int?
+  product_id       Int?
+  portal_id        Int?
   contract         contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal           portal?   @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   tariff           tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id], map: "vats_bitrix_id_portal_id")
 }
 
 model webform {
@@ -314,9 +337,15 @@ model webform {
   active               Boolean?
   price                Float                  @db.Real
   title                String
+  bitrix_id            Int?
+  product_id           Int?
+  portal_id            Int?
+  portal               portal?                @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   contract             contract?              @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
   tariff               tariff                 @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   webform_webform_type webform_webform_type[]
+
+  @@unique([portal_id, bitrix_id], map: "webform_bitrix_id_portal_id")
 }
 
 model contract_status {
@@ -339,8 +368,14 @@ model voice_robot {
   active      Boolean?
   price       Float     @db.Real
   title       String
+  bitrix_id   Int?
+  product_id  Int?
+  portal_id   Int?
+  portal      portal?   @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
   contract    contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tariff      tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([portal_id, bitrix_id], map: "voice_robot_bitrix_id_portal_id")
 }
 
 model webform_webform_type {

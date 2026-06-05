@@ -17,11 +17,10 @@ export default defineEventHandler(async (event) => {
                 statusMessage : "invalid id"
             })
         }
-        const company = await getCompanyPrisma(id)
+        const company = await getCompanyPrisma(id, portal.portal.id)
         if(company) return true
         else{
-            const companyClient = await initCompanyClient(parseId, portal!.portal)
-            console.log(companyClient)
+            const companyClient = await initCompanyClient(parseId, portal!.portal.id)
             if(companyClient) return true
             else return false
         }

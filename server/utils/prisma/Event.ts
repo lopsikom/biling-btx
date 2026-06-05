@@ -18,7 +18,6 @@ export async function eventListPrisma(data : {filter? : IEventFilter, portal_id?
             action : filter?.action,
             entity : filter?.entity,
             entityName : filter?.entityName,
-            createdAt : filter?.createdAt
         },
         orderBy : {
             createdAt : "desc"
@@ -35,6 +34,16 @@ export async function eventListPrisma(data : {filter? : IEventFilter, portal_id?
         }
         
     } as eventsFindManyArgs
+    if(filter?.createdAt) {
+        const date = new Date(filter.createdAt)
+        const startDate = structuredClone(date);
+        date.setDate(date.getDate() + 1)
+        const endDate = date;
+        args.where!.createdAt = {
+            gte : startDate,
+            lte : endDate
+        }
+    }
     if(typeof filter?.companyId === "string") args.where!.company = {bitrix_id : filter.companyId , portal_id : portal_id};
     else {
         if(filter?.companyId) args.where!.company = {id : filter.companyId, portal_id : portal_id}

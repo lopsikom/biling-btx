@@ -7,6 +7,6 @@ export default defineEventHandler(async (event) => {
             statusMessage : 'Bad Auth'
         })
     }
-    const data = await getBitrixTokenByPortal(portal_id.id)
-    return data;
+    const data = await getBitrixTokenByPortal(portal_id.portal.id)
+    return {acces_token : data?.access_token};
 })
