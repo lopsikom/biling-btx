@@ -12,7 +12,11 @@ export default defineNuxtConfig({
       './plugins/syncService-init.ts',
       './plugins/redis-check.ts'
     ],
-    serveStatic : false
+    serveStatic : false,
+    prerender: {  
+      routes: [],
+      crawlLinks: false
+    }
   },
 
   plugins : [
@@ -46,9 +50,6 @@ export default defineNuxtConfig({
     }
   },
 
-  routeRules: {
-    '/': { prerender: true }
-  },
   b24ui: {
 
   },
