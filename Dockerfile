@@ -33,6 +33,4 @@ CMD ["npm", "run", "dev"]
 
 FROM base as prod
 ENV NUXT_PUBLIC_DEV=false
-RUN npm run build
-CMD ["npm", "start"]
-
+CMD ["npm", "run", "dev"]
