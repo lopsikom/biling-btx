@@ -14,8 +14,8 @@ export const Contract = z.object({
     company_id : z.number(),
     status : z.string(),
     index : z.string(),
-    date_begin : z.string(),
-    date_close : z.string(),
+    date_begin : z.string().optional(),
+    date_close : z.string().optional(),
     org_name : z.string()
 })
 

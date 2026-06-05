@@ -48,11 +48,11 @@ export function companyMapUpsertPrisma(portal_id : number, users : user_bitrix[]
             portal : {connect : {id : portal_id}},
         }
         const assigned = users.find(u => u.bitrix_id === b.assignedById.toString());
-        if(assigned) company.user_bitrix_company_assigned_by_idTouser_bitrix = {connect : {id : assigned.id}};
+        if(assigned) company.assigned_by_id = assigned.id;
         const modify = users.find(u => u.bitrix_id === b.updatedBy.toString());
-        if(modify) company.user_bitrix_company_modify_by_idTouser_bitrix = {connect : {id : modify.id}};
+        if(modify) company.modify_by_id = modify.id;
         const created = users.find(u => u.bitrix_id === b.createdBy.toString());
-        if(created) company.user_bitrix_company_created_by_idTouser_bitrix = {connect : {id : created.id}};
+        if(created) company.created_by_id = created.id;
         return company
     })
 }
@@ -68,7 +68,7 @@ export function compnayMapPostPrisma(portal_id : number, company : NewBitrixComp
         date_create : company.createdTime,
         date_modify : company.updatedTime,
         portal : {connect : {id : portal_id}},
-        user_bitrix_company_assigned_by_idTouser_bitrix : {connect : {bitrix_id_portal_id : {bitrix_id : company.assignedById.toString(), portal_id : portal_id}}}
+        assigned_by_id : company.id
     }
     return data
 }
@@ -189,8 +189,8 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 company_id : c.company_id,
                 status : c.contract_status.name,
                 index : c.index,
-                date_begin : c.date_begin.toString(),
-                date_close : c.date_close.toString(),
+                date_begin : c.date_begin?.toString(),
+                date_close : c.date_close?.toString(),
                 org_name : c.org_name
             } as IContract)} )
     }
@@ -200,8 +200,8 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         company_id : data.company_id,
         status : data.contract_status.name,
         index : data.index,
-        date_begin : data.date_begin.toString(),
-        date_close : data.date_close.toString(),
+        date_begin : data.date_begin?.toString(),
+        date_close : data.date_close?.toString(),
         org_name : data.org_name
     } as IContract)
 }

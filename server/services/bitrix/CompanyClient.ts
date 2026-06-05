@@ -242,7 +242,7 @@ export async function initCompanyClient(bitrix_id : number, portal : number){
     const token = await bitrixAPI.getAccesToken(portalPrisma.client_id, portalPrisma.client_secret, portalPrisma.refresh_token);
     const company = await bitrixAPI.getCompany(bitrix_id, token.access_token, portalPrisma.domain);
     console.log(company);
-    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result));
+    const companyPrsima = await postCompany(portalPrisma.id, ...companyMapUpsertPrisma(portalPrisma.id, [], company.result.item));
 
     await syncCompanyContractsAndProducts(portalPrisma.domain, token.access_token, portalPrisma.id, bitrix_id);
 

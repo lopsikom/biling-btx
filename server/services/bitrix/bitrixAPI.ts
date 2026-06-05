@@ -97,13 +97,14 @@ export class bitrixAPI {
         return response.data as IResponseArrayNewBitrix<NewBitrixCompany>
     }
     async getCompany(id : number, token : string, domain : string){
-        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.company.get`, {
+        const response = await this.AxiosClient.get(`https://${domain}/rest/crm.item.list`, {
             params : {
+                entityTypeId : 4,
                 auth : token,
                 ID : id
             }
         })
-        return response.data as bitrixResponse<NewBitrixCompany>
+        return response.data as IResponseNewBitrix<NewBitrixCompany>
     }
     async getBitrixUsers(domain : string, token : string){
         const response = await this.AxiosClient.get(`https://${domain}/rest/user.get`,{

@@ -227,7 +227,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_ADD, async (data) => {
         const id = z.number().parse(data.data.FIELDS.ID);
         const company = await bitrixAPI.getCompany(id, token.access_token, portal.portal.domain)
         if(!company.result) return;
-        await postCompany(portal.portal.id, ...companyMapUpsertPrisma(portal.portal.id, [], company.result))
+        await postCompany(portal.portal.id, ...companyMapUpsertPrisma(portal.portal.id, [], company.result.item))
     }catch(e){
         console.error("Error add company");
         console.error(e);
