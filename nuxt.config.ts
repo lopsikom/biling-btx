@@ -12,8 +12,8 @@ export default defineNuxtConfig({
       './plugins/syncService-init.ts',
       './plugins/redis-check.ts'
     ],
-    serveStatic : false,
-    prerender: {  
+    serveStatic : true,
+    prerender: {
       routes: [],
       crawlLinks: false
     }
