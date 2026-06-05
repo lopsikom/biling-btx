@@ -1,27 +1,27 @@
 import { EventEmitter } from "node:events";
-import { AnyProduct, Bitrix24Event, IAutoInfoProduct, IBitrixWebhookPayload, IChatBotProduct, ICompanyNew, IContractBitrix, IDynamicItemEvent, IProductRow, ISmsProduct, IVatsProduct, IVoiceRobotProduct, IWebFormProdruct, NewBitrixCompany, ProductEnum, ProductToEntityRecord, productByParentId } from "./models";
+import { Bitrix24Event, IBitrixWebhookPayload, IContractBitrix, IDynamicItemEvent, IProductRow, NewBitrixCompany, ProductEnum, ProductToEntityRecord, productByParentId } from "./models";
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
 import { entityType, ICacheCompany } from "~~/shared/models/APIModels";
 import { upsertContractPrisma } from "../utils/prisma/modules/Contract";
 import getMyCompanysCache from "../utils/redis/getMyCompanys";
-import { postChatBotProductPrisma, upsertChatBotProductPrisma } from "../utils/prisma/modules/ChatBot";
-import { postVoiceRobotProductPrisma, upsertVoiceRobotProductPrisma } from "../utils/prisma/modules/VoiceRobot";
-import { postVatsProductPrisma, upsertVatsProductPrisma } from "../utils/prisma/modules/Vats";
-import { postWebFormProducPrisma, upsertWebFormProductPrisma } from "../utils/prisma/modules/WebForm";
-import { postAutoInformationProductPrisma, upsertAutoInformationProductPrisma } from "../utils/prisma/modules/AutoInfo";
 import { getAllModulesContact } from "../utils/prisma/modules";
+import { productFuncCreateRecord, productFuncDeleteRecord, productFuncUpsertRecord } from "../utils/prisma/modules/productFuncs";
 import { EventEntity, eventsAudit } from "./EventsAudit";
 import postCompanyPrisma from "../utils/prisma/postCompany";
 import { compnayMapPostPrisma } from "../utils/mappers";
 import getCompanyPrisma from "../utils/prisma/getCompany";
+import z from "zod";
+import deleteCompanyPrisma from "../utils/prisma/deleteCompany";
 
 
 export type WebHooksMap = {
     [Bitrix24Event.CRM_DYNAMIC_ITEM_ADD] : [IBitrixWebhookPayload<IDynamicItemEvent>],
     [Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE] : [IBitrixWebhookPayload<IDynamicItemEvent>],
-    [Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE] : [IBitrixWebhookPayload<IDynamicItemEvent>]
+    [Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE] : [IBitrixWebhookPayload<IDynamicItemEvent>],
+    [Bitrix24Event.CRM_COMPANY_ADD] : [IBitrixWebhookPayload<Omit<IDynamicItemEvent, "ENTITY_TYPE_ID">>],
+    [Bitrix24Event.CRM_COMPANY_DELETE] : [IBitrixWebhookPayload<Omit<IDynamicItemEvent, "ENTITY_TYPE_ID">>]
 }
 
 const config = useRuntimeConfig()
@@ -218,46 +218,37 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
     console.log("Contract deleted");
 })
 
+webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_ADD, async (data) => {
+    try{
+        const portal = await getPortalByUserBitrix(data.auth.access_token);
+        if(!portal) return
+        const token = await getBitrixTokenByRedis(portal);
+        if(!token) return
+        const id = z.number().parse(data.data.FIELDS.ID);
+        const company = await bitrixAPI.getCompany(id, token.access_token, portal.portal.domain)
+        if(!company.result) return;
+        await postCompany(portal.portal.id, ...companyMapUpsertPrisma(portal.portal.id, [], company.result))
+    }catch(e){
+        console.error("Error add company");
+        console.error(e);
+    }
+})
+webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_DELETE, async (data) => {
+        try{
+            const portal = await getPortalByUserBitrix(data.auth.access_token);
+            if(!portal) return
+            const token = await getBitrixTokenByRedis(portal);
+            if(!token) return
+            await deleteCompanyPrisma(data.data.FIELDS.ID, portal.portal.id)
+        }catch(e) {
+            console.error("Error delete company");
+            console.error(e)
+        }
+})
+
+
 export function emitBitrixEvent(event: keyof WebHooksMap, payload: IBitrixWebhookPayload<any>) {
   webHookEmmiter.emit(event, payload);
-}
-
-type ProductDataMap = {
-  [ProductEnum.CHAT_BOT]: { info: IChatBotProduct; productRows: IProductRow };
-  [ProductEnum.VOICE_ROBOT]: { info: IVoiceRobotProduct; productRows: IProductRow };
-  [ProductEnum.VATS] : {info : IVatsProduct, productRows : IProductRow}; 
-  [ProductEnum.WEB_FORM] : {info : IWebFormProdruct, productRows : IProductRow};
-  [ProductEnum.SMS] : {info : ISmsProduct, productRows : IProductRow};
-  [ProductEnum.AUTOINFO] : {info : IAutoInfoProduct, productRows : IProductRow};
-}
-type ProductFuncRecord = {
-  [K in keyof ProductDataMap]: (data: ProductDataMap[K], portal_id: number) => Promise<any>;
-};
-
-const productFuncUpsertRecord: ProductFuncRecord = {
-  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {return await upsertChatBotProductPrisma(data, portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {return await upsertVoiceRobotProductPrisma(data, portal_id)},
-  [ProductEnum.VATS] : async (data, portal_id) => {return await upsertVatsProductPrisma(data, portal_id)},
-  [ProductEnum.WEB_FORM] : async (data, portal_id) => {return await upsertWebFormProductPrisma(data, portal_id)},
-  [ProductEnum.SMS] : async (data, portal_id) => {return await upsertAutoInformationProductPrisma(data, portal_id)},
-  [ProductEnum.AUTOINFO] : async (data, portal_id) => {return await upsertAutoInformationProductPrisma(data, portal_id)}
-};
-const productFuncCreateRecord: ProductFuncRecord = {
-  [ProductEnum.CHAT_BOT]: async (data, portal_id) => {return await postChatBotProductPrisma(data, portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (data, portal_id) => {return await postVoiceRobotProductPrisma(data, portal_id)},
-  [ProductEnum.VATS] : async (data, portal_id) => {return await postVatsProductPrisma(data, portal_id)},
-  [ProductEnum.WEB_FORM] : async (data, portal_id) => {return await postWebFormProducPrisma(data, portal_id)},
-  [ProductEnum.SMS] : async (data, portal_id) => {return await postAutoInformationProductPrisma(data, portal_id)},
-  [ProductEnum.AUTOINFO] : async (data, portal_id) => {return await postAutoInformationProductPrisma(data, portal_id)}
-};
-
-const productFuncDeleteRecord = {
-  [ProductEnum.CHAT_BOT]: async (id : number, portal_id : number) => {return await deleteChatBotPrisma(id,portal_id)},
-  [ProductEnum.VOICE_ROBOT]: async (id : number, portal_id : number) => {return await deleteVoiceRobotPrisma(id,portal_id)},
-  [ProductEnum.VATS] : async (id : number, portal_id : number) => {return await deleteVatsPrisma(id,portal_id)},
-  [ProductEnum.WEB_FORM] : async (id : number, portal_id : number) => {return await deleteWebForm(id,portal_id)},
-  [ProductEnum.SMS] : async (id : number, portal_id : number) => {return await deleteAutoInforPrisma(id,portal_id)},
-  [ProductEnum.AUTOINFO] : async (id : number, portal_id : number) => {return await deleteAutoInforPrisma(id,portal_id)}
 }
 
 function findDeletedRows(prev: { bitrix_id : number, portal_id : number, type: string }[], curr: {bitrix_id : number, portal_id : number, type : string}[]): {bitrix_id : number, portal_id : number, type : string}[] {
