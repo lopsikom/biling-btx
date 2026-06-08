@@ -530,6 +530,15 @@ export enum DealStageStatus {
     C19_LOSE = "C19:LOSE",                         // Сделка провалена
     C19_APOLOGY = "C19:APOLOGY",                   // Анализ причины провала
 }
+
+export enum Bitrix24Placement {
+    COMPANY = "CRM_COMPANY_DETAIL_TAB",
+    DEAL = "CRM_DEAL_DETAIL_TAB",
+    QUOTE = "CRM_QUOTE_LIST_MENU",
+    CONTACT = "CRM_CONTACT_DETAIL_TAB",
+    CONTRACT = `CRM_DYNAMIC_1058_DETAIL_TAB`
+}
+
 export enum Bitrix24Event {
     // // App
     // APP_UNINSTALL = "ONAPPUNINSTALL",

@@ -1,11 +1,14 @@
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { DiffAdress, IAddress, IAddresType, ICompnany, IContact, IDeal, IField, Invoice, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix, IStage, IUser, IUserField } from '~/services/models'
+import type { Bitrix24Placement, DiffAdress, IAddress, IAddresType, ICompnany, IContact, IDeal, IField, Invoice, IRequisite, IResponseArrayNewBitrix, IResponseNewBitrix, IStage, IUser, IUserField } from '~/services/models'
+import { BitrixPlacementMap } from './axiosClient'
 
 export class Bitrix {
+    private companyId : string | null
     public bitrixFrame : B24Frame
 
     constructor(frame : B24Frame){
         this.bitrixFrame = frame
+        this.companyId = null;
     }
     async companyFields() : Promise<IField[]>{
         return (await this.bitrixFrame.callMethod("crm.company.fields", {})).getData().result as IField[]
@@ -14,10 +17,16 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("crm.company.userfield.list", {})).getData().result as IUserField[]
     }
     async companyInfo(id? : string | number) : Promise<ICompnany>{
-        console.log(this.bitrixFrame.placement.options.ID)
         return (await this.bitrixFrame.callMethod("crm.company.get", {
-            id : id ?? this.bitrixFrame.placement.options.ID
+            id : id ?? await this.getCompanyId()
         })).getData().result as ICompnany
+    }
+    async getCompanyId(){
+        if(!this.companyId){
+            const id = await BitrixPlacementMap[this.bitrixFrame.placement.title as Bitrix24Placement](this.bitrixFrame);
+            this.companyId = id;
+        }
+        return this.companyId;
     }
     async getItems<T>(entityTypeId : string | number, filter? : object){
         return (await this.bitrixFrame.callMethod("crm.item.list",{
@@ -28,7 +37,7 @@ export class Bitrix {
     async companyContacts(id? : string | number) : Promise<IContact[]>{
         return ( await this.bitrixFrame.callMethod("crm.contact.list", {
             filter : {
-                COMPANY_ID : id ?? this.bitrixFrame.placement.options.ID
+                COMPANY_ID : id ?? await this.getCompanyId()
             },
             select : [
                 "ID",
@@ -45,7 +54,7 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("crm.requisite.list", {
             filter : {
                 ENTITY_TYPE_ID : 4,
-                ENTITY_ID : id ?? this.bitrixFrame.placement.options.ID
+                ENTITY_ID : id ?? await this.getCompanyId()
             }
         })).getData().result as IRequisite[];
     }
@@ -66,7 +75,7 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("crm.address.list", {
             filter : {
                 ENTITY_TYPE_ID : 4,
-                ENTITY_ID : id ?? this.bitrixFrame.placement.options.ID
+                ENTITY_ID : id ?? await this.getCompanyId()
             }
         })).getData().result as IAddress[]
     }
@@ -75,7 +84,7 @@ export class Bitrix {
     }
     async companyUpdate(data : Partial<ICompnany>, id? : string | number){
        return (await this.bitrixFrame.callMethod("crm.company.update", {
-            id : id ?? this.bitrixFrame.placement.options.ID,
+            id : id ?? await this.getCompanyId(),
             fields : data
         })).getData();
     }
@@ -121,7 +130,7 @@ export class Bitrix {
         return (await this.bitrixFrame.callMethod("crm.item.list",{
         entityTypeId : 31,
         filter : {
-            companyId : id ?? this.bitrixFrame.placement.options.ID
+            companyId : id ?? await this.getCompanyId()
         }
     })).getData().result.items as Invoice[];
     }
@@ -137,7 +146,7 @@ export class Bitrix {
     }
     async getDeals(data? : {filter? : object, order? : object, select? : string[], start? : number }){
         const response = await this.bitrixFrame.callMethod("crm.deal.list", {
-            filter : {...data?.filter, "COMPANY_ID" : this.bitrixFrame.placement.options.ID},
+            filter : {...data?.filter, "COMPANY_ID" : await this.getCompanyId()},
             order : data?.order,
             start : data?.start
         })

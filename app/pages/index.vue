@@ -44,7 +44,7 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         const isCompany = await $axios.getCheckCompany();
         if (!isCompany) throw new Error("Invalid Company")
 
-        const companyId = bitrix.bitrixFrame.placement.options.ID
+        const companyId = (await $axios.getCompanyId())!;
 
         const [
             company,

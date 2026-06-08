@@ -1,13 +1,38 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
 import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IUser, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
-import type { IResponseArrayNewBitrix } from "~~/shared/models/bitrixModels";
+import { Bitrix24Placement, type IResponseArrayNewBitrix } from "~~/shared/models/bitrixModels";
 
-
+export const BitrixPlacementMap : Record<Bitrix24Placement, (frame : B24Frame) => Promise<string>> = {
+    [Bitrix24Placement.COMPANY] : (frame) => {
+        return frame.placement.options.ID;
+    },
+    [Bitrix24Placement.DEAL] : async (frame) => {
+        const id = frame.placement.options.ID;
+        const companyId = (await frame.callMethod("crm.deal.get", {id : id})).getData().result.COMPANY_ID;
+        return companyId
+    },
+    [Bitrix24Placement.QUOTE] : async (frame) => {
+        const id = frame.placement.options.ID;
+        const companyId = (await frame.callMethod("crm.quote.get", {id :id})).getData().result.COMPANY_ID
+        return companyId
+    },
+    [Bitrix24Placement.CONTACT] : async (frame) => {
+        const id = frame.placement.options.ID;
+        const companyId = (await frame.callMethod("crm.contact.get", {id :id})).getData().result.COMPANY_ID
+        return companyId
+    },
+    [Bitrix24Placement.CONTRACT] : async (frame) => {
+        const id = frame.placement.options.ID;
+        const companyId = (await frame.callMethod("crm.item.get", {id : id, entityTypeId : 1058})).getData().result.item.companyId; //хардкод
+        return (companyId as number).toString();
+    }
+}
 
 export class axiosClient{
     private AxiosClient;
     private BitrixFrame : B24Frame | undefined;
+    private companyId : string | null = null;
     constructor(){
         const url = useRuntimeConfig().public.BaseUri + useRuntimeConfig().public.BaseUrl + "api/";
         this.AxiosClient = axios.create({baseURL : url, headers: {
@@ -30,6 +55,7 @@ export class axiosClient{
 
     set setBitrixFrame(BitrixFrame : B24Frame) {this.BitrixFrame = BitrixFrame;}
 
+
     async verifyBitrixUser(token : string) {
         const response = await this.AxiosClient.get<boolean>("oauth/verify.install",{
             headers:{
@@ -38,8 +64,18 @@ export class axiosClient{
         })
         return response.data
     }
+    async getCompanyId() {
+        if(!this.BitrixFrame) return
+        if(!this.companyId){
+            const id = await BitrixPlacementMap[this.BitrixFrame.placement.title as Bitrix24Placement](this.BitrixFrame);
+            this.companyId = id;
+        }
+        return this.companyId;
+    }
     async getCheckCompany(){
-        const response = await this.AxiosClient.get<boolean>(`bitrix/company.check/${this.BitrixFrame?.placement.options.ID ?? "2"}`)
+        const companyId = await this.getCompanyId()
+        if(!companyId) return;
+        const response = await this.AxiosClient.get<boolean>(`bitrix/company.check/${companyId}`)
         return response.data 
     }
     async getContractStatuses(){
@@ -63,7 +99,7 @@ export class axiosClient{
     async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) : Promise<IPagionationResponse<IContract>>;
     async getContracts(data : {filter? : Partial<IContractFilter>, pagination? : {skip : number, limit : number}}) {
         const params : any = {}
-        const filter = {...data.filter, bitrxi_company_id : this.BitrixFrame?.placement.options.ID ?? (useNuxtApp().$config.public.dev ? "2" : "0")}
+        const filter = {...data.filter, bitrxi_company_id : await this.getCompanyId() ?? (useNuxtApp().$config.public.dev ? "2" : "0")}
         params.filter = JSON.stringify(filter)
         if(data.pagination) {
             params.skip = data.pagination.skip,
@@ -88,8 +124,8 @@ export class axiosClient{
     }
     async postContract(data : IContractPost) {
         if(!data.company_id) {
-            if(useNuxtApp().$config.public.dev) data.bitrix_id = this.BitrixFrame?.placement.options.ID ?? "2"
-            else data.bitrix_id = this.BitrixFrame?.placement.options.ID
+            if(useNuxtApp().$config.public.dev) data.bitrix_id = await this.getCompanyId() ?? "2"
+            else data.bitrix_id = await this.getCompanyId()
         }
         const response = await this.AxiosClient.post('modules/contract.add', data)
         return response.data as IContract
@@ -239,8 +275,8 @@ export class axiosClient{
     }
     async postConnection(data : IConnectionPost){
         if(!data.company_id) {
-            if(useNuxtApp().$config.public.dev) data.company_id = this.BitrixFrame?.placement.options.ID ?? "2"
-            else data.company_id = this.BitrixFrame?.placement.options.ID
+            if(useNuxtApp().$config.public.dev) data.company_id = await this.getCompanyId() ?? "2"
+            else data.company_id = await this.getCompanyId() ?? ""
         }
         const response = await this.AxiosClient.post(`connection.add`, data)
         return response.data as IConnection
@@ -257,7 +293,7 @@ export class axiosClient{
     async getEvents(data : { filter? : IEventFilter, pagination : {skip : number, limit : number}}) :  Promise<IPagionationResponse<IEvent>>
     async getEvents(data : { filter? : IEventFilter, pagination? : {skip : number, limit : number}}){
         const params : any = {}
-        const filter = {...data.filter, companyId : this.BitrixFrame?.placement.options.ID ?? 
+        const filter = {...data.filter, companyId : await this.getCompanyId() ??
             (useNuxtApp().$config.public.dev ? "2" : "0")} as IEventFilter
         params.filter = JSON.stringify(filter)
         if(data.pagination) {

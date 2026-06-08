@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { Bitrix24Event } from '~/services/models';
+import { Bitrix24Event, Bitrix24Placement } from '~/services/models';
 import { unbindAllEvent, unbindAllPlacement } from '~/services/utils/utils';
 
 
@@ -31,8 +31,9 @@ onMounted( async () => {
                 }
             }))
             await unbindAllPlacement(frame)
-            await frame.callMethod('placement.bind',{
-                PLACEMENT : "CRM_COMPANY_DETAIL_TAB",
+            await Promise.all(Object.values(Bitrix24Placement).map(async p => {
+                await frame.callMethod('placement.bind',{
+                PLACEMENT : p,
                 HANDLER : url,
                 DESCRIPTION : "DESCRIPTION",
                 LANG_ALL : {
@@ -46,6 +47,7 @@ onMounted( async () => {
                     }
                 }        
             })
+            }))
         }
         catch(e){
             console.error(e)
