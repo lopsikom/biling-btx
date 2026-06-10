@@ -775,18 +775,61 @@ export interface IContractBitrix {
   parentId7?: number;          // Offer (entityTypeId: 7)
  
   // --- Custom (UF) fields ---
-  ufCrm7_1772107131118?: string;   // date — Дата начала договора
-  ufCrm7_1772107148271?: string;   // date — Дата окончания договора
-  ufCrm7_1772523967924?: "Y" | "N";  // "Y" | "N" — Пролонгация
-  ufCrm7_1772524025251?: string;   // date — Дата подписания договора
+  ufCrm7_1772107131118?: string;   // date — Дата начала документа
+  ufCrm7_1772107148271?: string;   // date — Дата окончания документа
+  ufCrm7_1772524025251?: string;   // date — Дата подписания документа
   ufCrm7_1772527646144?: {
     id : number,
     url : string,
     urlMachine : string
-  }[]; // file IDs — Файлы договора
-  ufCrm7_1773131357728?: "Y" | "N";  // "Y" | "N" — Оригинал получен
-  ufCrm7_1773302434?: string[];    // crm links — Доп. соглашения
+  }[];                             // file (multiple) — Файлы договора
+  ufCrm7_1773302434?: string[];    // crm (multiple) — Доп. соглашения
+  ufCrm7_1773302540?: string[];    // crm (multiple) — Доп. соглашения
+
+  // --- Selector (enumeration) fields — значение приходит как строковый ID элемента ---
+  ufCrm7_1779197235340?: ContractProlongation;  // enumeration — Пролонгация
+  ufCrm7_1779197312850?: ContractOriginal;      // enumeration — Оригинал получен
+  ufCrm7_1779197395083?: ContractDocType;       // enumeration — Тип документа
+  ufCrm7_1779712966393?: string;                // string — № документа
+  ufCrm7_1780659264898?: ContractState;         // enumeration — Состояние
 }
+
+/**
+ * Селекторы (enumeration) договора.
+ * Значение поля — строковый ID элемента списка. Union ниже фиксирует допустимые ID,
+ * а *Labels-мапа даёт человекочитаемое значение для UI (ID → подпись).
+ */
+
+// Пролонгация (ufCrm7_1779197235340)
+export type ContractProlongation = "754" | "755" | "756";
+export const ContractProlongationLabels: Record<ContractProlongation, string> = {
+  "754": "Да",
+  "755": "Нет",
+  "756": "?",
+};
+
+// Оригинал получен (ufCrm7_1779197312850)
+export type ContractOriginal = "757" | "758";
+export const ContractOriginalLabels: Record<ContractOriginal, string> = {
+  "757": "ЭДО",
+  "758": "Бумажный носитель",
+};
+
+// Тип документа (ufCrm7_1779197395083)
+export type ContractDocType = "759" | "760";
+export const ContractDocTypeLabels: Record<ContractDocType, string> = {
+  "759": "Договор",
+  "760": "Доп. соглашение",
+};
+
+// Состояние (ufCrm7_1780659264898)
+export type ContractState = "761" | "762" | "763" | "764";
+export const ContractStateLabels: Record<ContractState, string> = {
+  "761": "Активен",
+  "762": "Приостановлен",
+  "763": "Завершен",
+  "764": "Расторгнут",
+};
 export interface ICompanyNew {
   id: number;
   createdTime: string;

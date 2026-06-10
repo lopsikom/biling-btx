@@ -235,10 +235,15 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         index : "0", //Временная затычка,
         date_begin : a.ufCrm7_1772107131118,
         date_close : a.ufCrm7_1772107148271,
+        date_sign : a.ufCrm7_1772524025251,
         org_name : resolvedMyCompany?.title ?? "МИНТА ООО",
         bitrix_id : a.id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
+    // Селекторы коннектим к справочникам по bitrix_id (строковый ID элемента списка bitrix)
+    if(a.ufCrm7_1779197395083) data2.contract_doc_type = {connect : {bitrix_id : a.ufCrm7_1779197395083}}
+    if(a.ufCrm7_1779197235340) data2.contract_prolongation = {connect : {bitrix_id : a.ufCrm7_1779197235340}}
+    if(a.ufCrm7_1779197312850) data2.contract_original_type = {connect : {bitrix_id : a.ufCrm7_1779197312850}}
     return data2
    }
 }
@@ -252,9 +257,9 @@ export function contractMapBitrix(data : IContractPost | IContractUpdate, option
         mycompanyId : options?.company_id,
         ufCrm7_1772107131118 : data.date_begin,
         ufCrm7_1772107148271 : data.date_close,
-        ufCrm7_1772523967924 : "N",
         ufCrm7_1772524025251 : data.date_begin,
-        ufCrm7_1773131357728 : "N"
+        ufCrm7_1779197395083 : "759", // Тип документа — Договор
+        ufCrm7_1780659264898 : "761"  // Состояние — Активен
      } as IContractBitrix
      return _data
 }

@@ -175,6 +175,10 @@ model contract {
   index                  String?
   date_begin             DateTime?                @db.Date
   date_close             DateTime?                @db.Date
+  date_sign              DateTime?                @db.Date   // ufCrm7_1772524025251 — дата подписания документа
+  doc_type_id            Int?                                // FK → contract_doc_type (ufCrm7_1779197395083)
+  prolongation_id        Int?                                // FK → contract_prolongation (ufCrm7_1779197235340)
+  original_type_id       Int?                                // FK → contract_original_type (ufCrm7_1779197312850)
   org_name               String
   bitrix_id              Int?
   portal_id              Int?
@@ -183,6 +187,9 @@ model contract {
   company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   portal                 portal?                  @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contract_portal_id_fk")
   contract_status        contract_status          @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contract_doc_type      contract_doc_type?       @relation(fields: [doc_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contract_prolongation  contract_prolongation?   @relation(fields: [prolongation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  contract_original_type contract_original_type?  @relation(fields: [original_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   vats                   vats[]
   voice_robot            voice_robot[]
   webform                webform[]
@@ -349,9 +356,31 @@ model webform {
 }
 
 model contract_status {
-  id       Int        @id @default(autoincrement())
-  name     String
-  contract contract[]
+  id        Int        @id @default(autoincrement())
+  name      String
+  bitrix_id String?    // ID элемента списка bitrix (ufCrm7_1780659264898)
+  contract  contract[]
+}
+
+model contract_doc_type {
+  id        Int        @id @default(autoincrement())
+  name      String
+  bitrix_id String?    @unique // ID элемента списка bitrix (ufCrm7_1779197395083: 759=Договор, 760=Доп.согл.)
+  contract  contract[]
+}
+
+model contract_prolongation {
+  id        Int        @id @default(autoincrement())
+  name      String
+  bitrix_id String?    @unique // ID элемента списка bitrix (ufCrm7_1779197235340: 754=Да, 755=Нет, 756=?)
+  contract  contract[]
+}
+
+model contract_original_type {
+  id        Int        @id @default(autoincrement())
+  name      String
+  bitrix_id String?    @unique // ID элемента списка bitrix (ufCrm7_1779197312850: 757=ЭДО, 758=Бумага)
+  contract  contract[]
 }
 
 model webform_type {
