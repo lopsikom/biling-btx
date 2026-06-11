@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IUser, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
+import type { IAutoinformation, IAutoinformationFilterUpdate, IAutoinformationPost, IChatBot, IChatBotFilter, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractStatus, IContractDocType, IContractProlongation, IContractOriginalType, IContractUpdate, IEvent, IEventFilter, IMessengers, Integrations, IPagionationResponse, ITarrifs, IUser, IVats, IVatsFilter, IVatsPost, IVatsUpdate, IVoiceRobot, IVoiceRobotFilter, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
 import { Bitrix24Placement, type IResponseArrayNewBitrix } from "~~/shared/models/bitrixModels";
 
 export const BitrixPlacementMap : Record<Bitrix24Placement, (frame : B24Frame) => Promise<string>> = {
@@ -81,6 +81,18 @@ export class axiosClient{
     async getContractStatuses(){
         const response = await this.AxiosClient.get("modules/contract.statuses.list")
         return response.data as IContractStatus[]
+    }
+    async getContractDocTypes(){
+        const response = await this.AxiosClient.get("modules/contract.docTypes.list")
+        return response.data as IContractDocType[]
+    }
+    async getContractProlongations(){
+        const response = await this.AxiosClient.get("modules/contract.prolongations.list")
+        return response.data as IContractProlongation[]
+    }
+    async getContractOriginalTypes(){
+        const response = await this.AxiosClient.get("modules/contract.originalTypes.list")
+        return response.data as IContractOriginalType[]
     }
     async getMessengers(){
         const response = await this.AxiosClient.get("modules/messengers.list")

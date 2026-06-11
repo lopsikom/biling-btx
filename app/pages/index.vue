@@ -51,6 +51,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             myCompanys,
             messengers,
             contractStatuses,
+            contractDocTypes,
+            contractProlongations,
+            contractOriginalTypes,
             integrations,
             tariff,
             vats,
@@ -66,6 +69,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             bitrix.getItems<ICompanyNew>(4, { "isMyCompany": "Y" }),
             $axios.getMessengers(),
             $axios.getContractStatuses(),
+            $axios.getContractDocTypes(),
+            $axios.getContractProlongations(),
+            $axios.getContractOriginalTypes(),
             $axios.getIntegrations(),
             $axios.getTariff(),
             $axios.getVats({ bitrix_id: companyId }),
@@ -82,6 +88,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
         bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
         billingStateStore.messengers = messengers
         billingStateStore.contractStatuses = contractStatuses
+        billingStateStore.contractDocTypes = contractDocTypes
+        billingStateStore.contractProlongations = contractProlongations
+        billingStateStore.contractOriginalTypes = contractOriginalTypes
         billingStateStore.integrations = integrations
         billingStateStore.tariff = tariff
         billingStateStore.vats.push(...vats)
@@ -112,6 +121,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
                 messengers,
                 integrations,
                 contractStatuses,
+                contractDocTypes,
+                contractProlongations,
+                contractOriginalTypes,
                 tariff,
                 vats,
                 voiceRobots,
@@ -125,6 +137,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
                 $axios.getMessengers(),
                 $axios.getIntegrations(),
                 $axios.getContractStatuses(),
+                $axios.getContractDocTypes(),
+                $axios.getContractProlongations(),
+                $axios.getContractOriginalTypes(),
                 $axios.getTariff(),
                 $axios.getVats({ bitrix_id: "2" }),
                 $axios.getVoiceRobots({ bitrix_id: "2" }),
@@ -139,6 +154,9 @@ const {data, pending, error} = useAsyncData('bitrix', async () => {
             billingStateStore.messengers = messengers
             billingStateStore.integrations = integrations
             billingStateStore.contractStatuses = contractStatuses
+            billingStateStore.contractDocTypes = contractDocTypes
+            billingStateStore.contractProlongations = contractProlongations
+            billingStateStore.contractOriginalTypes = contractOriginalTypes
             billingStateStore.tariff = tariff
             billingStateStore.vats.push(...vats)
             billingStateStore.voiceRobots.push(...voiceRobots)

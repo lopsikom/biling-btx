@@ -1,10 +1,10 @@
 import { Contract, ContractPost, IAutoinformationFilterUpdate, IAutoinformationPost, ICacheCompany, IChatBot, IChatBotPost, IChatBotUpdate, IConnection, IConnectionPatch, IConnectionPost, IContract, IContractFilter, IContractPost, IContractUpdate, IVats, IVatsPost, IVatsUpdate, IVoiceRobotPost, IVoiceRobotUpdate, IWebform, IWebFormFilterUpdate, IWebformPost } from "~~/shared/models/APIModels";
-import { IAddress, ICompnany, IContact, IContactInfo, IContractBitrix, Invoice, IRequisite, IUser, NewBitrixCompany } from "../services/models";
+import { IAddress, ICompnany, IContact, IContactInfo, IContractBitrix, ContractDocType, ContractProlongation, ContractOriginal, Invoice, IRequisite, IUser, NewBitrixCompany } from "../services/models";
 import { contract, user_bitrix } from "../services/models/generated/prisma/client";
 import { addressCreateInput, autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput, chat_botCreateInput, chat_botUpdateInput, companyCreateInput, connectionCreateInput, contact_emailCreateInput, contact_phonesCreateInput, contactCreateInput, contractCreateInput, contractUpdateInput, invoiceCreateInput, requisiteCreateInput, user_bitrixCreateInput, vatsCreateInput, vatsUpdateInput, voice_robotCreateInput, voice_robotUpdateInput, webformCreateInput, webformUpdateInput } from "../services/models/generated/prisma/models";
 import { ContactWithData } from "./prisma/postContact";
 import { connectionPrisma } from "./prisma/Connection";
-import { contractPrismaGet } from "./prisma/modules/Contract";
+import { contractPrismaGet, getDocTypeBitrixId, getProlongationBitrixId, getOriginalTypeBitrixId } from "./prisma/modules/Contract";
 import * as z from "zod"
 
 export function userMapUpsertPrisma(portal_id: number, user: IUser): user_bitrixCreateInput;
@@ -191,6 +191,10 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 index : c.index,
                 date_begin : c.date_begin?.toString(),
                 date_close : c.date_close?.toString(),
+                date_sign : c.date_sign?.toString(),
+                doc_type : c.contract_doc_type?.name,
+                prolongation : c.contract_prolongation?.name,
+                original_type : c.contract_original_type?.name,
                 org_name : c.org_name
             } as IContract)} )
     }
@@ -202,6 +206,10 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         index : data.index,
         date_begin : data.date_begin?.toString(),
         date_close : data.date_close?.toString(),
+        date_sign : data.date_sign?.toString(),
+        doc_type : data.contract_doc_type?.name,
+        prolongation : data.contract_prolongation?.name,
+        original_type : data.contract_original_type?.name,
         org_name : data.org_name
     } as IContract)
 }
@@ -219,20 +227,23 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         index : data.index,
         date_begin : data.date_begin,
         date_close : data.date_close,
+        date_sign : data.date_sign,
         org_name : data.org_name,
         bitrix_id : bitrix_id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
     if(!data.bitrix_id || !portal_id) delete data2.company.connect?.bitrix_id_portal_id
     if(!data.company_id) delete data2.company.connect?.id;
+    if(data.doc_type) data2.contract_doc_type = {connect : {id : data.doc_type}}
+    if(data.prolongation) data2.contract_prolongation = {connect : {id : data.prolongation}}
+    if(data.original_type) data2.contract_original_type = {connect : {id : data.original_type}}
     return data2
    }else{
     const a = data as IContractBitrix
     const data2 ={
         name : a.title,
-        contract_status : {connect : {id : 1}}, //Временная затычка
         company : {connect : {bitrix_id_portal_id : {bitrix_id : a.companyId?.toString(), portal_id : portal_id}}},
-        index : "0", //Временная затычка,
+        index : a.ufCrm7_1779712966393,
         date_begin : a.ufCrm7_1772107131118,
         date_close : a.ufCrm7_1772107148271,
         date_sign : a.ufCrm7_1772524025251,
@@ -240,14 +251,16 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
         bitrix_id : a.id,
         portal : {connect : {id : portal_id}}
     } as contractCreateInput
-    // Селекторы коннектим к справочникам по bitrix_id (строковый ID элемента списка bitrix)
-    if(a.ufCrm7_1779197395083) data2.contract_doc_type = {connect : {bitrix_id : a.ufCrm7_1779197395083}}
-    if(a.ufCrm7_1779197235340) data2.contract_prolongation = {connect : {bitrix_id : a.ufCrm7_1779197235340}}
-    if(a.ufCrm7_1779197312850) data2.contract_original_type = {connect : {bitrix_id : a.ufCrm7_1779197312850}}
+    // Селекторы коннектим к справочникам по bitrix_id (строковый ID элемента списка bitrix).
+    // Bitrix присылает значение enumeration числом, поэтому приводим к строке.
+    if(a.ufCrm7_1780659264898) data2.contract_status = {connect : {bitrix_id : String(a.ufCrm7_1780659264898)}}
+    if(a.ufCrm7_1779197395083) data2.contract_doc_type = {connect : {bitrix_id : String(a.ufCrm7_1779197395083)}}
+    if(a.ufCrm7_1779197235340) data2.contract_prolongation = {connect : {bitrix_id : String(a.ufCrm7_1779197235340)}}
+    if(a.ufCrm7_1779197312850) data2.contract_original_type = {connect : {bitrix_id : String(a.ufCrm7_1779197312850)}}
     return data2
    }
 }
-export function contractMapBitrix(data : IContractPost | IContractUpdate, options? : {user_id? : number, company_id? : number}) : IContractBitrix{
+export async function contractMapBitrix(data : IContractPost | IContractUpdate, options? : {user_id? : number, company_id? : number}) : Promise<IContractBitrix>{
      const _data = {
         title : data.name,
         opened : "N",
@@ -257,10 +270,15 @@ export function contractMapBitrix(data : IContractPost | IContractUpdate, option
         mycompanyId : options?.company_id,
         ufCrm7_1772107131118 : data.date_begin,
         ufCrm7_1772107148271 : data.date_close,
-        ufCrm7_1772524025251 : data.date_begin,
-        ufCrm7_1779197395083 : "759", // Тип документа — Договор
-        ufCrm7_1780659264898 : "761"  // Состояние — Активен
+        ufCrm7_1772524025251 : data.date_sign ?? data.date_begin,
+        ufCrm7_1779712966393 : data.index,
+        ufCrm7_1779197395083 : "759", // Тип документа — Договор (дефолт)
+        ufCrm7_1780659264898 : "761"  // Состояние — Активен (дефолт)
      } as IContractBitrix
+     // Селекторы: резолвим FK-id справочника → bitrix_id (строковый ID элемента списка bitrix)
+     if(data.doc_type) _data.ufCrm7_1779197395083 = await getDocTypeBitrixId(data.doc_type) as ContractDocType
+     if(data.prolongation) _data.ufCrm7_1779197235340 = await getProlongationBitrixId(data.prolongation) as ContractProlongation
+     if(data.original_type) _data.ufCrm7_1779197312850 = await getOriginalTypeBitrixId(data.original_type) as ContractOriginal
      return _data
 }
 
@@ -270,10 +288,14 @@ export function contractUpdateMapPrisma(data : IContractUpdate) : contractUpdate
         index : data.index,
         date_begin : data.date_begin,
         date_close : data.date_close,
+        date_sign : data.date_sign,
         org_name : data.org_name
     } as contractUpdateInput
     if(data.company_id) contract.company = {connect : {id : data.company_id}}
     if(data.status) contract.contract_status = {connect : {id : data.status}}
+    if(data.doc_type) contract.contract_doc_type = {connect : {id : data.doc_type}}
+    if(data.prolongation) contract.contract_prolongation = {connect : {id : data.prolongation}}
+    if(data.original_type) contract.contract_original_type = {connect : {id : data.original_type}}
     return contract
 }
 

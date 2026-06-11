@@ -16,8 +16,6 @@ import type { CalendarDate } from '@internationalized/date'
 const billingStateStore = usebillingStateStore()
 const bitrixStateStore = useBitrixStateStore()
 const eventSource = ref<string[]>(["События биллинга", "События сделок"])
-const RoleItems = ref<string[]>(["dawdaw", "dawdwa"])
-const RoleMenuValue = ref<string>()
 const eventSourceValue = ref<"События биллинга" | "События сделок">("События биллинга")
 const search = ref<string>()
 const toastStore = useToastStore()

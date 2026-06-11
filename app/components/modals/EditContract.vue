@@ -13,6 +13,7 @@ import type { IContract, IContractPost, IContractUpdate } from '~~/shared/models
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore();
 const menuStore = useMenuStore()
+const dateSubscribe = ref<CalendarDate>();
 const toastStore = useToastStore();
 const bitrixStateStore = useBitrixStateStore()
 const {$axios} = useNuxtApp()
@@ -25,18 +26,33 @@ const dateBegin = ref<CalendarDate>()
 const dateClose = ref<CalendarDate>()
 const SelectStatus = ref<SelectorObject>()
 const selectStatusItems = computed(() => billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
+const selectDocType = ref<SelectorObject>()
+const selectDocTypesItems = computed(() => billingStateStore.contractDocTypes.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
+const selectorProlongation = ref<SelectorObject>()
+const selectorProlongationItems = computed(() => billingStateStore.contractProlongations.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
+const selectorOrigignalType = ref<SelectorObject>();
+const selectorOrigignalTypeItems = computed(() => billingStateStore.contractOriginalTypes.map(c => {return {label : c.id, value : c.name} as SelectorObject}))
 const selectOrgName = ref<string>()
 const selectorOrgNames = computed(() => bitrixStateStore.bitrixisMyCompanys.map(c => {return c.title}))
+
+function toCalendarDate(value?: string) {
+    if(!value) return undefined
+    const date = new Date(value)
+    if(isNaN(date.getTime())) return undefined
+    return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
 
 onMounted(() => {
     if(!EditContract.value) {modalStore.hideModal(); return}
     contract.value = structuredClone(toRaw(EditContract.value))
     SelectStatus.value = selectStatusItems.value.find(s => s.value === EditContract.value!.status)
+    selectDocType.value = selectDocTypesItems.value.find(s => s.value === EditContract.value!.doc_type)
+    selectorProlongation.value = selectorProlongationItems.value.find(s => s.value === EditContract.value!.prolongation)
+    selectorOrigignalType.value = selectorOrigignalTypeItems.value.find(s => s.value === EditContract.value!.original_type)
     selectOrgName.value = EditContract.value.org_name
-    const date1 = new Date(EditContract.value.date_begin)
-    dateBegin.value = new CalendarDate(date1.getFullYear(), date1.getMonth() + 1, date1.getDate())
-    const date2 = new Date(EditContract.value.date_close);
-    dateClose.value = new CalendarDate(date2.getFullYear(), date2.getMonth() + 1, date2.getDate())
+    dateBegin.value = toCalendarDate(EditContract.value.date_begin)
+    dateClose.value = toCalendarDate(EditContract.value.date_close)
+    dateSubscribe.value = toCalendarDate(EditContract.value.date_sign)
 })
 
 watch(() => dateBegin.value, () => {
@@ -61,15 +77,19 @@ watch(() => dateClose.value, () => {
 async function saveData(){
     menuStore.fetchDataLoad = true
     try{
-        if(!dateBegin.value || !dateClose.value) throw new Error("Validation Error")
+        if(!dateBegin.value || !dateClose.value || !dateSubscribe.value) throw new Error("Validation Error")
         const begin = new Date(dateBegin.value.year, dateBegin.value.month - 1, dateBegin.value.day)
         const close = new Date(dateClose.value.year, dateClose.value.month - 1, dateClose.value.day)
         const data = {
             name : contract.value.name,
             status : SelectStatus.value?.label,
+            doc_type : selectDocType.value?.label,
+            prolongation : selectorProlongation.value?.label,
+            original_type : selectorOrigignalType.value?.label,
             index : contract.value.index?.toString(),
             date_begin : `${dateBegin.value.year}-${String(dateBegin.value.month).padStart(2, '0')}-${String(dateBegin.value.day).padStart(2, '0')}T00:00:00.000Z`,
             date_close : `${dateClose.value.year}-${String(dateClose.value.month).padStart(2, '0')}-${String(dateClose.value.day).padStart(2, '0')}T00:00:00.000Z`,
+            date_sign : `${dateSubscribe.value.year}-${String(dateSubscribe.value.month).padStart(2, '0')}-${String(dateSubscribe.value.day).padStart(2, '0')}T00:00:00.000Z`,
             org_name : selectOrgName.value
         } as IContractPost
         if(begin.getTime() > close.getTime()) throw new Error("Validation Error")
@@ -111,17 +131,27 @@ async function deleteData(){
                 <span class="font-semibold mb-[20px] select-none">Поля договора</span>
             </div>
             <div class="flex flex-col gap-3">
+                <div class="flex gap-[10px]">                    
+                    <InputBox placeholder="Введите название..." v-model="contract.name" :resize="false" title="Название договора" style="width: 100%;">
+                    </InputBox>
+                </div>
                 <div class="flex gap-[10px]">
-                <InputBox placeholder="Введите название..." v-model="contract.name" :resize="false" title="Название договора" style="width: 50%;">
-                </InputBox>
                 <InputBox placeholder="Введите номер..." v-model="contract.index" type="number" :resize="false" title="Номер договора" style="width: 50%;">
                 </InputBox>
-                <Selector v-model="SelectStatus" style="width: 50%;" title="Статус договора" :items="selectStatusItems" />
+                    <Selector v-model="SelectStatus" style="width: 50%;" title="Статус договора" :items="selectStatusItems" />
+                    <Selector v-model="selectorProlongation" style="width: 50%;" title="Пролонгация" :items="selectorProlongationItems" />
                 </div>
-                <Selector v-model="selectOrgName" style="width: 100%;" title="Организация" :items="selectorOrgNames" />
+                <div class="flex gap-[10px]">
+                    <Selector v-model="selectOrgName" style="width: 33%;" class="overflow-hidden" title="Организация" :items="selectorOrgNames" />
+                    <Selector v-model="selectDocType" style="width: 33%;" class="overflow-hidden" title="Тип документа" :items="selectDocTypesItems" />
+                    <Selector v-model="selectorOrigignalType" style="width: 33%;" class="overflow-hidden" title="Оригинал получен" :items="selectorOrigignalTypeItems" />
+                </div>
                 <div class="flex gap-[20px]">
                     <DateRangePicker v-model="dateBegin" title="Дата начала"></DateRangePicker>
                     <DateRangePicker v-model="dateClose" title="Дата окончания"></DateRangePicker>
+                </div>
+                <div class="flex gap-[20px]">
+                    <DateRangePicker v-model="dateSubscribe" title="Дата подписания"></DateRangePicker>
                 </div>
             </div>
         </div>

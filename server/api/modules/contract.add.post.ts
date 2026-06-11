@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
         const bitrixCompany =  new companyClient(portal!.portal.domain, portal!.portal.id, ZBody.bitrix_id!);
         const myCompanys = await getMyCompanysCache(portal)
         const myCompany = myCompanys.find(c => c.title === ZBody.org_name) ?? myCompanys[0]
-        const bitirixContract = await bitrixCompany.addContract(contractMapBitrix(ZBody, {user_id : Number(portal!.bitrix_user_id), company_id : myCompany.id})) //Пофиксить строковый айди
+        const bitirixContract = await bitrixCompany.addContract(await contractMapBitrix(ZBody, {user_id : Number(portal!.bitrix_user_id), company_id : myCompany.id})) //Пофиксить строковый айди
         const contract = await addContractPrisma(contractInputMapPrisma(ZBody, portal!.portal.id, bitirixContract.result.item.id!));
         setResponseStatus(event, 201);
         eventsAudit.emit("entity.create", {

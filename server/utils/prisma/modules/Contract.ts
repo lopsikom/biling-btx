@@ -25,7 +25,10 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             }
         },
         include : {
-            contract_status : true
+            contract_status : true,
+            contract_doc_type : true,
+            contract_prolongation : true,
+            contract_original_type : true
         },
         orderBy : {
             id : 'desc'
@@ -60,6 +63,9 @@ export async function getContractById(id : number, portal_id? : number){
             },
             include : {
                 contract_status : true,
+                contract_doc_type : true,
+                contract_prolongation : true,
+                contract_original_type : true,
                 company : {select : {
                     id : true,
                     title : true,
@@ -75,6 +81,9 @@ export async function getContractById(id : number, portal_id? : number){
             },
             include : {
                 contract_status : true,
+                contract_doc_type : true,
+                contract_prolongation : true,
+                contract_original_type : true,
                 company : {select : {
                     id : true,
                     title : true,
@@ -110,8 +119,11 @@ export async function patchContractPrisma(id : number, data : contractUpdateInpu
             id : id
         },
         data : data,
-        include : { 
+        include : {
             contract_status : true,
+            contract_doc_type : true,
+            contract_prolongation : true,
+            contract_original_type : true,
             company : {
                 select : {
                     bitrix_id : true
@@ -140,7 +152,10 @@ export  async function addContractPrisma(data : contractCreateInput) {
     const response = await prisma.contract.create({
         data : data,
         include : {
-            contract_status : true
+            contract_status : true,
+            contract_doc_type : true,
+            contract_prolongation : true,
+            contract_original_type : true
         }
     })
     return response
@@ -149,6 +164,31 @@ export  async function addContractPrisma(data : contractCreateInput) {
 export async function getContractsStatusesPrisma(){
     const response = prisma.contract_status.findMany()
     return response
+}
+export async function getContractsDocTypesPrisma(){
+    const response = prisma.contract_doc_type.findMany()
+    return response
+}
+export async function getContractsProlongationsPrisma(){
+    const response = prisma.contract_prolongation.findMany()
+    return response
+}
+export async function getContractsOriginalTypesPrisma(){
+    const response = prisma.contract_original_type.findMany()
+    return response
+}
+// Резолв FK-id справочника → bitrix_id (строковый ID элемента списка bitrix)
+export async function getDocTypeBitrixId(id : number){
+    const response = await prisma.contract_doc_type.findUnique({where : {id}})
+    return response?.bitrix_id ?? undefined
+}
+export async function getProlongationBitrixId(id : number){
+    const response = await prisma.contract_prolongation.findUnique({where : {id}})
+    return response?.bitrix_id ?? undefined
+}
+export async function getOriginalTypeBitrixId(id : number){
+    const response = await prisma.contract_original_type.findUnique({where : {id}})
+    return response?.bitrix_id ?? undefined
 }
 export async function getTariffs(){
     const response = await prisma.tariff.findMany();

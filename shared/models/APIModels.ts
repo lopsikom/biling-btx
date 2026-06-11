@@ -16,6 +16,10 @@ export const Contract = z.object({
     index : z.string(),
     date_begin : z.string().optional(),
     date_close : z.string().optional(),
+    date_sign : z.string().optional(),
+    doc_type : z.string().optional(),
+    prolongation : z.string().optional(),
+    original_type : z.string().optional(),
     org_name : z.string()
 })
 
@@ -27,6 +31,10 @@ export const ContractFilter = z.object({
     index : z.string().optional(),
     date_begin : z.string().optional(),
     date_close : z.string().optional(),
+    date_sign : z.string().optional(),
+    doc_type : z.number().optional(),
+    prolongation : z.number().optional(),
+    original_type : z.number().optional(),
     org_name : z.string().optional()
 })
 
@@ -38,6 +46,10 @@ export const ContractPost = z.object({
     index : z.string().optional(),
     date_begin : z.string(),
     date_close : z.string(),
+    date_sign : z.string().optional(),
+    doc_type : z.number().optional(),
+    prolongation : z.number().optional(),
+    original_type : z.number().optional(),
     org_name : z.string().optional()
 })
 
@@ -48,6 +60,10 @@ export const ContractUpdate = z.object({
     index : z.string().optional(),
     date_begin : z.string().optional(),
     date_close : z.string().optional(),
+    date_sign : z.string().optional(),
+    doc_type : z.number().optional(),
+    prolongation : z.number().optional(),
+    original_type : z.number().optional(),
     org_name : z.string().optional()
 })
 
@@ -345,6 +361,9 @@ export interface IMessengers{
 export interface Integrations extends IMessengers {}
 export interface ITarrifs extends IMessengers {}
 export interface IContractStatus extends IMessengers {}
+export interface IContractDocType extends IMessengers {}
+export interface IContractProlongation extends IMessengers {}
+export interface IContractOriginalType extends IMessengers {}
 export interface IConnectionStatus extends IMessengers {}
 export interface IConnectionType extends IMessengers {type : connectionTypesEnum}
 

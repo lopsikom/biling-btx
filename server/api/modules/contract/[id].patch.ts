@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
                 const CompanyClient = new companyClient(portal.portal.domain, portal.portal.id, contract.company.bitrix_id)
                 const myCompanys = await getMyCompanysCache(portal)
                 const myCompany = myCompanys.find(c => c.title === data.org_name) ?? myCompanys[0]
-                await CompanyClient.patchContract(contractMapBitrix(data, { company_id: myCompany.id }), contract.bitrix_id)
+                await CompanyClient.patchContract(await contractMapBitrix(data, { company_id: myCompany.id }), contract.bitrix_id)
             } finally {
                 await releaseLock(contract.bitrix_id, portal.portal.id)
             }

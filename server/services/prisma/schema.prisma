@@ -358,7 +358,7 @@ model webform {
 model contract_status {
   id        Int        @id @default(autoincrement())
   name      String
-  bitrix_id String?    // ID элемента списка bitrix (ufCrm7_1780659264898)
+  bitrix_id String?    @unique // ID элемента списка bitrix (ufCrm7_1780659264898)
   contract  contract[]
 }
 

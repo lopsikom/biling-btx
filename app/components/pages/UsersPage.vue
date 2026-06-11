@@ -186,24 +186,26 @@ async function inputSearch(e : InputEvent){
                             justify-center h-[100%] select-none" v-if="isLoad">
                             <Icon icon="line-md:loading-loop" class="text-blue-600" width="60"/>
                         </div>
-                        <div class="users-list-grid mt-[30px]" v-else>
-                            <div class="users-list-row h-[50px]" style="border-width: 0;">
-                                <div class="font-semibold">Имя</div>
-                                <div class="font-semibold">Организация</div>
-                                <div class="font-semibold">Статус</div>
-                                <div class="font-semibold">Дата начала</div>
-                                <div class="font-semibold">Дата конца</div>
-                            </div>
-                            <div style="overflow-y: auto;">
-                                <div v-for="(value, index) in billingStateStore.contracts" :key="index" >
-                                    <div class="users-list-row users-item" @click="openEdit(value)">
-                                        <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.name }} {{value.index }}</p>
-                                        <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
-                                        <div >
-                                            <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
+                        <div class="users-list-scroll mt-[30px]" v-else>
+                            <div class="users-list-grid">
+                                <div class="users-list-row h-[50px]" style="border-width: 0;">
+                                    <div class="font-semibold">Имя</div>
+                                    <div class="font-semibold">Организация</div>
+                                    <div class="font-semibold">Статус</div>
+                                    <div class="font-semibold">Дата начала</div>
+                                    <div class="font-semibold">Дата конца</div>
+                                </div>
+                                <div style="overflow-y: auto;">
+                                    <div v-for="(value, index) in billingStateStore.contracts" :key="index" >
+                                        <div class="users-list-row users-item" @click="openEdit(value)">
+                                            <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.name }} {{value.index }}</p>
+                                            <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ value.org_name }}</p>
+                                            <div >
+                                                <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
+                                            </div>
+                                            <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
+                                            <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
                                         </div>
-                                        <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
-                                        <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -376,10 +378,14 @@ async function inputSearch(e : InputEvent){
     transition: border-color 0.15s ease;
     transition: box-shadow 0.15s ease;
 }
+.users-list-scroll{
+    overflow-x: auto;
+    width: 100%;
+}
 .users-list-grid{
-    
     display: grid;
     grid-auto-rows: auto;
+    min-width: 1050px;
     width: 100%;
 }
 .users-list-row{

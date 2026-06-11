@@ -289,4 +289,9 @@ watch(model, (newVal) => {
   color: #c7d2da;
   cursor: not-allowed;
 }
+
+/* Дни, не входящие в текущий месяц */
+.df-cell-trigger[data-outside-view] {
+  color: #b6c2cd;
+}
 </style>
