@@ -192,8 +192,12 @@ async function inputSearch(e : InputEvent){
                                     <div class="font-semibold">Имя</div>
                                     <div class="font-semibold">Организация</div>
                                     <div class="font-semibold">Статус</div>
+                                    <div class="font-semibold">Дата подписания</div>
                                     <div class="font-semibold">Дата начала</div>
                                     <div class="font-semibold">Дата конца</div>
+                                    <div class="font-semibold">Пролонгация</div>
+                                    <div class="font-semibold">Тип документа</div>
+                                    <div class="font-semibold">Оригинал получен</div>
                                 </div>
                                 <div style="overflow-y: auto;">
                                     <div v-for="(value, index) in billingStateStore.contracts" :key="index" >
@@ -203,8 +207,12 @@ async function inputSearch(e : InputEvent){
                                             <div >
                                                 <div class="any-white-container role-box px-[10px] py-[2px] flex justify-center align-center text-sm" style="width: fit-content;" >{{ value.status }}</div>
                                             </div>
-                                            <div>{{ new Date(value.date_begin).toLocaleDateString() }}</div>
-                                            <div>{{ new Date(value.date_close).toLocaleDateString() }}</div>
+                                            <div>{{ value.date_sign ? new Date(value.date_sign).toLocaleDateString()  : "Нету даты"}}</div>
+                                            <div>{{ value.date_begin ? new Date(value.date_begin).toLocaleDateString() : "Нету даты"}}</div>
+                                            <div>{{ value.date_close ? new Date(value.date_close).toLocaleDateString()  : "Нету даты"}}</div>
+                                            <div>{{ value.prolongation }}</div>
+                                            <div>{{ value.doc_type }}</div>
+                                            <div>{{ value.original_type }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -390,7 +398,7 @@ async function inputSearch(e : InputEvent){
 }
 .users-list-row{
     display: grid;
-    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    grid-template-columns: minmax(350px, 1.6fr) minmax(250px, 1.6fr) minmax(150px, 1.6fr) repeat(6, minmax(200px, 1fr));
     align-items: center;
     gap: 10px;
     border-top: 1px solid #d1d5db;
