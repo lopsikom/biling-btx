@@ -32,9 +32,9 @@ export const ContractFilter = z.object({
     date_begin : z.string().optional(),
     date_close : z.string().optional(),
     date_sign : z.string().optional(),
-    doc_type : z.number().optional(),
-    prolongation : z.number().optional(),
-    original_type : z.number().optional(),
+    doc_type : z.string().optional(),
+    prolongation : z.string().optional(),
+    original_type : z.string().optional(),
     org_name : z.string().optional()
 })
 

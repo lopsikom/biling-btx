@@ -16,8 +16,18 @@ export async function getContractList(data : {portal_id? : number, filter? : ICo
             contract_status : {
                 name : filter?.status
             },
+            contract_doc_type : filter?.doc_type ? {
+                name : filter?.doc_type
+            } : undefined,
+            contract_prolongation : filter?.prolongation ? {
+                name : filter?.prolongation
+            } : undefined,
+            contract_original_type : filter?.original_type ? {
+                name : filter?.original_type
+            } : undefined,
             date_begin : filter?.date_begin,
             date_close : filter?.date_close,
+            date_sign : filter?.date_sign,
             org_name : filter?.org_name,
             company : {
                 portal_id : portal_id,

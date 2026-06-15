@@ -9,7 +9,7 @@ import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import type { IContract, IContractFilter } from '~~/shared/models/APIModels'
 import useToastStore from '~/services/stores/toastStore'
-import type { CalendarDate } from '@internationalized/date'
+import { CalendarDate } from '@internationalized/date'
 
 
 const billingStateStore = usebillingStateStore()
@@ -22,13 +22,34 @@ const isLoad = ref<boolean>(false);
 const search = ref<string>()
 const RoleItems = computed(() => {
     const a = billingStateStore.contractStatuses.map(c => {return {label : c.id, value : c.name} as SelectorObject})
-    a.unshift({label : 0, value : "Все Статусы"})
+    a.unshift({label : 0, value : "Все cтатусы"})
     return a
 })
+const ProlongationItems = computed(() => {
+    const a = billingStateStore.contractProlongations.map(c => {return {label : c.id, value : c.name} as SelectorObject})
+    a.unshift({label : 0, value : "Все типы"})
+    return a
+})
+const TypeItems = computed(() => {
+    const a = billingStateStore.contractDocTypes.map(c => {return {label : c.id, value : c.name} as SelectorObject})
+    a.unshift({label : 0, value : "Все типы"})
+    return a
+})
+const OriginalItems = computed(() => {
+    const a = billingStateStore.contractOriginalTypes.map(c => {return {label : c.id, value : c.name} as SelectorObject})
+    a.unshift({label : 0, value : "Все типы"})
+    return a
+})
+
 const timeOutSearch = ref<NodeJS.Timeout>()
-const RoleMenuValue = ref<SelectorObject>({label : 0, value : "Все Статусы"});
+const RoleMenuValue = ref<SelectorObject>({label : 0, value : "Все cтатусы"});
+const ProlongationValue = ref<SelectorObject>({label : 0, value : "Все типы"});
+const TypeValue = ref<SelectorObject>({label : 0, value : "Все типы"});
+const OriginalValue = ref<SelectorObject>({label : 0, value : "Все типы"});
 const DateBeginFilter = ref<CalendarDate>();
 const DateCloseFilter = ref<CalendarDate>();
+const DateSignFilter = ref<CalendarDate>();
+
 // const excludeDisabled = ref<boolean>(false);
 
 function openEdit(item : IContract){
@@ -37,9 +58,13 @@ function openEdit(item : IContract){
 }
 
 function clearFilter(){
-    RoleMenuValue.value = {label : 0, value : "Все Статусы"};
+    RoleMenuValue.value = {label : 0, value : "Все cтатусы"};
+    ProlongationValue.value = {label : 0, value : "Все типы"};
+    TypeValue.value = {label : 0, value : "Все типы"};
+    OriginalValue.value = {label : 0, value : "Все типы"};
     DateBeginFilter.value = undefined;
     DateCloseFilter.value = undefined;
+    DateSignFilter.value = undefined;
     search.value =""
     // excludeDisabled.value = false;
     toastStore.openToast("Фильтр очищен")
@@ -58,7 +83,13 @@ async function getContractPagination(){
         if(DateCloseFilter.value) {
             if(DateCloseFilter.value.year.toString().length > 3) filter.date_close = `${DateCloseFilter.value.year}-${String(DateCloseFilter.value.month).padStart(2, '0')}-${String(DateCloseFilter.value.day).padStart(2, '0')}T00:00:00.000Z`;
         }
+        if(DateSignFilter.value) {
+            if(DateSignFilter.value.year.toString().length > 3) filter.date_sign = `${DateSignFilter.value.year}-${String(DateSignFilter.value.month).padStart(2, '0')}-${String(DateSignFilter.value.day).padStart(2, '0')}T00:00:00.000Z`;
+        }
         if(RoleMenuValue.value.label !== 0) filter.status = RoleMenuValue.value.value.toString()
+        if(ProlongationValue.value.label !== 0) filter.prolongation = ProlongationValue.value.value.toString()
+        if(TypeValue.value.label !== 0) filter.doc_type = TypeValue.value.value.toString()
+        if(OriginalValue.value.label !== 0) filter.original_type = OriginalValue.value.value.toString()
         if(search.value?.trim() !== "") filter.name = search.value;
         const data = await $axios.getContracts({
             filter : filter,
@@ -96,8 +127,19 @@ watch(() => [
 })
 
 watch(() => [
-    pagePagination.value, 
-    RoleMenuValue.value], 
+    DateSignFilter.value,
+], async () => {
+    if(DateSignFilter.value) {
+        if(DateSignFilter.value.year.toString().length > 3) await getContractPagination()
+    }
+})
+
+watch(() => [
+    pagePagination.value,
+    RoleMenuValue.value,
+    ProlongationValue.value,
+    TypeValue.value,
+    OriginalValue.value],
     async () => { await getContractPagination()})
 watch(() => billingStateStore.isRefreshContracts, async () => {
     if(billingStateStore.isRefreshContracts) {
@@ -166,10 +208,20 @@ async function inputSearch(e : InputEvent){
                     </div>
                     <DateRangePicker v-model="DateBeginFilter" title="Дата начала"/>
                     <DateRangePicker v-model="DateCloseFilter" title="Дата окончания"/>
+                    <DateRangePicker v-model="DateSignFilter" title="Дата подписания"/>
                 </div> 
                 <div class="flex mt-[15px] gap-5">
                     <div class="flex">
-                        <Selector v-model="RoleMenuValue" :items="RoleItems" :width="200"/>
+                        <Selector v-model="RoleMenuValue" title="Статус" :items="RoleItems" :width="200"/>
+                    </div>
+                    <div class="flex">
+                        <Selector v-model="ProlongationValue" title="Пролонгация" :items="ProlongationItems" :width="200"/>
+                    </div>
+                    <div class="flex">
+                        <Selector v-model="TypeValue" title="Тип документа" :items="TypeItems" :width="200"/>
+                    </div>
+                    <div class="flex">
+                        <Selector v-model="OriginalValue" title="Вид документа" :items="OriginalItems" :width="200"/>
                     </div>
                     <!-- <div class="flex items-center gap-3">
                         <CheckboxRoot v-model="excludeDisabled" :class="excludeDisabled ? 'checkbox-active' : 'checkbox-disable'">
