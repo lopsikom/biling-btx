@@ -1,13 +1,13 @@
 import { EventEmitter } from "node:events";
-import { Bitrix24Event, IBitrixWebhookPayload, IContractBitrix, IDynamicItemEvent, IProductRow, NewBitrixCompany, ProductEnum, ProductToEntityRecord, productByParentId } from "./models";
+import { Bitrix24Event, IBitrixWebhookPayload, IContractBitrix, IDynamicItemEvent, NewBitrixCompany } from "./models";
 import {getBitrixTokenByRedis} from "../utils/getBitrixToken"
 import bitrixAPI from "./bitrix/bitrixAPI";
 import { redisClient } from "./redis";
-import { entityType, ICacheCompany } from "~~/shared/models/APIModels";
+import { entityType } from "~~/shared/models/APIModels";
 import { upsertContractPrisma } from "../utils/prisma/modules/Contract";
 import getMyCompanysCache from "../utils/redis/getMyCompanys";
 import { getAllModulesContact } from "../utils/prisma/modules";
-import { productFuncCreateRecord, productFuncDeleteRecord, productFuncUpsertRecord } from "../utils/prisma/modules/productFuncs";
+import { reconcileContractProducts } from "./contractProductSync/reconcileContractProducts";
 import { EventEntity, eventsAudit } from "./EventsAudit";
 import postCompanyPrisma from "../utils/prisma/postCompany";
 import { compnayMapPostPrisma } from "../utils/mappers";
@@ -45,25 +45,13 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX, data.data.FIELDS.ID)).result.item;
     if(!contract?.companyId) {console.warn("Нету контракта или контракт без компании"); return;}
-    const [myCompanys, products] = await Promise.all([
-        getMyCompanysCache(portal, token.access_token),
-        (async () => {
-            const productRows = await bitrixAPI.getProductRowContract(portal.portal.domain, token.access_token, contract.id!.toString(), CONTRACT_STRING_ID_BITRIX)
-            return await Promise.all(productRows.result.productRows.map(async p => {
-                const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
-                info.result.product.productName = p.productName
-                const parent = info.result.product.parentId ? Number(info.result.product.parentId.value) : info.result.product.id
-                const productType = productByParentId[parent]
-                return {productRows : p, info, productType}
-            }))
-        })()
-    ])
+    const myCompanys = await getMyCompanysCache(portal, token.access_token)
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
     const companyPrisma = await getCompanyPrisma(contract.companyId!.toString(), portal.portal.id)
     if(!companyPrisma){
-        const company = await bitrixAPI.getItem<NewBitrixCompany>(portal.portal.domain, token.access_token, 4, contract.companyId!)
-        if(!company.result.item) {console.warn("Не удалось найти компанию"); return;}
-        await postCompanyPrisma(portal.portal.id, compnayMapPostPrisma(portal.portal.id, company.result.item))
+        const companyBitrix = await bitrixAPI.getItem<NewBitrixCompany>(portal.portal.domain, token.access_token, 4, contract.companyId!)
+        if(!companyBitrix.result.item) {console.warn("Не удалось найти компанию"); return;}
+        await postCompanyPrisma(portal.portal.id, compnayMapPostPrisma(portal.portal.id, companyBitrix.result.item))
     }
     await addContractPrisma(contractInputMapPrisma(contract, portal.portal.id, company)).then(c => {
     eventsAudit.emit("entity.create", {
@@ -72,39 +60,15 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
         entityName : c.name,
         companyid : c.company_id
     }as EventEntity)})
-    await Promise.all(products.map(async _ => {
-        try{
-            const p = _.info.result.product;
-            const r = _.productRows;
-            const key = _.productType;
-            if (!key) {
-                console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
-                return
-            }
-            (productFuncCreateRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<any>)(
-                { info: p, productRows: r },
-                portal.portal.id
-            ).then(_ => {
-                eventsAudit.emit("entity.create", {
-                    userid : portal.user_id,
-                    entity : ProductToEntityRecord[key],
-                    entityName : _.title,
-                    companyid : _.contract?.company_id
-                })
-            });;
-        }
-        catch(e){
-            console.error(e);
-        }
-    }))
-
-    await saveShapshotProduct(contract.id!, portal.portal.id, products
-        .filter(p => p.productType)
-        .map((p) => ({
-            bitrix_id:   p.productRows.id,
-            portal_id : portal.portal.id,
-            type: p.productType!,
-        })))
+    await reconcileContractProducts({
+        domain: portal.portal.domain,
+        token: token.access_token,
+        contractBitrixId: contract.id!,
+        contractStringId: CONTRACT_STRING_ID_BITRIX,
+        portalId: portal.portal.id,
+        mode: 'create',
+        userId: portal.user_id
+    })
     console.log("Contract added")
 })
 webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
@@ -121,84 +85,24 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async(data) => {
     if(!token) return
     const contract = (await bitrixAPI.getItem<IContractBitrix>(portal.portal.domain, token.access_token, CONTRACT_ID_BITRIX, data.data.FIELDS.ID)).result.item;
     if(!contract || contract.companyId === 0) return
-    const [myCompanys, products] = await Promise.all([
-        getMyCompanysCache(portal, token.access_token),
-        (async () => {
-            const productRows = await bitrixAPI.getProductRowContract(portal.portal.domain, token.access_token, contract.id!.toString(), CONTRACT_STRING_ID_BITRIX)
-            console.log("product", productRows)
-            return await Promise.all(productRows.result.productRows.map(async p => {
-                const info = await bitrixAPI.getProductInfo(portal.portal.domain, token.access_token, p.productId)
-                info.result.product.productName = p.productName
-                const parent = info.result.product.parentId ? Number(info.result.product.parentId.value) : info.result.product.id
-                const productType = productByParentId[parent]
-                return {productRows : p, info, productType}
-            }))
-        })()
-    ])
-    const prev = await getShapshotProduct(contract.id!, portal.portal.id)
-    const curr = products
-        .filter(p => p.productType)
-        .map((p) => ({
-            bitrix_id:   p.productRows.id,
-            portal_id: portal.portal.id,
-            type: p.productType!,
-        }))
-    const deleted = findDeletedRows(prev, curr)
+    const myCompanys = await getMyCompanysCache(portal, token.access_token)
     const company = myCompanys.find(c => c.id === contract.mycompanyId);
     const companyPrisma = await getCompanyPrisma(contract.companyId!.toString(), portal.portal.id)
     if(!companyPrisma){
-        const company = await bitrixAPI.getItem<NewBitrixCompany>(portal.portal.domain, token.access_token, 4, contract.companyId!)
-        if(!company.result.item) {console.warn("Не удалось найти компанию"); return;}
-        await postCompanyPrisma(portal.portal.id, compnayMapPostPrisma(portal.portal.id, company.result.item))
+        const companyBitrix = await bitrixAPI.getItem<NewBitrixCompany>(portal.portal.domain, token.access_token, 4, contract.companyId!)
+        if(!companyBitrix.result.item) {console.warn("Не удалось найти компанию"); return;}
+        await postCompanyPrisma(portal.portal.id, compnayMapPostPrisma(portal.portal.id, companyBitrix.result.item))
     }
-    await upsertContractPrisma(portal.portal.id, contractInputMapPrisma(contract, portal.portal.id, company)),
-    await Promise.all([
-        ...products.map(async _ => {
-            try{
-                const p = _.info.result.product;
-                const r = _.productRows;
-                const key = _.productType;
-                if (!key) {
-                    console.warn(`[webhook] не удалось определить тип товара по parentId для productId=${r.productId}`)
-                    return
-                }
-                await (productFuncUpsertRecord[key] as (data: { info: typeof p; productRows: IProductRow }, portal_id: number) => Promise<any>)(
-                    { info: p, productRows: r },
-                    portal.portal.id
-                ).then(_ => {
-                    eventsAudit.emit("entity.update", {
-                        userid : portal.user_id,
-                        entity : ProductToEntityRecord[key],
-                        entityName : _.title,
-                        companyid : _.contract?.company_id
-                    })
-                });
-            }
-            catch(e){
-                console.error(e);
-            }
-        }),
-        ...deleted.map(async (_) => {
-            try {
-                await (productFuncDeleteRecord[_.type as ProductEnum] as (
-                    id: number,
-                    portal_id : number
-                ) => Promise<any>)(_.bitrix_id, _.portal_id).then(__ => {
-                    console.log(_)
-                    eventsAudit.emit("entity.delete", {
-                        userid : portal.user_id,
-                        entity : ProductToEntityRecord[_.type as ProductEnum],
-                        entityName : __.title,
-                        companyid : __.contract?.company_id
-                    })
-                });
-            }
-            catch(e) {
-                console.error(e)
-            }
-        })
-    ])
-    await saveShapshotProduct(contract.id!, portal.portal.id, curr)
+    await upsertContractPrisma(portal.portal.id, contractInputMapPrisma(contract, portal.portal.id, company))
+    await reconcileContractProducts({
+        domain: portal.portal.domain,
+        token: token.access_token,
+        contractBitrixId: contract.id!,
+        contractStringId: CONTRACT_STRING_ID_BITRIX,
+        portalId: portal.portal.id,
+        mode: 'reconcile',
+        userId: portal.user_id
+    })
     console.log("Contract updated")
 })
 
@@ -249,11 +153,6 @@ webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_DELETE, async (data) => {
 
 export function emitBitrixEvent(event: keyof WebHooksMap, payload: IBitrixWebhookPayload<any>) {
   webHookEmmiter.emit(event, payload);
-}
-
-function findDeletedRows(prev: { bitrix_id : number, portal_id : number, type: string }[], curr: {bitrix_id : number, portal_id : number, type : string}[]): {bitrix_id : number, portal_id : number, type : string}[] {
-  const currIds = new Set(curr.map((r) => r.bitrix_id!));
-  return prev.filter((r) => !currIds.has(r.bitrix_id));
 }
 
 export async function getShapshotProduct(contract_id : number, portal_id : number) {

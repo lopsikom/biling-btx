@@ -4,12 +4,10 @@ import { AnyProduct, IAddress, IBitrixToken, ICompnany, IContact, IContractBitri
 import { portalPrisma } from "~~/server/utils/prisma/getPortal";
 import { redisClient } from "../redis";
 import { b24RateLimiter } from "~~/server/utils/rateLimiter";
-import { productByParentId } from "~~/shared/models/bitrixModels";
 import { ICacheCompany } from "~~/shared/models/APIModels";
-import { productFuncCreateRecord } from "~~/server/utils/prisma/modules/productFuncs";
 import { contractInputMapPrisma } from "~~/server/utils/mappers";
 import { addContractPrisma } from "~~/server/utils/prisma/modules/Contract";
-import { saveShapshotProduct } from "../webHooksEvents";
+import { reconcileContractProducts } from "../contractProductSync/reconcileContractProducts";
 
 export default class companyClient{
     domain : string;
@@ -282,49 +280,19 @@ async function syncCompanyContractsAndProducts(domain : string, token : string, 
         try{
             if(!contract.id || !contract.companyId) return;
 
-            const productRows = (await bitrixAPI.getProductRowContract(
-                domain, token, contract.id.toString(), CONTRACT_STRING_ID_BITRIX
-            )).result.productRows;
-
-            const products = await Promise.all(productRows.map(async p => {
-                const info = await bitrixAPI.getProductInfo(domain, token, p.productId);
-                info.result.product.productName = p.productName;
-                const parent = info.result.product.parentId
-                    ? Number(info.result.product.parentId.value)
-                    : info.result.product.id;
-                const productType = productByParentId[parent];
-                return {productRows : p, info, productType};
-            }));
-
             const myCompany = myCompanys.find(c => c.id === contract.mycompanyId);
 
             await addContractPrisma(contractInputMapPrisma(contract, portal_id, myCompany));
 
-            await Promise.all(products.map(async _ => {
-                try{
-                    const p = _.info.result.product;
-                    const r = _.productRows;
-                    const key = _.productType;
-                    if(!key){
-                        console.warn(`[syncCompany] не удалось определить тип товара по parentId для productId=${r.productId}`);
-                        return;
-                    }
-                    await (productFuncCreateRecord[key] as (data : {info : typeof p; productRows : IProductRow}, portal_id : number) => Promise<any>)(
-                        {info : p, productRows : r},
-                        portal_id
-                    );
-                }catch(e){
-                    console.error("[syncCompany] ошибка добавления товара", e);
-                }
-            }));
-
-            await saveShapshotProduct(contract.id, portal_id, products
-                .filter(p => p.productType)
-                .map(p => ({
-                    bitrix_id : p.productRows.id,
-                    portal_id : portal_id,
-                    type : p.productType!
-                })));
+            // Backfill товаров договора: без userId → аудит молчит (см. CONTEXT.md → events).
+            await reconcileContractProducts({
+                domain,
+                token,
+                contractBitrixId: contract.id,
+                contractStringId: CONTRACT_STRING_ID_BITRIX,
+                portalId: portal_id,
+                mode: 'create'
+            });
         }catch(e){
             console.error(`[syncCompany] ошибка обработки договора ${contract.id}`, e);
         }

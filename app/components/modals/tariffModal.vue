@@ -73,7 +73,7 @@ const ContractsSelect = computed(() =>
     .filter(c => c.status !== "Завершен" && c.status !== "Приостановлен")
     .map(c => ({
       label: c.id,
-      value: `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status} от ${new Date(c.date_begin).toLocaleDateString()}`
+      value: `${c.name} ${c.index ?? ''} ${c.org_name} ${c.status}`
 })))
 
 const tarrifsSelect = computed(() => tarrifs.value.map(c => {return {label : c.id, value : c.name}}))
