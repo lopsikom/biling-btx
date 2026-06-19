@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if (id) {
         const parseId = z.coerce.number().parse(id)
-        const verify = await requireChatBot(parseId, portal.portal.id)
-        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+        // const verify = await requireChatBot(parseId, portal.portal.id)
+        // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldChatBot = await getChatBotById(parseId);
         if (!OldChatBot || !OldChatBot.bitrix_id || !OldChatBot.contract_id) throw createError({ statusCode: 404, statusMessage: "No found chat bot" })
         const contract = await getContractById(OldChatBot.contract_id);

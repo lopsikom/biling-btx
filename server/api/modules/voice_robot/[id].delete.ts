@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if (id) {
         const parseId = z.coerce.number().parse(id)
-        const verify = await requireVoiceRobot(parseId, portal.portal.id)
-        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+        // const verify = await requireVoiceRobot(parseId, portal.portal.id)
+        // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldVoiceRobot = await getVoiceRobotByIdPrisma(parseId);
         if (!OldVoiceRobot || !OldVoiceRobot.bitrix_id || !OldVoiceRobot.contract_id) throw createError({ statusCode: 404, statusMessage: "No found voice robot" })
         const contract = await getContractById(OldVoiceRobot.contract_id);

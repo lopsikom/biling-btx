@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if (id) {
         const parseId = z.coerce.number().parse(id)
-        const verify = await requireAutoInfo(parseId, portal.portal.id);
-        if(!verify) throw createError({statusCode : 404, statusMessage : "not verify portal"})
+        // const verify = await requireAutoInfo(parseId, portal.portal.id);
+        // if(!verify) throw createError({statusCode : 404, statusMessage : "not verify portal"})
         const OldAutoinformation = await getAutoinformationByIdPrisma(parseId);
         if (!OldAutoinformation || !OldAutoinformation.bitrix_id || !OldAutoinformation.contract_id) throw createError({ statusCode: 404, statusMessage: "No found autoinformation" })
         const contract = await getContractById(OldAutoinformation.contract_id);

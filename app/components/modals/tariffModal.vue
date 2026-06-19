@@ -236,13 +236,13 @@ async function saveData(){
     try{
         const modules = Object.values(moduleRegistry)
 
-        for(const mod of modules){
-            for(const row of mod.list.value.filter((r : any) => !r.isDeleted)){
-                if(!row.selected_tarrif) throw new Error("Validation Error")
-                if(!row.selected_contract) throw new Error("Validation Error")
-                if(!isValidData(row.item)) throw new Error("Validation Error")
-            }
-        }
+        // for(const mod of modules){
+        //     for(const row of mod.list.value.filter((r : any) => !r.isDeleted)){
+        //         if(!row.selected_tarrif) throw new Error("Validation Error")
+        //         if(!row.selected_contract) throw new Error("Validation Error")
+        //         if(!isValidData(row.item)) throw new Error("Validation Error")
+        //     }
+        // }
 
         for(const m of modules){
             const rows = m.list.value as any[]

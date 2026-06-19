@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if(id){
         const parseId = z.coerce.number().parse(id)
-        const verify = await requireVats(parseId, portal.portal.id)
-        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+        // const verify = await requireVats(parseId, portal.portal.id)
+        // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldVats = await getVatsById(parseId);
         if(!OldVats || !OldVats.bitrix_id || !OldVats.contract_id) throw createError({statusCode : 404, statusMessage : "No found vats"})
         const contract = await getContractById(OldVats.contract_id);

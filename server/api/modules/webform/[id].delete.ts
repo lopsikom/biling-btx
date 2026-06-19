@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType
     if (id) {
         const parseId = z.coerce.number().parse(id)
-        const verify = await requireWebform(parseId, portal.portal.id)
-        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+        // const verify = await requireWebform(parseId, portal.portal.id)
+        // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldWebform = await getWebformByIdPrisma(parseId);
         if (!OldWebform || !OldWebform.bitrix_id || !OldWebform.contract_id) throw createError({ statusCode: 404, statusMessage: "No found webform" })
         const contract = await getContractById(OldWebform.contract_id);
