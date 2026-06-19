@@ -16,7 +16,12 @@ export default defineEventHandler(async (event) => {
         // const verify = await requireVoiceRobot(parseId, portal.portal.id)
         // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldVoiceRobot = await getVoiceRobotByIdPrisma(parseId);
-        if (!OldVoiceRobot || !OldVoiceRobot.bitrix_id || !OldVoiceRobot.contract_id) throw createError({ statusCode: 404, statusMessage: "No found voice robot" })
+        if (!OldVoiceRobot) throw createError({ statusCode: 404, statusMessage: "No found voice robot" })
+        if(!OldVoiceRobot.portal_id || !OldVoiceRobot.bitrix_id || !OldVoiceRobot.contract_id || !OldVoiceRobot.product_id){
+            const data = await deleteVoiceRobotPrisma(parseId);
+            if(data) return true;
+            else return false;
+        }
         const contract = await getContractById(OldVoiceRobot.contract_id);
         if (!contract || !contract.bitrix_id) throw createError({ statusCode: 404, statusMessage: "No found contract" })
         await acquireLock(contract.bitrix_id, portal.portal.id)

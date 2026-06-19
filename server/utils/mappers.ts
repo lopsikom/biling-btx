@@ -234,6 +234,7 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
     } as contractCreateInput
     if(!data.bitrix_id || !portal_id) delete data2.company.connect?.bitrix_id_portal_id
     if(!data.company_id) delete data2.company.connect?.id;
+    if(data.status) data2.contract_status = {connect : {id : data.status}}
     if(data.doc_type) data2.contract_doc_type = {connect : {id : data.doc_type}}
     if(data.prolongation) data2.contract_prolongation = {connect : {id : data.prolongation}}
     if(data.original_type) data2.contract_original_type = {connect : {id : data.original_type}}

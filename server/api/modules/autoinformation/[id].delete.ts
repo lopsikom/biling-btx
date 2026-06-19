@@ -16,7 +16,12 @@ export default defineEventHandler(async (event) => {
         // const verify = await requireAutoInfo(parseId, portal.portal.id);
         // if(!verify) throw createError({statusCode : 404, statusMessage : "not verify portal"})
         const OldAutoinformation = await getAutoinformationByIdPrisma(parseId);
-        if (!OldAutoinformation || !OldAutoinformation.bitrix_id || !OldAutoinformation.contract_id) throw createError({ statusCode: 404, statusMessage: "No found autoinformation" })
+        if (!OldAutoinformation) throw createError({ statusCode: 404, statusMessage: "No found autoinformation" })
+        if (!OldAutoinformation.portal_id || !OldAutoinformation.bitrix_id || !OldAutoinformation.contract_id || !OldAutoinformation.product_id) {
+            const data = await deleteAutoInforPrisma(parseId);
+            if (data) return true;
+            else return false;
+        }
         const contract = await getContractById(OldAutoinformation.contract_id);
         if (!contract || !contract.bitrix_id) throw createError({ statusCode: 404, statusMessage: "No found contract" })
         await acquireLock(contract.bitrix_id, portal.portal.id)

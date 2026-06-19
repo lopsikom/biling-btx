@@ -16,7 +16,12 @@ export default defineEventHandler(async (event) => {
         // const verify = await requireWebform(parseId, portal.portal.id)
         // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldWebform = await getWebformByIdPrisma(parseId);
-        if (!OldWebform || !OldWebform.bitrix_id || !OldWebform.contract_id) throw createError({ statusCode: 404, statusMessage: "No found webform" })
+        if (!OldWebform ) throw createError({ statusCode: 404, statusMessage: "No found webform" })
+        if(!OldWebform.portal_id || !OldWebform.bitrix_id || !OldWebform.contract_id || !OldWebform.product_id) {
+            const data = await deleteWebForm(parseId);
+            if(data) return true;
+            else return false;
+        }
         const contract = await getContractById(OldWebform.contract_id);
         if (!contract || !contract.bitrix_id) throw createError({ statusCode: 404, statusMessage: "No found contract" })
         await acquireLock(contract.bitrix_id, portal.portal.id)

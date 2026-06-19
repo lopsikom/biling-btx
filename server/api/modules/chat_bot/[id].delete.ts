@@ -16,7 +16,12 @@ export default defineEventHandler(async (event) => {
         // const verify = await requireChatBot(parseId, portal.portal.id)
         // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldChatBot = await getChatBotById(parseId);
-        if (!OldChatBot || !OldChatBot.bitrix_id || !OldChatBot.contract_id) throw createError({ statusCode: 404, statusMessage: "No found chat bot" })
+        if (!OldChatBot) throw createError({ statusCode: 404, statusMessage: "No found chat bot" })
+        if (!OldChatBot.portal_id || !OldChatBot.bitrix_id || !OldChatBot.contract_id || !OldChatBot.product_id) {
+            const data = await deleteChatBotPrisma(parseId);
+            if (data) return true;
+            else return false;
+        }
         const contract = await getContractById(OldChatBot.contract_id);
         if (!contract || !contract.bitrix_id) throw createError({ statusCode: 404, statusMessage: "No found contract" })
         await acquireLock(contract.bitrix_id, portal.portal.id)

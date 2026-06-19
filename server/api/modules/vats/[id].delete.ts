@@ -16,7 +16,12 @@ export default defineEventHandler(async (event) => {
         // const verify = await requireVats(parseId, portal.portal.id)
         // if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
         const OldVats = await getVatsById(parseId);
-        if(!OldVats || !OldVats.bitrix_id || !OldVats.contract_id) throw createError({statusCode : 404, statusMessage : "No found vats"})
+        if(!OldVats) throw createError({statusCode : 404, statusMessage : "No found vats"})
+        if(!OldVats.portal_id || !OldVats.bitrix_id || !OldVats.contract_id || !OldVats.product_id){
+            const data = await deleteVatsPrisma(parseId);
+            if(data) return true;
+            else return false;
+        }
         const contract = await getContractById(OldVats.contract_id);
         if(!contract || !contract.bitrix_id) throw createError({statusCode : 404, statusMessage : "No found contract"})
         await acquireLock(contract.bitrix_id, portal.portal.id)
