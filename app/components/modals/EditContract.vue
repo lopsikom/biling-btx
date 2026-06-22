@@ -132,26 +132,26 @@ async function deleteData(){
             </div>
             <div class="flex flex-col gap-3">
                 <div class="flex gap-[10px]">                    
-                    <InputBox placeholder="Введите название..." v-model="contract.name" :resize="false" title="Название договора" style="width: 100%;">
+                    <InputBox placeholder="Введите название..." v-model="contract.name" :resize="false" :required="true" title="Название договора" style="width: 100%;">
                     </InputBox>
                 </div>
                 <div class="flex gap-[10px]">
-                <InputBox placeholder="Введите номер..." v-model="contract.index" type="number" :resize="false" title="Номер договора" style="width: 50%;">
+                <InputBox placeholder="Введите номер..." v-model="contract.index" type="number" :resize="false" :required="true" title="Номер договора" style="width: 50%;">
                 </InputBox>
-                    <Selector v-model="SelectStatus" style="width: 50%;" title="Статус договора" :items="selectStatusItems" />
-                    <Selector v-model="selectorProlongation" style="width: 50%;" title="Пролонгация" :items="selectorProlongationItems" />
+                    <Selector v-model="SelectStatus" style="width: 50%;" title="Статус договора" :required="true" :items="selectStatusItems" />
+                    <Selector v-model="selectorProlongation" style="width: 50%;" title="Пролонгация" :required="true" :items="selectorProlongationItems" />
                 </div>
                 <div class="flex gap-[10px]">
-                    <Selector v-model="selectOrgName" style="width: 33%;" class="overflow-hidden" title="Организация" :items="selectorOrgNames" />
-                    <Selector v-model="selectDocType" style="width: 33%;" class="overflow-hidden" title="Тип документа" :items="selectDocTypesItems" />
-                    <Selector v-model="selectorOrigignalType" style="width: 33%;" class="overflow-hidden" title="Оригинал получен" :items="selectorOrigignalTypeItems" />
+                    <Selector v-model="selectOrgName" style="width: 33%;" class="overflow-hidden" :required="true" title="Организация" :items="selectorOrgNames" />
+                    <Selector v-model="selectDocType" style="width: 33%;" class="overflow-hidden" :required="true" title="Тип документа" :items="selectDocTypesItems" />
+                    <Selector v-model="selectorOrigignalType" style="width: 33%;" class="overflow-hidden" :required="true" title="Оригинал получен" :items="selectorOrigignalTypeItems" />
                 </div>
                 <div class="flex gap-[20px]">
-                    <DateRangePicker v-model="dateBegin" title="Дата начала"></DateRangePicker>
-                    <DateRangePicker v-model="dateClose" title="Дата окончания"></DateRangePicker>
+                    <DateRangePicker v-model="dateBegin" :required="true" title="Дата начала"></DateRangePicker>
+                    <DateRangePicker v-model="dateClose" :required="true" title="Дата окончания"></DateRangePicker>
                 </div>
                 <div class="flex gap-[20px]">
-                    <DateRangePicker v-model="dateSubscribe" title="Дата подписания"></DateRangePicker>
+                    <DateRangePicker v-model="dateSubscribe" :required="true" title="Дата подписания"></DateRangePicker>
                 </div>
             </div>
         </div>

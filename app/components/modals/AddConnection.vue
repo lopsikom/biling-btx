@@ -65,13 +65,13 @@ async function saveData(){
                 <span class="font-semibold mb-[20px] select-none">Поля подключения</span>
             </div>
             <div class="flex flex-col gap-3">
-                <InputBox placeholder="Введите название подключения..." v-model="connection.title" :resize="false" title="Название подключения">
+                <InputBox placeholder="Введите название подключения..." v-model="connection.title" :required="true" :resize="false" title="Название подключения">
                 </InputBox>
                 <div class="flex gap-[10px]">
-                <InputBox placeholder="Введите источник..." v-model="connection.source" :resize="false" title="Источник" style="width: 50%;">
+                <InputBox placeholder="Введите источник..." v-model="connection.source" :required="true" :resize="false" title="Источник" style="width: 50%;">
                 </InputBox>
-                <Selector v-model="SelectType" style="width: 50%;" title="Тип подключения" :items="selectTypeItems" />
-                <Selector v-model="SelectStatus" style="width: 50%;" title="Статус подключения" :items="selectStatusItems" />
+                <Selector v-model="SelectType" style="width: 50%;" title="Тип подключения" :required="true" :items="selectTypeItems" />
+                <Selector v-model="SelectStatus" style="width: 50%;" title="Статус подключения" :required="true" :items="selectStatusItems" />
                 </div>
             </div>
         </div>

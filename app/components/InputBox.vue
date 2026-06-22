@@ -2,10 +2,12 @@
 import type { HTMLAttributes } from 'vue'
 
 const model = defineModel<string | number | null | undefined>()
+const error = defineModel<boolean>('error', { default: false })
 defineOptions({
   inheritAttrs: false
 })
 const attrs = useAttrs() as HTMLAttributes
+
 
 const wrapperAttrs = computed(() => ({
   class: attrs.class,
@@ -22,22 +24,33 @@ const props = withDefaults(defineProps<{
     title? : string,
     resize? : boolean,
     type? : "text" | "number",
-    step? : number
+    step? : number,
+    required? : boolean
 }>(), {
     title : undefined,
     rows : 1,
     placeholder : '',
     resize : true,
     type : "text",
-    step : 1
+    step : 1,
+    required : false
 })
+
+const touched = ref(false)
+
+const isEmpty = computed(() => {
+    const v = model.value
+    return v === null || v === undefined || String(v).trim() === ''
+})
+
+const hasError = computed(() => error.value || (props.required && touched.value && isEmpty.value))
 
 </script>
 <template>
     <div class="flex flex-col gap-[5px]" v-bind="wrapperAttrs">
         <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
-        <textarea v-if="resize" v-bind="inputAttrs":type="type" :step="step" v-model="model" :rows="rows" :placeholder="placeholder" class="edit-input"/>
-        <input v-else :type="type" :step="step" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" class="edit-input"/>
+        <textarea v-if="resize" v-bind="inputAttrs" :type="type" :step="step" v-model="model" :rows="rows" :placeholder="placeholder" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
+        <input v-else :type="type" :step="step" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
     </div>
 </template>
 <style scoped>
@@ -64,5 +77,14 @@ input[type="number"] {
     outline: none;
     transition: border-color 0.15s ease;
     transition: box-shadow 0.15s ease;
+}
+.edit-input.input-error{
+  background-color: #fff0f0;
+    border-color: #e53e3e;
+    transition: border-color 0.15s ease;
+}
+.edit-input.input-error:focus{
+    border-color: #e53e3e;
+    box-shadow: 0 0 8px rgba(229, 62, 62, 0.5);
 }
 </style>

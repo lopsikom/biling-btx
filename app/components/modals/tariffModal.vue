@@ -4,7 +4,7 @@ import InputBox from '../InputBox.vue';
 import Selector from '../Selector.vue';
 import usebillingStateStore from '~/services/stores/billingStateStore';
 import useModalStore from '~/services/stores/modalStore';
-import { diffObject, isDiffArraySimple, isValidData } from '~/services/utils/utils';
+import { diffObject, isDiffArraySimple } from '~/services/utils/utils';
 import useToastStore from '~/services/stores/toastStore';
 import { ModalEnum, ModuleEnum } from '~/services/models/enums/billing/ModalsEnum';
 import useMenuStore from '~/services/stores/menuStores';
@@ -91,6 +91,16 @@ function makeRow<T extends { tarrif_id?: number; contract_id: number }, E extend
         isDeleted : false,
         isEditName : false,
         isEditMenu : false,
+        errors : {
+            additional_users : false,
+            duration : false,
+            price : false,
+            lines : false,
+            lines_count : false,
+            quantity : false,
+            selected_tarrif : false,
+            selected_contract : false,
+        } as Record<string, boolean>,
         ...extra,
     }
 }
@@ -165,21 +175,40 @@ selected_contract : {
     modalStore.showHigherModal(ModalEnum.ADD_CONTRACT)
 }
 
+interface ValidationRule {
+    key : string
+    label : string
+    where : 'item' | 'row'
+    rule : 'notEmpty' | 'positive'
+}
+
 interface ModuleConfig {
     list : Ref<any[]>
     store : { id : number }[]
+    label : string
     numeric : readonly string[]
+    validations : ValidationRule[]
     post : (item : any) => Promise<any>
     patch : (id : number, diff : any) => Promise<any>
     remove : (id : number) => Promise<boolean>
     multi? : { field : string; rowKey : string; options : { id : number; name : string }[] }
 }
 
+const tarrifRule : ValidationRule = { key : 'selected_tarrif', label : 'Тариф', where : 'row', rule : 'notEmpty' }
+const contractRule : ValidationRule = { key : 'selected_contract', label : 'Договор', where : 'row', rule : 'notEmpty' }
+const priceRule : ValidationRule = { key : 'price', label : 'Цена', where : 'item', rule : 'positive' }
+
 const moduleRegistry : Record<string, ModuleConfig> = {
     vats : {
         list : vats,
         store : billingStateStore.vats,
+        label : 'ВАТС',
         numeric : ['additional_users'] as const,
+        validations : [
+            { key : 'additional_users', label : 'Количество дополнительных пользователей', where : 'item', rule : 'notEmpty' },
+            { key : 'duration', label : 'Период хранения записей разговоров', where : 'item', rule : 'positive' },
+            priceRule, tarrifRule, contractRule,
+        ],
         post : (item : any) => $axios.postVats(item),
         patch : (id : number, diff : any) => $axios.patchVats(id, diff),
         remove : (id : number) => $axios.deleteVats(id),
@@ -187,7 +216,12 @@ const moduleRegistry : Record<string, ModuleConfig> = {
     voiceRobot : {
         list : voiceRobotComputed,
         store : billingStateStore.voiceRobots,
+        label : 'Голосовой робот',
         numeric : ['lines'] as const,
+        validations : [
+            { key : 'lines', label : 'Количество линий', where : 'item', rule : 'positive' },
+            priceRule, tarrifRule, contractRule,
+        ],
         post : (item : any) => $axios.postVoiceRobot(item),
         patch : (id : number, diff : any) => $axios.patcVoiceRobot(id, diff),
         remove : (id : number) => $axios.deleteVoiceRobot(id),
@@ -195,7 +229,12 @@ const moduleRegistry : Record<string, ModuleConfig> = {
     chatBot : {
         list : chatBotComputed,
         store : billingStateStore.chatBots,
+        label : 'Чат-бот',
         numeric : ['lines_count'] as const,
+        validations : [
+            { key : 'lines_count', label : 'Количество линий', where : 'item', rule : 'positive' },
+            priceRule, tarrifRule, contractRule,
+        ],
         post : (item : any) => $axios.postChatBots(item),
         patch : (id : number, diff : any) => $axios.patcChatBots(id, diff),
         remove : (id : number) => $axios.deleteChatBot(id),
@@ -204,7 +243,12 @@ const moduleRegistry : Record<string, ModuleConfig> = {
     autoinfo : {
         list : autoInfoComputed,
         store : billingStateStore.autoinformations,
+        label : 'Автоинформирование',
         numeric : ['quantity'] as const,
+        validations : [
+            { key : 'quantity', label : 'Количество', where : 'item', rule : 'positive' },
+            priceRule, tarrifRule, contractRule,
+        ],
         post : (item : any) => $axios.postAutoInfo(item),
         patch : (id : number, diff : any) => $axios.patcAutoInfo(id, diff),
         remove : (id : number) => $axios.deleteAutoInfo(id),
@@ -212,7 +256,11 @@ const moduleRegistry : Record<string, ModuleConfig> = {
     webForm : {
         list : webFormsComputed,
         store : billingStateStore.webform,
+        label : 'Веб-форма',
         numeric : [] as const,
+        validations : [
+            priceRule, tarrifRule, contractRule,
+        ],
         post : (item : any) => $axios.postWebform(item),
         patch : (id : number, diff : any) => $axios.patcWebform(id, diff),
         remove : (id : number) => $axios.deleteWebform(id),
@@ -231,18 +279,58 @@ function selectedIds(row : any, rowKey : string) : number[] {
     return row[rowKey].filter((m : any) => m.active).map((m : any) => m.item.id)
 }
 
+function isInvalid(value : any, rule : ValidationRule['rule']) {
+    if(rule === 'positive') return !(Number(value) > 0)
+    return value === null || value === undefined || String(value).trim() === ''
+}
+
+function expandTo(moduleKey : string, row : any) {
+    (openModulsMenu.value as Record<string, boolean>)[moduleKey] = true
+    if(moduleKey === 'autoinfo'){
+        const sub = row.item.type_id === 1 ? 'autoinfo_with_voice'
+            : row.item.type_id === 2 ? 'autoinfo_without_voice'
+            : 'autoinfo_sms'
+        openModulsMenu.value[sub] = true
+    }
+    row.active = true
+}
+
+function validate() : boolean {
+    const errors : { moduleKey : string; module : string; project : string; field : string; row : any }[] = []
+
+    for(const m of Object.values(moduleRegistry)){
+        for(const row of m.list.value as any[]){
+            for(const key in row.errors) row.errors[key] = false
+        }
+    }
+
+    for(const [moduleKey, m] of Object.entries(moduleRegistry)){
+        for(const row of (m.list.value as any[]).filter(r => !r.isDeleted)){
+            for(const v of m.validations){
+                const value = v.where === 'row' ? row[v.key] : row.item[v.key]
+                if(isInvalid(value, v.rule)){
+                    row.errors[v.key] = true
+                    errors.push({ moduleKey, module : m.label, project : row.item.title, field : v.label, row })
+                }
+            }
+        }
+    }
+
+    if(errors.length){
+        const first = errors[0]!
+        expandTo(first.moduleKey, first.row)
+        const extra = errors.length > 1 ? ` и ещё ${errors.length - 1}` : ''
+        toastStore.openToast(`Модуль "${first.module}" → проект "${first.project}": не заполнено поле "${first.field}"${extra}`)
+        return false
+    }
+    return true
+}
+
 async function saveData(){
+    if(!validate()) return
     menuStore.fetchDataLoad = true;
     try{
         const modules = Object.values(moduleRegistry)
-
-        // for(const mod of modules){
-        //     for(const row of mod.list.value.filter((r : any) => !r.isDeleted)){
-        //         if(!row.selected_tarrif) throw new Error("Validation Error")
-        //         if(!row.selected_contract) throw new Error("Validation Error")
-        //         if(!isValidData(row.item)) throw new Error("Validation Error")
-        //     }
-        // }
 
         for(const m of modules){
             const rows = m.list.value as any[]
@@ -292,7 +380,7 @@ async function saveData(){
         modalStore.hideModal();
     }catch(e) {
         console.error(e)
-        if((e as Error).message === "Validation Error") toastStore.openToast("Не все поля правильно заполнены или заполнены некорректно")
+        toastStore.openToast("Ошибка при сохранении данных")
     }
     finally{
         menuStore.fetchDataLoad = false;
@@ -350,15 +438,15 @@ async function saveData(){
                 <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                     <div class="flex gap-[15px]">
                         
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.additional_users" title="Количество дополнительных пользователей" />
-                        <Selector style="width: 50%; margin-top: auto;" title="Период хранения записей разговоров" v-model="item.item.duration" :items="durationList"/>
+                        <InputBox style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.additional_users" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.additional_users" title="Количество дополнительных пользователей" />
+                        <Selector style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.duration" title="Период хранения записей разговоров" v-model="item.item.duration" :items="durationList"/>
                     </div>
                     <div class="flex gap-[15px]">
-                        <Selector style="width: 50%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <Selector style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.selected_tarrif" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                        <InputBox style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.price" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
-                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                         <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                             <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                         </div>
@@ -412,14 +500,14 @@ async function saveData(){
                 </div>
                     <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                     <div class="flex gap-[15px]">
-                        <Selector style="width: 50%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.lines" title="Количество линий" />
+                        <Selector style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.selected_tarrif" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                        <InputBox style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.lines" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.lines" title="Количество линий" />
                     </div>
                     <div class="flex">
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <InputBox style="width: 50%; margin-top: auto;" :required="true" v-model:error="item.errors.price" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
-                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <Selector style="min-width: 90% ;width: 90%;" :required="true" v-model:error="item.errors.selected_contract" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
                         <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                             <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                         </div>
@@ -472,8 +560,8 @@ async function saveData(){
                 </div>
                     <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                     <div class="flex gap-[15px]">
-                        <Selector style="width: 33%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                        <InputBox style="width: 33%; margin-top: auto;" type="number" placeholder="Введите количество" :resize="false" v-model="item.item.lines_count" title="Количество линий" />
+                        <Selector style="width: 33%; margin-top: auto;" title="Тариф" :required="true" v-model:error="item.errors.selected_tarrif" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                        <InputBox style="width: 33%; margin-top: auto;" type="number" :required="true" v-model:error="item.errors.lines_count" placeholder="Введите количество" :resize="false" v-model="item.item.lines_count" title="Количество линий" />
                         <div class="flex flex-col gap-[5px]" style="width: 33%; position: relative;">
                             <span class="select-none font-semibold text-sm">Мессенджеры</span>
                             <div>
@@ -503,10 +591,10 @@ async function saveData(){
                         </div>
                     </div>
                     <div class="flex">
-                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                        <InputBox style="width: 50%; margin-top: auto;" type="number" :resize="false" :step="0.01" :required="true" v-model:error="item.errors.price" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
-                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                         <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                             <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                         </div>
@@ -568,12 +656,12 @@ async function saveData(){
                             </div>
                             <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted" >
                                 <div class="flex gap-[15px]">
-                                    <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                    <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
-                                    <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
+                                    <Selector style="width: 35%; margin-top: auto;" :required="true" v-model:error="item.errors.selected_tarrif" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                                    <InputBox style="width: 31%; margin-top: auto;" :required="true" v-model:error="item.errors.price" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                    <InputBox style="width: 31%; margin-top: auto;" :required="true" v-model:error="item.errors.quantity" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                                 </div>
                             <div class="flex gap-[10px] " style="align-items: end;">
-                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                                 <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                                     <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                                 </div>
@@ -628,12 +716,12 @@ async function saveData(){
                         </div>
                         <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                             <div class="flex gap-[15px]">
-                                <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
+                                <Selector style="width: 35%; margin-top: auto;" title="Тариф" :required="true" v-model:error="item.errors.selected_tarrif" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                                <InputBox style="width: 31%; margin-top: auto;" type="number" :required="true" v-model:error="item.errors.price" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                <InputBox style="width: 31%; margin-top: auto;" type="number" :required="true" v-model:error="item.errors.quantity" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
                         <div class="flex gap-[10px] " style="align-items: end;">
-                            <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                            <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                             <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                                 <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                             </div>
@@ -688,12 +776,12 @@ async function saveData(){
                         </div>
                         <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                             <div class="flex gap-[15px]">
-                                <Selector style="width: 35%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
-                                <InputBox style="width: 31%; margin-top: auto;" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
+                                <Selector style="width: 35%; margin-top: auto;" :required="true" v-model:error="item.errors.selected_tarrif" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                                <InputBox style="width: 31%; margin-top: auto;" :required="true" v-model:error="item.errors.price" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                                <InputBox style="width: 31%; margin-top: auto;" :required="true" v-model:error="item.errors.quantity" type="number" title="Количество" placeholder="Введите кол-во" v-model="item.item.quantity" />
                             </div>
                             <div class="flex gap-[10px] " style="align-items: end;">
-                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                                <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                                 <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                                     <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                                 </div>
@@ -747,8 +835,8 @@ async function saveData(){
                 </div>
                 <div class="flex flex-col gap-[10px] px-[15px] mt-[5px]" v-if="item.active && !item.isDeleted">
                 <div class="flex gap-[15px]">
-                    <Selector style="width: 33%; margin-top: auto;" title="Тариф" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
-                    <InputBox style="width: 33%; margin-top: auto;" type="number" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
+                    <Selector style="width: 33%; margin-top: auto;" title="Тариф" :required="true" v-model:error="item.errors.selected_tarrif" v-model="item.selected_tarrif" :items="tarrifsSelect"/>
+                    <InputBox style="width: 33%; margin-top: auto;" type="number" :required="true" v-model:error="item.errors.price" :resize="false" :step="0.01" title="Цена (руб.)" placeholder="Введите цену" v-model="item.item.price" />
                     <div class="flex flex-col gap-[5px]" style="width: 33%; position: relative;">
                         <span class="select-none font-semibold text-sm">Интеграции</span>
                         <div>
@@ -778,7 +866,7 @@ async function saveData(){
                     </div>
                 </div>
                     <div class="flex gap-[10px] " style="align-items: end;">
-                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" v-model="item.selected_contract" :items="ContractsSelect"/>
+                        <Selector style="min-width: 90% ;width: 90%;" title="Договор" :required="true" v-model:error="item.errors.selected_contract" v-model="item.selected_contract" :items="ContractsSelect"/>
                         <div class="add-tag-box" style="width: 100%; height: 40px;" @click="addContract(item)">
                             <Icon class="h-[15px] w-[15px] hover-item changeable-icon" icon="rivet-icons:plus" />
                         </div>

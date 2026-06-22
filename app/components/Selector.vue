@@ -5,18 +5,29 @@ import type { SelectorObject } from '~/services/models';
 const props = withDefaults(defineProps<{
     items : T[],
     title? : string,
-    width? : number
+    width? : number,
+    required? : boolean
 }>(),{
-
+    required : false
 })
 
-const model = defineModel<T>() 
+const model = defineModel<T>()
+const error = defineModel<boolean>('error', { default: false })
+
+const touched = ref(false)
+
+const isEmpty = computed(() => {
+    const v = model.value
+    return v === null || v === undefined || String(v).trim() === ''
+})
+
+const hasError = computed(() => error.value || (props.required && touched.value && isEmpty.value))
 </script>
 <template>
 <div class="flex flex-col gap-[5px]">
     <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
     <SelectRoot v-model="model">
-    <SelectTrigger class="select-menu text-sm gap-[10px]" :style="width ? `width:${width}px`:''">
+    <SelectTrigger class="select-menu text-sm gap-[10px]" :class="{ 'select-menu-error': hasError }" :style="width ? `width:${width}px`:''" @focusout="touched = true; error = false">
         <SelectValue  style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 80%; text-align: start;" />
         <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
     </SelectTrigger>
@@ -48,6 +59,12 @@ const model = defineModel<T>()
 
 .select-menu:focus{
     outline: none;
+}
+
+.select-menu-error{
+    background-color: #fff0f0;
+    border-color: #e53e3e;
+    transition: border-color 0.15s ease;
 }
 
 .select-content{
