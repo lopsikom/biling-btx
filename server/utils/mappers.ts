@@ -187,7 +187,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
                 id : c.id,
                 name : c.name,
                 company_id : c.company_id,
-                status : c.contract_status.name,
+                status : c.contract_status?.name,
                 index : c.index,
                 date_begin : c.date_begin?.toString(),
                 date_close : c.date_close?.toString(),
@@ -202,7 +202,7 @@ export function contractGetMapPrisma(data: contractPrismaGet | contractPrismaGet
         id : data.id,
         name : data.name,
         company_id : data.company_id,
-        status : data.contract_status.name,
+        status : data.contract_status?.name,
         index : data.index,
         date_begin : data.date_begin?.toString(),
         date_close : data.date_close?.toString(),
@@ -222,7 +222,6 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
    if("bitrix_id" in data){
      const data2 = {
         name : data.name,
-        contract_status : {connect : {id : data.status}},
         company :{connect : {id : data.company_id, bitrix_id_portal_id : {bitrix_id : data.bitrix_id , portal_id : portal_id}}},
         index : data.index,
         date_begin : data.date_begin,
@@ -234,6 +233,7 @@ export function contractInputMapPrisma(data : IContractPost | IContractBitrix, p
     } as contractCreateInput
     if(!data.bitrix_id || !portal_id) delete data2.company.connect?.bitrix_id_portal_id
     if(!data.company_id) delete data2.company.connect?.id;
+    // Статус обязателен в БД, но connect ставим только если пришёл — иначе connect:{id:undefined} упадёт
     if(data.status) data2.contract_status = {connect : {id : data.status}}
     if(data.doc_type) data2.contract_doc_type = {connect : {id : data.doc_type}}
     if(data.prolongation) data2.contract_prolongation = {connect : {id : data.prolongation}}

@@ -12,7 +12,7 @@ export const Contract = z.object({
     id : z.number(),
     name : z.string(),
     company_id : z.number(),
-    status : z.string(),
+    status : z.string().optional(),
     index : z.string(),
     date_begin : z.string().optional(),
     date_close : z.string().optional(),
