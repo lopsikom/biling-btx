@@ -1,7 +1,7 @@
 import { autoinformation_moduleCreateInput, autoinformation_moduleUpdateInput } from "~~/server/services/models/generated/prisma/models";
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { IAutoinformationFilterUpdate } from "~~/shared/models/APIModels";
-import { IAutoInfoProduct, IProductRow, ISmsProduct } from "~~/shared/models/bitrixModels";
+import { IAutoInfoProduct, IProductRow, ISmsProduct, ProductEnum, productRecords } from "~~/shared/models/bitrixModels";
 
 export async function getAutoinformationListPrisma(data : {portal_id? : number, filter? : IAutoinformationFilterUpdate}) {
     const {portal_id, filter} = data;
@@ -101,7 +101,7 @@ export async function postAutoinformationPrisma(data : autoinformation_moduleCre
 }
 export async function upsertAutoInformationProductPrisma(data : {info : ISmsProduct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
-    const type = productRows.productName === "Обзвон" ? ((info as IAutoInfoProduct).property308.valueEnum === "с РР" ? 2 : 1) : 3
+    const type = info.parentId?.value === productRecords[ProductEnum.AUTOINFO].id.toString()  ? ((info as IAutoInfoProduct).property308.valueEnum === "с РР" ? 2 : 1) : 3
     const response = prisma.autoinformation_module.upsert({
     where : {portal_id_bitrix_id :{
         bitrix_id : productRows.id,
@@ -144,7 +144,7 @@ export async function upsertAutoInformationProductPrisma(data : {info : ISmsProd
 
 export async function postAutoInformationProductPrisma(data : {info : ISmsProduct, productRows : IProductRow}, portal_id : number){
     const {info, productRows} = data
-    const type = productRows.productName === "Обзвон" ? ((info as IAutoInfoProduct).property308.valueEnum === "с РР" ? 2 : 1) : 3
+    const type = info.parentId?.value === productRecords[ProductEnum.AUTOINFO].id.toString() ? ((info as IAutoInfoProduct).property308.valueEnum === "с РР" ? 2 : 1) : 3
     const response = prisma.autoinformation_module.create({
         data : {
             contract : {connect : {portal_id_bitrix_id : {

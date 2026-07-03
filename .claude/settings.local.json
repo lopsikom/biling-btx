@@ -5,7 +5,11 @@
       "Bash(node_modules/.bin/tsc --noEmit --project .)",
       "mcp__b24-dev-mcp__bitrix-method-details",
       "mcp__b24-dev-mcp__bitrix-search",
-      "Bash(git -C /home/lopsik/biling-btx ls-files)"
+      "Bash(git -C /home/lopsik/biling-btx ls-files)",
+      "Bash(cd /home/lopsik/biling-btx *)"
+    ],
+    "additionalDirectories": [
+      "/home/lopsik/biling-btx/shared/models"
     ]
   }
 }
