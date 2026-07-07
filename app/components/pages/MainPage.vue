@@ -2,328 +2,498 @@
 import SuccessIcon from '@bitrix24/b24icons-vue/button/SuccessIcon'
 import MoreIcon from '@bitrix24/b24icons-vue/actions/MoreIcon'
 import Cross25Icon from '@bitrix24/b24icons-vue/actions/Cross25Icon'
-import useBitrixStateStore from '~/services/stores/bitrixStateStore';
-import useModalStore from '~/services/stores/modalStore';
-import { ModalEnum, ModuleEnum } from '~/services/models/enums/billing/ModalsEnum';
-import usebillingStateStore from '~/services/stores/billingStateStore';
-import { Icon } from '@iconify/vue';
-import  { connectionTypesEnum, type IConnection, type IConnectionStatus, type IConnectionType } from '~~/shared/models/APIModels';
-import useToastStore from '~/services/stores/toastStore';
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
+import useModalStore from '~/services/stores/modalStore'
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
+import usebillingStateStore from '~/services/stores/billingStateStore'
+import { Icon } from '@iconify/vue'
+import { connectionTypesEnum, type IConnection, type IConnectionStatus, type IConnectionType } from '~~/shared/models/APIModels'
+import useToastStore from '~/services/stores/toastStore'
 
-const bitrixStateStore = useBitrixStateStore();
-const billingStateStore = usebillingStateStore();
-const modalStore = useModalStore();
-const toastStore = useToastStore();
-const {$axios} = useNuxtApp();
+const bitrixStateStore = useBitrixStateStore()
+const billingStateStore = usebillingStateStore()
+const modalStore = useModalStore()
+const toastStore = useToastStore()
+const { $axios } = useNuxtApp()
 
 type ModuleType = {
-    title : string,
-    count : number,
+  title: string
+  count: number
 }
 
+// Плитки модулей: группировка единого списка по виду (parent_product_id),
+// имя вида — из метаданных каталога (moduleKinds)
 const modulesComputed = computed(() => {
-    const data : ModuleType[] = []
-    if(billingStateStore.vats.filter(v => v.active).length > 0) {
-        data.push({
-            title : ModuleEnum.VATS,
-            count : billingStateStore.vats.filter(v => v.active).length
-        })
-    }
-    if(billingStateStore.voiceRobots.filter(v => v.active).length > 0) {
-        data.push({
-            title : ModuleEnum.VOICE_ROBOT,
-            count : billingStateStore.voiceRobots.filter(v => v.active).length
-        })
-    }
-    if(billingStateStore.chatBots.filter(c => c.active).length > 0) {
-        data.push({
-            title : ModuleEnum.CHAT_BOT,
-            count : billingStateStore.chatBots.filter(c => c.active).length
-        })
-    }
-    if(billingStateStore.autoinformations.filter(a => a.active).length > 0){
-        data.push({
-            title : ModuleEnum.AUTOINFORMATION,
-            count : billingStateStore.autoinformations.filter(a => a.active).length
-        })
-    }
-    if(billingStateStore.webform.filter(w => w.active).length > 0){
-        data.push({
-            title : ModuleEnum.WEBFORM,
-            count : billingStateStore.webform.filter(w => w.active).length
-        })
-    }
-    return data
+  const kindName = (pid: number) => billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)?.name ?? `Товар ${pid}`
+  const counts = new Map<number, number>()
+  for (const m of billingStateStore.modules) {
+    if (!m.active) continue
+    counts.set(m.parent_product_id, (counts.get(m.parent_product_id) ?? 0) + 1)
+  }
+  const data: ModuleType[] = []
+  for (const [pid, count] of counts) data.push({ title: kindName(pid), count })
+  return data
 })
- 
-const ModulesCount = computed(() => billingStateStore.vats.length + billingStateStore.voiceRobots.length + billingStateStore.chatBots.length + billingStateStore.autoinformations.length + billingStateStore.webform.length)
+
+const ModulesCount = computed(() => billingStateStore.modules.length)
 
 interface IConnectionWithType extends IConnection {
-    typeData : IConnectionType
-    statusData : IConnectionStatus,
-    isOpen : boolean
+  typeData: IConnectionType
+  statusData: IConnectionStatus
+  isOpen: boolean
 }
 
 const connectionsComputed = computed(() => {
-    const data : Record<connectionTypesEnum, IConnectionWithType[]> = {
-        [connectionTypesEnum.MESSENGERS] : [],
-        [connectionTypesEnum.SMS] : [],
-        [connectionTypesEnum.VATS] : [],
-        [connectionTypesEnum.ANOTHER] : []
+  const data: Record<connectionTypesEnum, IConnectionWithType[]> = {
+    [connectionTypesEnum.MESSENGERS]: [],
+    [connectionTypesEnum.SMS]: [],
+    [connectionTypesEnum.VATS]: [],
+    [connectionTypesEnum.ANOTHER]: []
+  }
+  const connections = Array.isArray(billingStateStore.connections) ? billingStateStore.connections : []
+  connections.forEach((c) => {
+    const type = billingStateStore.connection_types.find(t => t.id === c.type_id)
+    const status = billingStateStore.connection_statuses.find(s => s.id === c.status_id)
+    if (type && status) {
+      const _c: IConnectionWithType = {
+        ...c,
+        typeData: toRaw(type),
+        statusData: toRaw(status),
+        isOpen: false
+      }
+      data[type.type].push(_c)
     }
-    billingStateStore.connections.forEach(c => {
-        const type = billingStateStore.connection_types.find(t => t.id === c.type_id);
-        const status = billingStateStore.connection_statuses.find(s => s.id === c.status_id)
-        if(type && status){
-            const _c : IConnectionWithType = {
-                ...c,
-                typeData : toRaw(type),
-                statusData : toRaw(status),
-                isOpen : false
-            }
-            data[type.type].push(_c)
-        }
-    })
-    return data
+  })
+  return data
 })
 
-function openEdit(item : IConnection){
-    modalStore.EditConnection = item;
-    modalStore.showModal(ModalEnum.EDIT_CONNECTION)
+function openEdit(item: IConnection) {
+  modalStore.EditConnection = item
+  modalStore.showModal(ModalEnum.EDIT_CONNECTION)
 }
 
-async function deleteConnection(item : IConnection) {
-    const data = await $axios.deleteConnection(item.id);
-    if(data) {
-        const index = billingStateStore.connections.findIndex(c => c.id === item.id);
-        if(index > -1) {
-            billingStateStore.connections.splice(index, 1);
-            toastStore.openToast("Подключение удаленно")
-        }
+async function deleteConnection(item: IConnection) {
+  const data = await $axios.deleteConnection(item.id)
+  if (data) {
+    const index = billingStateStore.connections.findIndex(c => c.id === item.id)
+    if (index > -1) {
+      billingStateStore.connections.splice(index, 1)
+      toastStore.openToast('Подключение удаленно')
     }
+  }
 }
-
 </script>
+
 <template>
-<div class="main-page-container">
+  <div class="main-page-container">
     <div class="main-info-grid">
-        <div class="main-info-item any-white-container blue-hover" @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)">
-            <div>
-                <span class="font-semibold select-none">Модули</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-2xl cursor-default">Корп</span>
-                <span class="text-gray-500 text-sm cursor-default">Общее количество модулей: {{ModulesCount}}</span>
-            </div>
+      <div
+        class="main-info-item any-white-container blue-hover"
+        @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)"
+      >
+        <div>
+          <span class="font-semibold select-none">Модули</span>
         </div>
-        <div class="main-info-item any-white-container">
-            <div>
-                <span class="font-semibold select-none">Дата создания</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-2xl cursor-default">{{ bitrixStateStore.getDateCreate() }}</span>
-                <span class="text-gray-500 text-sm cursor-default">Последняя активность:<br>{{ bitrixStateStore.lastActivityCompany() }}</span>
-            </div>
+        <div class="flex flex-col">
+          <span class="text-2xl cursor-default">Корп</span>
+          <span class="text-gray-500 text-sm cursor-default">Общее количество модулей: {{ ModulesCount }}</span>
         </div>
-        <div class="main-info-item any-white-container blue-hover" @click="modalStore.showModal(ModalEnum.ASSIGN_MODAL)">
-            <div>
-                <span class="font-semibold select-none">Отвественный</span>
-            </div>
-            <div class="flex flex-col" v-if="bitrixStateStore.companyAssignUser">
-                <span class="text-2xl cursor-default">{{ bitrixStateStore.getShortName(bitrixStateStore.companyAssignUser) }}</span>
-                <span class="text-gray-500 text-sm cursor-default">{{ bitrixStateStore.companyAssignUser?.WORK_POSITION }}</span>
-                <span class="text-gray-500 text-xs cursor-default" style="margin-top: 10px;">Нажмите для просмотра контактов</span>
-            </div>
-            <div class="flex flex-col" v-else>
-                <span class="text-3xl cursor-default">Отсутсвует</span>
-            </div>
+      </div>
+      <div class="main-info-item any-white-container">
+        <div>
+          <span class="font-semibold select-none">Дата создания</span>
         </div>
+        <div class="flex flex-col">
+          <span class="text-2xl cursor-default">{{ bitrixStateStore.getDateCreate() }}</span>
+          <span class="text-gray-500 text-sm cursor-default">Последняя активность:<br>{{ bitrixStateStore.lastActivityCompany() }}</span>
+        </div>
+      </div>
+      <div
+        class="main-info-item any-white-container blue-hover"
+        @click="modalStore.showModal(ModalEnum.ASSIGN_MODAL)"
+      >
+        <div>
+          <span class="font-semibold select-none">Отвественный</span>
+        </div>
+        <div
+          v-if="bitrixStateStore.companyAssignUser"
+          class="flex flex-col"
+        >
+          <span class="text-2xl cursor-default">{{ bitrixStateStore.getShortName(bitrixStateStore.companyAssignUser) }}</span>
+          <span class="text-gray-500 text-sm cursor-default">{{ bitrixStateStore.companyAssignUser?.WORK_POSITION }}</span>
+          <span
+            class="text-gray-500 text-xs cursor-default"
+            style="margin-top: 10px;"
+          >Нажмите для просмотра контактов</span>
+        </div>
+        <div
+          v-else
+          class="flex flex-col"
+        >
+          <span class="text-3xl cursor-default">Отсутсвует</span>
+        </div>
+      </div>
     </div>
     <div class="any-white-container connected-container">
-        <div class="flex flex-col gap-1">
-            <span class="text-lg select-none">Подключенные модули</span>
-            <span class="text-gray-500 text-sm select-none">Активные модули организации</span>
-        </div>
-        <div class="connected-modules-box" v-if="modulesComputed.length > 0">
-            <div class="flex flex-col p-[12px] any-white-container gap-[10px] blue-hover" v-for="value in modulesComputed">
-                <div class="flex items-center gap-[12px]" @click="modalStore.showModal(ModalEnum.TARIFF_MODAL, {key : value.title, data : true})">
-                    <Icon class="text-sky-600 w-5 h-5" icon="solar:box-linear" />
-                    <div class="flex flex-col">
-                        <span>{{ value.title }}</span>
-                        <span class="text-gray-500 text-xs select-none">Активный</span>
-                    </div>
-                </div>
-                <div class="tags-container">
-                    <div class="tag-box">
-                        <span class="text-xs font-semibold">Количество проектов: {{ value.count }}</span>
-                    </div>
-                </div>
+      <div class="flex flex-col gap-1">
+        <span class="text-lg select-none">Подключенные модули</span>
+        <span class="text-gray-500 text-sm select-none">Активные модули организации</span>
+      </div>
+      <div
+        v-if="modulesComputed.length > 0"
+        class="connected-modules-box"
+      >
+        <div
+          v-for="value in modulesComputed"
+          class="flex flex-col p-[12px] any-white-container gap-[10px] blue-hover"
+        >
+          <div
+            class="flex items-center gap-[12px]"
+            @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)"
+          >
+            <Icon
+              class="text-sky-600 w-5 h-5"
+              icon="solar:box-linear"
+            />
+            <div class="flex flex-col">
+              <span>{{ value.title }}</span>
+              <span class="text-gray-500 text-xs select-none">Активный</span>
             </div>
+          </div>
+          <div class="tags-container">
+            <div class="tag-box">
+              <span class="text-xs font-semibold">Количество проектов: {{ value.count }}</span>
+            </div>
+          </div>
         </div>
-        <div class="connected-empty-box" v-else>
-            <span class="text-gray-500 select-none">Нет активных модулей</span>
-        </div>
+      </div>
+      <div
+        v-else
+        class="connected-empty-box"
+      >
+        <span class="text-gray-500 select-none">Нет активных модулей</span>
+      </div>
     </div>
     <div class="connected-container any-white-container gap-5">
-        <div class="flex">
+      <div class="flex">
         <div class="flex flex-col gap-1 mb-2">
-            <span class="select-none font-semibold">Подключенния</span>
-            <span class="text-gray-500 select-none">Подключенные аккаунты и сервисы</span>
+          <span class="select-none font-semibold">Подключенния</span>
+          <span class="text-gray-500 select-none">Подключенные аккаунты и сервисы</span>
         </div>
-        <div class="add-user-btn items-center flex px-3 py-2 gap-1" @click="modalStore.showModal(ModalEnum.ADD_CONNECTION)">
-            <span class="select-none text-sm text-slate-50 font-semibold">Добавить подключенние</span>
+        <div
+          class="add-user-btn items-center flex px-3 py-2 gap-1"
+          @click="modalStore.showModal(ModalEnum.ADD_CONNECTION)"
+        >
+          <span class="select-none text-sm text-slate-50 font-semibold">Добавить подключенние</span>
         </div>
-        </div>
-        <div class="flex flex-col gap-[10px] mb-2" v-if="billingStateStore.connections.length > 0">
-        <div class="flex flex-col gap-1" v-if="connectionsComputed.messenger.length > 0">
-            <span class="text-gray-500 text-sm select-none">Мессенджеры</span>
-            <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.messenger">
-                    <div class="messenger-whatsap-container mr-2" :class="`messenger-${value.typeData.name}-container`">
-                        <div :class="`messenger-${value.typeData.name}-char-logo`" class="select-none">{{ value.typeData.name.length > 2  ? value.typeData.name[0]?.toUpperCase() : value.typeData.name }}</div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">{{ value.title }}</span>
-                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
-                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
-                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
-                        </div>
-                            <DropdownMenuRoot v-model="value.isOpen">
-                                <DropdownMenuTrigger>
-                                    <MoreBox/>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
-                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
-                                           <span class="select-none hover-item text-sm">Изменить</span> 
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
-                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
-                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuRoot>
-                    </div>
-                    
+      </div>
+      <div
+        v-if="billingStateStore.connections.length > 0"
+        class="flex flex-col gap-[10px] mb-2"
+      >
+        <div
+          v-if="connectionsComputed.messenger.length > 0"
+          class="flex flex-col gap-1"
+        >
+          <span class="text-gray-500 text-sm select-none">Мессенджеры</span>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="value in connectionsComputed.messenger"
+              class="any-white-container connected-item-box"
+            >
+              <div
+                class="messenger-whatsap-container mr-2"
+                :class="`messenger-${value.typeData.name}-container`"
+              >
+                <div
+                  :class="`messenger-${value.typeData.name}-char-logo`"
+                  class="select-none"
+                >
+                  {{ value.typeData.name.length > 2 ? value.typeData.name[0]?.toUpperCase() : value.typeData.name }}
                 </div>
-            </div>
-        </div>
-        <div class="flex flex-col gap-1" v-if="connectionsComputed.vats.length > 0">
-            <span class="text-gray-500 text-sm select-none">ВАТС</span>
-            <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.vats">
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">{{ value.title }}</span>
-                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
-                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
-                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
-                        </div>
-                        <DropdownMenuRoot v-model="value.isOpen">
-                                <DropdownMenuTrigger>
-                                    <MoreBox/>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
-                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
-                                           <span class="select-none hover-item text-sm">Изменить</span> 
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
-                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
-                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuRoot>
-                    </div>
+              </div>
+              <div class="flex flex-col gap-2">
+                <span class="text-sm">{{ value.title }}</span>
+                <span class="text-gray-500 text-xs ">{{ value.source }}</span>
+              </div>
+              <div
+                class="flex gap-3"
+                style="margin-left: auto; align-items: center;"
+              >
+                <div
+                  :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'"
+                  class="flex any-green-container gap-1 py-0.5 px-1.5 items-center"
+                  style="height: fit-content;"
+                >
+                  <Icon
+                    :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'"
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '"
+                    class="w-3 h-3"
+                  />
+                  <span
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'"
+                    class="text-xs"
+                  >{{ value.statusData.name }}</span>
                 </div>
+                <DropdownMenuRoot v-model="value.isOpen">
+                  <DropdownMenuTrigger>
+                    <MoreBox />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent
+                      class="DropdownMenuContent"
+                      align="end"
+                      :side-offset="5"
+                    >
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="openEdit(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="majesticons:open"
+                        />
+                        <span class="select-none hover-item text-sm">Изменить</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="deleteConnection(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="tabler:trash"
+                        />
+                        <span class="select-none hover-item text-sm text-red-600">Удалить</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuRoot>
+              </div>
             </div>
+          </div>
         </div>
-        <div class="flex flex-col gap-1" v-if="connectionsComputed.sms.length > 0">
-            <span class="text-gray-500 text-sm select-none">SMS</span>
-            <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.sms">
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">{{ value.title }}</span>
-                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
-                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
-                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
-                        </div>
-                        <DropdownMenuRoot v-model="value.isOpen">
-                                <DropdownMenuTrigger>
-                                    <MoreBox/>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
-                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
-                                           <span class="select-none hover-item text-sm">Изменить</span> 
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
-                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
-                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuRoot>
-                    </div>
+        <div
+          v-if="connectionsComputed.vats.length > 0"
+          class="flex flex-col gap-1"
+        >
+          <span class="text-gray-500 text-sm select-none">ВАТС</span>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="value in connectionsComputed.vats"
+              class="any-white-container connected-item-box"
+            >
+              <div class="flex flex-col gap-2">
+                <span class="text-sm">{{ value.title }}</span>
+                <span class="text-gray-500 text-xs ">{{ value.source }}</span>
+              </div>
+              <div
+                class="flex gap-3"
+                style="margin-left: auto; align-items: center;"
+              >
+                <div
+                  :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'"
+                  class="flex any-green-container gap-1 py-0.5 px-1.5 items-center"
+                  style="height: fit-content;"
+                >
+                  <Icon
+                    :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'"
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '"
+                    class="w-3 h-3"
+                  />
+                  <span
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'"
+                    class="text-xs"
+                  >{{ value.statusData.name }}</span>
                 </div>
+                <DropdownMenuRoot v-model="value.isOpen">
+                  <DropdownMenuTrigger>
+                    <MoreBox />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent
+                      class="DropdownMenuContent"
+                      align="end"
+                      :side-offset="5"
+                    >
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="openEdit(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="majesticons:open"
+                        />
+                        <span class="select-none hover-item text-sm">Изменить</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="deleteConnection(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="tabler:trash"
+                        />
+                        <span class="select-none hover-item text-sm text-red-600">Удалить</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuRoot>
+              </div>
             </div>
+          </div>
         </div>
-        <div class="flex flex-col gap-1" v-if="connectionsComputed.another.length > 0">
-            <span class="text-gray-500 text-sm select-none">Иное</span>
-            <div class="flex flex-col gap-2">
-                <div class="any-white-container connected-item-box" v-for="value in connectionsComputed.another">
-                    <div class="flex flex-col gap-2">
-                            <span class="text-sm">{{ value.title }}</span>
-                            <span class="text-gray-500 text-xs ">{{ value.source }}</span>
-                    </div>
-                    <div class="flex gap-3" style="margin-left: auto; align-items: center;">
-                        <div :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'" class="flex any-green-container gap-1 py-0.5 px-1.5 items-center" style="height: fit-content;">
-                            <Icon :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'" :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '" class="w-3 h-3"/>
-                            <span :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'" class="text-xs">{{ value.statusData.name }}</span>
-                        </div>
-                        <DropdownMenuRoot v-model="value.isOpen">
-                                <DropdownMenuTrigger>
-                                    <MoreBox/>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuContent class="DropdownMenuContent" align="end" :side-offset="5">
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="openEdit(value)">
-                                            <Icon class="w-4 h-4 hover-item" icon="majesticons:open" />
-                                           <span class="select-none hover-item text-sm">Изменить</span> 
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="drop-down-item blue-hover" @select="deleteConnection(value)">
-                                           <Icon class="w-4 h-4 hover-item" icon="tabler:trash" />
-                                           <span class="select-none hover-item text-sm text-red-600">Удалить</span> 
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuRoot>
-                    </div>
+        <div
+          v-if="connectionsComputed.sms.length > 0"
+          class="flex flex-col gap-1"
+        >
+          <span class="text-gray-500 text-sm select-none">SMS</span>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="value in connectionsComputed.sms"
+              class="any-white-container connected-item-box"
+            >
+              <div class="flex flex-col gap-2">
+                <span class="text-sm">{{ value.title }}</span>
+                <span class="text-gray-500 text-xs ">{{ value.source }}</span>
+              </div>
+              <div
+                class="flex gap-3"
+                style="margin-left: auto; align-items: center;"
+              >
+                <div
+                  :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'"
+                  class="flex any-green-container gap-1 py-0.5 px-1.5 items-center"
+                  style="height: fit-content;"
+                >
+                  <Icon
+                    :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'"
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '"
+                    class="w-3 h-3"
+                  />
+                  <span
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'"
+                    class="text-xs"
+                  >{{ value.statusData.name }}</span>
                 </div>
+                <DropdownMenuRoot v-model="value.isOpen">
+                  <DropdownMenuTrigger>
+                    <MoreBox />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent
+                      class="DropdownMenuContent"
+                      align="end"
+                      :side-offset="5"
+                    >
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="openEdit(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="majesticons:open"
+                        />
+                        <span class="select-none hover-item text-sm">Изменить</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="deleteConnection(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="tabler:trash"
+                        />
+                        <span class="select-none hover-item text-sm text-red-600">Удалить</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuRoot>
+              </div>
             </div>
+          </div>
         </div>
+        <div
+          v-if="connectionsComputed.another.length > 0"
+          class="flex flex-col gap-1"
+        >
+          <span class="text-gray-500 text-sm select-none">Иное</span>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="value in connectionsComputed.another"
+              class="any-white-container connected-item-box"
+            >
+              <div class="flex flex-col gap-2">
+                <span class="text-sm">{{ value.title }}</span>
+                <span class="text-gray-500 text-xs ">{{ value.source }}</span>
+              </div>
+              <div
+                class="flex gap-3"
+                style="margin-left: auto; align-items: center;"
+              >
+                <div
+                  :class="value.status_id === 1 ? 'any-green-container' : 'any-red-container'"
+                  class="flex any-green-container gap-1 py-0.5 px-1.5 items-center"
+                  style="height: fit-content;"
+                >
+                  <Icon
+                    :icon="value.status_id === 1 ? 'mdi:success' : 'akar-icons:cross'"
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item '"
+                    class="w-3 h-3"
+                  />
+                  <span
+                    :class="value.status_id === 1 ? 'green-container-item' : 'red-container-item'"
+                    class="text-xs"
+                  >{{ value.statusData.name }}</span>
+                </div>
+                <DropdownMenuRoot v-model="value.isOpen">
+                  <DropdownMenuTrigger>
+                    <MoreBox />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent
+                      class="DropdownMenuContent"
+                      align="end"
+                      :side-offset="5"
+                    >
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="openEdit(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="majesticons:open"
+                        />
+                        <span class="select-none hover-item text-sm">Изменить</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        class="drop-down-item blue-hover"
+                        @select="deleteConnection(value)"
+                      >
+                        <Icon
+                          class="w-4 h-4 hover-item"
+                          icon="tabler:trash"
+                        />
+                        <span class="select-none hover-item text-sm text-red-600">Удалить</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuRoot>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="h-[100px] flex flex-col justify-center items-center" v-else>
-            <span class="text-gray-500 select-none">Нет активных подключенний</span>
-        </div>
+      </div>
+      <div
+        v-else
+        class="h-[100px] flex flex-col justify-center items-center"
+      >
+        <span class="text-gray-500 select-none">Нет активных подключенний</span>
+      </div>
     </div>
-</div>
+  </div>
 </template>
-<style>
 
+<style>
 @import '~/assets/css/any-container.css';
 
 .DropdownMenuContent{
@@ -390,7 +560,7 @@ async function deleteConnection(item : IConnection) {
     border-color: #eaeff5;
     gap: 5px;
     border-width: 1.5px;
-} 
+}
 .connected-container{
     min-height: 240px;
     height: fit-content;
@@ -403,7 +573,6 @@ async function deleteConnection(item : IConnection) {
     gap: 20px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
-    
 
 }
 

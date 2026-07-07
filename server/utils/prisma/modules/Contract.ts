@@ -1,216 +1,129 @@
-import { contractCreateInput, contractFindManyArgs, contractUpdateInput } from "~~/server/services/models/generated/prisma/models";
-import { prisma } from "~~/server/services/prisma/prismaClient";
-import { IContractFilter } from "~~/shared/models/APIModels";
+import type { contractFindManyArgs } from '~~/server/services/models/generated/prisma/models'
+import { prisma } from '~~/server/services/prisma/prismaClient'
+import type { IContract, IContractFilter } from '~~/shared/models/APIModels'
+import type { BitrixItem } from '~~/server/services/fieldMetadata'
 
-export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}) : Promise<contractPrismaGet[]>
-export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}, pagination? : {after? : number, limit? : number}) : Promise<contractPrismaWithPagination>
-export async function getContractList(data : {portal_id? : number, filter? : IContractFilter}, pagination? : {after? : number, limit? : number}){
-    const {portal_id, filter} = data
-    const args = {
-        where : {
-            name : {
-                startsWith : filter?.name,
-                mode : "insensitive"
-            },
-            company_id : filter?.company_id,
-            contract_status : {
-                name : filter?.status
-            },
-            contract_doc_type : filter?.doc_type ? {
-                name : filter?.doc_type
-            } : undefined,
-            contract_prolongation : filter?.prolongation ? {
-                name : filter?.prolongation
-            } : undefined,
-            contract_original_type : filter?.original_type ? {
-                name : filter?.original_type
-            } : undefined,
-            date_begin : filter?.date_begin,
-            date_close : filter?.date_close,
-            date_sign : filter?.date_sign,
-            org_name : filter?.org_name,
-            company : {
-                portal_id : portal_id,
-                bitrix_id : filter?.bitrxi_company_id
-            }
-        },
-        include : {
-            contract_status : true,
-            contract_doc_type : true,
-            contract_prolongation : true,
-            contract_original_type : true
-        },
-        orderBy : {
-            id : 'desc'
+function buildContractWhere(portal_id: number | undefined, filter?: IContractFilter) {
+  const where: contractFindManyArgs['where'] = {
+    name: filter?.name
+      ? {
+          startsWith: filter.name,
+          mode: 'insensitive'
         }
-        
-    } as contractFindManyArgs
-    if(pagination){
-        if(pagination.after) args.skip = pagination.after;
-        if(pagination.limit) args.take = pagination.limit;
-        const response = await prisma.$transaction([
-            prisma.contract.findMany(args),
-            prisma.contract.count({where : args.where})
-        ])
-        const [list, count] = response
-        return {
-            data : list,
-            count : count
-        }
-    } 
-    else{
-        const response = await prisma.contract.findMany(args);
-        return response;
+      : undefined,
+    company_id: filter?.company_id,
+    company: {
+      portal_id: portal_id,
+      bitrix_id: filter?.bitrxi_company_id
     }
+  }
+  // Фильтры по динамическим полям: ключ = код поля Bitrix, сравнение по значению в JSONB.
+  // Строки — вхождением, остальное (id enumeration, числа, булевы) — равенством.
+  if (filter?.values && Object.keys(filter.values).length) {
+    where!.AND = Object.entries(filter.values).map(([code, value]) => ({
+      field_values: typeof value === 'string'
+        ? { path: [code], string_contains: value }
+        : { path: [code], equals: value as never }
+    }))
+  }
+  return where
 }
 
-export async function getContractById(id : number, portal_id? : number){
-    if(portal_id){
-        const response = await prisma.contract.findFirst({
-            where : {
-                portal_id : portal_id,
-                bitrix_id : id
-            },
-            include : {
-                contract_status : true,
-                contract_doc_type : true,
-                contract_prolongation : true,
-                contract_original_type : true,
-                company : {select : {
-                    id : true,
-                    title : true,
-                    bitrix_id : true
-                }}
-            }
-        })
-        return response
-    }else{
-        const response = await prisma.contract.findFirst({
-            where : {
-                id : id
-            },
-            include : {
-                contract_status : true,
-                contract_doc_type : true,
-                contract_prolongation : true,
-                contract_original_type : true,
-                company : {select : {
-                    id : true,
-                    title : true,
-                    bitrix_id : true
-                }}
-            }
-        })
-        return response
+export async function getContractList(data: { portal_id?: number, filter?: IContractFilter }): Promise<contractPrismaGet[]>
+export async function getContractList(data: { portal_id?: number, filter?: IContractFilter }, pagination?: { after?: number, limit?: number }): Promise<contractPrismaWithPagination>
+export async function getContractList(data: { portal_id?: number, filter?: IContractFilter }, pagination?: { after?: number, limit?: number }) {
+  const { portal_id, filter } = data
+  const args = {
+    where: buildContractWhere(portal_id, filter),
+    orderBy: {
+      id: 'desc'
     }
-}
-
-export async function deleteContractPrisma(id : number, portal_id? : number){
-    const config = {
-        where : portal_id ? {contract : {bitrix_id : id}} : {contract_id : id},
-        data : {contract_id : null}
-    }
+  } as contractFindManyArgs
+  if (pagination) {
+    if (pagination.after) args.skip = pagination.after
+    if (pagination.limit) args.take = pagination.limit
     const response = await prisma.$transaction([
-        prisma.webform.updateMany(config),
-        prisma.autoinformation_module.updateMany(config),
-        prisma.vats.updateMany(config),
-        prisma.voice_robot.updateMany(config),
-        prisma.chat_bot.updateMany(config),
-        prisma.contract.delete({
-            where : portal_id ? {portal_id_bitrix_id : {bitrix_id : id, portal_id : portal_id}} : {id : id}
-        })
+      prisma.contract.findMany(args),
+      prisma.contract.count({ where: args.where })
     ])
-    return response[5]
+    const [list, count] = response
+    return {
+      data: list,
+      count: count
+    }
+  } else {
+    const response = await prisma.contract.findMany(args)
+    return response
+  }
 }
 
-export async function patchContractPrisma(id : number, data : contractUpdateInput){
-    const response = await prisma.contract.update({
-        where : {
-            id : id
-        },
-        data : data,
-        include : {
-            contract_status : true,
-            contract_doc_type : true,
-            contract_prolongation : true,
-            contract_original_type : true,
-            company : {
-                select : {
-                    bitrix_id : true
-                }
-            }
-        }
-    })
-    return response
+export async function getContractById(id: number, portal_id?: number) {
+  const response = await prisma.contract.findFirst({
+    where: portal_id ? { portal_id: portal_id, bitrix_id: id } : { id: id },
+    include: {
+      company: { select: {
+        id: true,
+        title: true,
+        bitrix_id: true
+      } }
+    }
+  })
+  return response
 }
 
-export async function upsertContractPrisma(portal_id : number, data : contractCreateInput){
-    const response = await prisma.contract.upsert({
-        where : {
-            portal_id_bitrix_id : {
-                bitrix_id : data.bitrix_id!,
-                portal_id : portal_id
-            }
-        },
-        update : data,
-        create : data
-    })
-    return response;
+export async function deleteContractPrisma(id: number, portal_id?: number) {
+  // Модули отвязываются автоматически: module.contract_id ON DELETE SET NULL (ADR-0004).
+  return prisma.contract.delete({
+    where: portal_id ? { portal_id_bitrix_id: { bitrix_id: id, portal_id: portal_id } } : { id: id }
+  })
 }
 
-export  async function addContractPrisma(data : contractCreateInput) {
-    const response = await prisma.contract.create({
-        data : data,
-        include : {
-            contract_status : true,
-            contract_doc_type : true,
-            contract_prolongation : true,
-            contract_original_type : true
-        }
-    })
-    return response
+/**
+ * Единственный путь записи договора в БД: replace-зеркало ответа Bitrix (ADR-0005).
+ * field_values перезаписывается целиком элементом из Bitrix, системные поля
+ * извлекаются из него же. Компания должна уже существовать в БД (caller обеспечивает).
+ */
+export async function upsertContractFromBitrix(portal_id: number, item: BitrixItem) {
+  const data = {
+    name: item.title,
+    bitrix_id: item.id,
+    field_values: item as object,
+    portal: { connect: { id: portal_id } },
+    company: { connect: { bitrix_id_portal_id: { bitrix_id: String(item.companyId), portal_id: portal_id } } }
+  }
+  const response = await prisma.contract.upsert({
+    where: {
+      portal_id_bitrix_id: {
+        bitrix_id: item.id,
+        portal_id: portal_id
+      }
+    },
+    update: data,
+    create: data
+  })
+  return response
 }
 
-export async function getContractsStatusesPrisma(){
-    const response = prisma.contract_status.findMany()
-    return response
-}
-export async function getContractsDocTypesPrisma(){
-    const response = prisma.contract_doc_type.findMany()
-    return response
-}
-export async function getContractsProlongationsPrisma(){
-    const response = prisma.contract_prolongation.findMany()
-    return response
-}
-export async function getContractsOriginalTypesPrisma(){
-    const response = prisma.contract_original_type.findMany()
-    return response
-}
-// Резолв FK-id справочника → bitrix_id (строковый ID элемента списка bitrix)
-export async function getDocTypeBitrixId(id : number){
-    const response = await prisma.contract_doc_type.findUnique({where : {id}})
-    return response?.bitrix_id ?? undefined
-}
-export async function getProlongationBitrixId(id : number){
-    const response = await prisma.contract_prolongation.findUnique({where : {id}})
-    return response?.bitrix_id ?? undefined
-}
-export async function getOriginalTypeBitrixId(id : number){
-    const response = await prisma.contract_original_type.findUnique({where : {id}})
-    return response?.bitrix_id ?? undefined
-}
-export async function getTariffs(){
-    const response = await prisma.tariff.findMany();
-    return response
-}
 export async function requireContract(id: number, portal_id: number) {
-    const response = await prisma.contract.findFirst({ where: { id, portal_id } })
-    return !!response
+  const response = await prisma.contract.findFirst({ where: { id, portal_id } })
+  return !!response
 }
 
-export type contractPrismaGet = Awaited<ReturnType<typeof addContractPrisma>>
+export function contractToApi(data: contractPrismaGet): IContract
+export function contractToApi(data: contractPrismaGet[]): IContract[]
+export function contractToApi(data: contractPrismaGet | contractPrismaGet[]): IContract | IContract[] {
+  const map = (c: contractPrismaGet): IContract => ({
+    id: c.id,
+    bitrix_id: c.bitrix_id,
+    name: c.name,
+    company_id: c.company_id,
+    values: (c.field_values ?? {}) as Record<string, unknown>
+  })
+  return Array.isArray(data) ? data.map(map) : map(data)
+}
+
+export type contractPrismaGet = Awaited<ReturnType<typeof upsertContractFromBitrix>>
 export type contractPrismaWithPagination = {
-    data : contractPrismaGet[],
-    count : number
+  data: contractPrismaGet[]
+  count: number
 }

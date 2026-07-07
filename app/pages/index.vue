@@ -10,7 +10,7 @@ import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
 import { bilingPagesEnum, type ICompanyNew, type ICompnany } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser, myCompanysMock} from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
@@ -25,208 +25,192 @@ import { reloadFrame } from '~/services/utils/utils'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
-const billingStateStore = usebillingStateStore();
-const modalStore = useModalStore();
-const errorModal = useErrorStateStore();
+const billingStateStore = usebillingStateStore()
+const modalStore = useModalStore()
+const errorModal = useErrorStateStore()
 
-const {$axios} = useNuxtApp()
+const { $axios } = useNuxtApp()
 
-const selectPage = ref<string>(bilingPagesEnum.Main);
+const selectPage = ref<string>(bilingPagesEnum.Main)
 
+const { data, pending, error } = useAsyncData('bitrix', async () => {
+  menuStore.fetchDataLoad = true
+  try {
+    const bitrix = await initBitrix()
+    bitrixStateStore.setBitrixClient(bitrix)
+    $axios.setBitrixFrame = bitrix.bitrixFrame
 
-const {data, pending, error} = useAsyncData('bitrix', async () => {
-    menuStore.fetchDataLoad = true
-    try {
-        const bitrix = await initBitrix();
-        bitrixStateStore.setBitrixClient(bitrix);
-        $axios.setBitrixFrame = bitrix.bitrixFrame;
+    const isCompany = await $axios.getCheckCompany()
+    if (!isCompany) throw new Error('Invalid Company')
 
-        const isCompany = await $axios.getCheckCompany();
-        if (!isCompany) throw new Error("Invalid Company")
+    const companyId = (await $axios.getCompanyId())!
 
-        const companyId = (await $axios.getCompanyId())!;
+    const [
+      company,
+      myCompanys,
+      contractMetadata,
+      moduleMetadata,
+      modules,
+      connectionStatuses,
+      connectionTypes,
+      connections
+    ] = await Promise.all([
+      bitrix.companyInfo(),
+      bitrix.getItems<ICompanyNew>(4, { isMyCompany: 'Y' }),
+      $axios.getContractMetadata(),
+      $axios.getModuleMetadata(),
+      $axios.getModules({ company_bitrix_id: companyId }),
+      $axios.getConnectionStatus(),
+      $axios.getConnectionType(),
+      $axios.getConnectionList({ company_id: companyId })
+    ])
 
-        const [
-            company,
-            myCompanys,
-            messengers,
-            contractStatuses,
-            contractDocTypes,
-            contractProlongations,
-            contractOriginalTypes,
-            integrations,
-            tariff,
-            vats,
-            voiceRobots,
-            chatBots,
-            autoInfos,
-            webForms,
-            connectionStatuses,
-            connectionTypes,
-            connections,
-        ] = await Promise.all([
-            bitrix.companyInfo(),
-            bitrix.getItems<ICompanyNew>(4, { "isMyCompany": "Y" }),
-            $axios.getMessengers(),
-            $axios.getContractStatuses(),
-            $axios.getContractDocTypes(),
-            $axios.getContractProlongations(),
-            $axios.getContractOriginalTypes(),
-            $axios.getIntegrations(),
-            $axios.getTariff(),
-            $axios.getVats({ bitrix_id: companyId }),
-            $axios.getVoiceRobots({ bitrix_id: companyId }),
-            $axios.getChatBots({ bitrix_id: companyId }),
-            $axios.getAutoInfos({ bitrix_id: companyId }),
-            $axios.getWebforms({ bitrix_id: companyId }),
-            $axios.getConnectionStatus(),
-            $axios.getConnectionType(),
-            $axios.getConnectionList({ company_id: companyId }),
-        ])
+    bitrixStateStore.bitrixCompany = company
+    bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
+    billingStateStore.contractFields = contractMetadata.fields
+    billingStateStore.metadataConfigured = contractMetadata.configured
+    billingStateStore.moduleKinds = moduleMetadata.kinds
+    billingStateStore.moduleFieldsByKind = moduleMetadata.fieldsByKind
+    billingStateStore.moduleMetadataConfigured = moduleMetadata.configured
+    billingStateStore.modules = modules
+    billingStateStore.connection_statuses = connectionStatuses
+    billingStateStore.connection_types = connectionTypes
+    billingStateStore.connections = connections
 
-        bitrixStateStore.bitrixCompany = company
-        bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
-        billingStateStore.messengers = messengers
-        billingStateStore.contractStatuses = contractStatuses
-        billingStateStore.contractDocTypes = contractDocTypes
-        billingStateStore.contractProlongations = contractProlongations
-        billingStateStore.contractOriginalTypes = contractOriginalTypes
-        billingStateStore.integrations = integrations
-        billingStateStore.tariff = tariff
-        billingStateStore.vats.push(...vats)
-        billingStateStore.voiceRobots.push(...voiceRobots)
-        billingStateStore.chatBots.push(...chatBots)
-        billingStateStore.autoinformations.push(...autoInfos)
-        billingStateStore.webform.push(...webForms)
-        billingStateStore.connection_statuses = connectionStatuses
-        billingStateStore.connection_types = connectionTypes
-        billingStateStore.connections = connections
+    bitrixStateStore.companyAssignUser = (await bitrix.getUser(company.ASSIGNED_BY_ID))[0]
 
-        bitrixStateStore.companyAssignUser = (await bitrix.getUser(company.ASSIGNED_BY_ID))[0]
+    return { bitrix, Company }
+  } catch (e) {
+    console.error(e)
+    if (useNuxtApp().$config.public.dev) {
+      bitrixStateStore.bitrixCompany = mockCompany
+      bitrixStateStore.companyRequisite = mockRequisite
+      bitrixStateStore.companyContacts = mockContact
+      bitrixStateStore.companyAssignUser = mockUser
+      bitrixStateStore.bitrixisMyCompanys = myCompanysMock
+      bitrixStateStore.addresTypes = mockAddressTypes
+      bitrixStateStore.companyAddress = mockAddress
+      bitrixStateStore.companyInvoice = mockInvoice
 
-        return { bitrix, Company }
-    } catch(e) {
-        console.error(e)
-        if (useNuxtApp().$config.public.dev) {
-            bitrixStateStore.bitrixCompany = mockCompany;
-            bitrixStateStore.companyRequisite = mockRequisite;
-            bitrixStateStore.companyContacts = mockContact;
-            bitrixStateStore.companyAssignUser = mockUser;
-            bitrixStateStore.bitrixisMyCompanys = myCompanysMock;
-            bitrixStateStore.addresTypes = mockAddressTypes;
-            bitrixStateStore.companyAddress = mockAddress;
-            bitrixStateStore.companyInvoice = mockInvoice;
+      const [
+        contractMetadata,
+        moduleMetadata,
+        modules,
+        connectionStatuses,
+        connectionTypes,
+        connections
+      ] = await Promise.all([
+        $axios.getContractMetadata(),
+        $axios.getModuleMetadata(),
+        $axios.getModules({ company_bitrix_id: '2' }),
+        $axios.getConnectionStatus(),
+        $axios.getConnectionType(),
+        $axios.getConnectionList({ company_id: '2' })
+      ])
 
-            const [
-                messengers,
-                integrations,
-                contractStatuses,
-                contractDocTypes,
-                contractProlongations,
-                contractOriginalTypes,
-                tariff,
-                vats,
-                voiceRobots,
-                chatBots,
-                autoInfos,
-                webForms,
-                connectionStatuses,
-                connectionTypes,
-                connections,
-            ] = await Promise.all([
-                $axios.getMessengers(),
-                $axios.getIntegrations(),
-                $axios.getContractStatuses(),
-                $axios.getContractDocTypes(),
-                $axios.getContractProlongations(),
-                $axios.getContractOriginalTypes(),
-                $axios.getTariff(),
-                $axios.getVats({ bitrix_id: "2" }),
-                $axios.getVoiceRobots({ bitrix_id: "2" }),
-                $axios.getChatBots({ bitrix_id: "2" }),
-                $axios.getAutoInfos({ bitrix_id: "2" }),
-                $axios.getWebforms({ bitrix_id: "2" }),
-                $axios.getConnectionStatus(),
-                $axios.getConnectionType(),
-                $axios.getConnectionList({ company_id: "2" }),
-            ])
-
-            billingStateStore.messengers = messengers
-            billingStateStore.integrations = integrations
-            billingStateStore.contractStatuses = contractStatuses
-            billingStateStore.contractDocTypes = contractDocTypes
-            billingStateStore.contractProlongations = contractProlongations
-            billingStateStore.contractOriginalTypes = contractOriginalTypes
-            billingStateStore.tariff = tariff
-            billingStateStore.vats.push(...vats)
-            billingStateStore.voiceRobots.push(...voiceRobots)
-            billingStateStore.chatBots.push(...chatBots)
-            billingStateStore.autoinformations.push(...autoInfos)
-            billingStateStore.webform.push(...webForms)
-            billingStateStore.connection_statuses = connectionStatuses
-            billingStateStore.connection_types = connectionTypes
-            billingStateStore.connections = connections
-        } else {
-            errorModal.showError({message : 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e}, "Ошибка Bitrix");
-        }
-        return
-    } finally {
-        menuStore.fetchDataLoad = false;
+      billingStateStore.contractFields = contractMetadata.fields
+      billingStateStore.metadataConfigured = contractMetadata.configured
+      billingStateStore.moduleKinds = moduleMetadata.kinds
+      billingStateStore.moduleFieldsByKind = moduleMetadata.fieldsByKind
+      billingStateStore.moduleMetadataConfigured = moduleMetadata.configured
+      billingStateStore.modules = modules
+      billingStateStore.connection_statuses = connectionStatuses
+      billingStateStore.connection_types = connectionTypes
+      billingStateStore.connections = connections
+    } else {
+      errorModal.showError({ message: 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e }, 'Ошибка Bitrix')
     }
+    return
+  } finally {
+    menuStore.fetchDataLoad = false
+  }
 }, { server: false }
 )
 
-
-
 const Company = computed(() => bitrixStateStore.bitrixCompany)
 
-function switchPage(page : string){
-    selectPage.value = page;
+function switchPage(page: string) {
+  selectPage.value = page
 };
-
 </script>
+
 <template>
-    <DialogRoot  :open="modalStore.openModal">
-        <DialogPortal>
-            <DialogOverlay class="modal-overlay" />
-            <DialogContent v-if="modalStore.openModal" class="modal-content any-white-container">
-                <VisuallyHidden as-child>
-                    <DialogTitle></DialogTitle>
-                    <DialogDescription></DialogDescription>
-                </VisuallyHidden>
-                <component v-if="modalStore.modalID" :is="modalsEnum[modalStore.modalID]"></component>
-            </DialogContent>
-        </DialogPortal>
-    </DialogRoot>
-    <DialogRoot  :open="modalStore.openModalHigher">
-        <DialogPortal>
-            <DialogOverlay class="modal-overlay" style="z-index: 200;" />
-            <DialogContent v-if="modalStore.openModalHigher" class="modal-content any-white-container" style="z-index: 200;">
-                <VisuallyHidden as-child>
-                    <DialogTitle></DialogTitle>
-                    <DialogDescription></DialogDescription>
-                </VisuallyHidden>
-                <component v-if="modalStore.modalHigherID" :is="modalsEnum[modalStore.modalHigherID]"></component>
-            </DialogContent>
-        </DialogPortal>
-    </DialogRoot>
-    <Toast></Toast>
-    <ErrorModal></ErrorModal>
-    <div class="app-container" @click="menuStore.closeAllMenu">
-        <div class="billing-container">
-            <div class="title-container" style="width: 100%;">
-                <div class="back-arrow-box">
-                    <ArrowLeftSIcon class="w-6 h-6 back-arrow-svg" />
-                </div>
-                <div class="any-contaier-column" style="gap: 15px;">
-                    <div class="any-contaier-row" style="gap: 10px; width: 100%;">
-                        <p class="company-title">{{ Company?.TITLE }}</p>
-                        <div class="status-box">
-                            <SuccessIcon class="w-4 h-4" style="color: white;" />
-                            <p class="status-title select-none">Активна</p>
-                        </div>
-                    </div>
-                    <!-- <div class="any-contaier-row" style="gap: 15px">
+  <DialogRoot :open="modalStore.openModal">
+    <DialogPortal>
+      <DialogOverlay class="modal-overlay" />
+      <DialogContent
+        v-if="modalStore.openModal"
+        class="modal-content any-white-container"
+      >
+        <VisuallyHidden as-child>
+          <DialogTitle />
+          <DialogDescription />
+        </VisuallyHidden>
+        <component
+          :is="modalsEnum[modalStore.modalID]"
+          v-if="modalStore.modalID"
+        />
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
+  <DialogRoot :open="modalStore.openModalHigher">
+    <DialogPortal>
+      <DialogOverlay
+        class="modal-overlay"
+        style="z-index: 200;"
+      />
+      <DialogContent
+        v-if="modalStore.openModalHigher"
+        class="modal-content any-white-container"
+        style="z-index: 200;"
+      >
+        <VisuallyHidden as-child>
+          <DialogTitle />
+          <DialogDescription />
+        </VisuallyHidden>
+        <component
+          :is="modalsEnum[modalStore.modalHigherID]"
+          v-if="modalStore.modalHigherID"
+        />
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
+  <Toast />
+  <ErrorModal />
+  <div
+    class="app-container"
+    @click="menuStore.closeAllMenu"
+  >
+    <div class="billing-container">
+      <div
+        class="title-container"
+        style="width: 100%;"
+      >
+        <div class="back-arrow-box">
+          <ArrowLeftSIcon class="w-6 h-6 back-arrow-svg" />
+        </div>
+        <div
+          class="any-contaier-column"
+          style="gap: 15px;"
+        >
+          <div
+            class="any-contaier-row"
+            style="gap: 10px; width: 100%;"
+          >
+            <p class="company-title">
+              {{ Company?.TITLE }}
+            </p>
+            <div class="status-box">
+              <SuccessIcon
+                class="w-4 h-4"
+                style="color: white;"
+              />
+              <p class="status-title select-none">
+                Активна
+              </p>
+            </div>
+          </div>
+          <!-- <div class="any-contaier-row" style="gap: 15px">
                         <div class="tag-box">
                             <span style="font-size: 0.7em;" class="cursor-default font-semibold">VIP</span>
                         </div>
@@ -237,41 +221,72 @@ function switchPage(page : string){
                             <Plus30Icon class="w-4 h-4 changeable-icon" />
                         </div>
                     </div> -->
-                </div>
-                <div class="flex any-white-container items-center blue-hover justify-center w-10 h-10" style="margin-left: auto;" @click="reloadFrame()">
-                    <Icon icon="mdi:reload" class="hover-item"/>
-                </div>
-            </div>
-            <div class="any-contaier-row" style="width: 100%; gap: 12px;">
-                <div class="transparent-box">
-                    <OpenIn40Icon class="w-6 h-6 changeable-icon"/>
-                    <p class="transparent-box-title font-semibold">Открыть в контексте</p>
-                </div>
-                <div class="transparent-box">
-                    <BoxIcon class="w-6 h-6 changeable-icon"/>
-                    <p class="transparent-box-title font-semibold">Модули</p>
-                </div>
-                <div class="transparent-box">
-                    <KeyIcon class="w-6 h-6 changeable-icon"/>
-                    <p class="transparent-box-title font-semibold">API</p>
-                </div>
-                <div class="transparent-box">
-                    <EditPencilIcon class="w-6 h-6 changeable-icon"/>
-                    <p class="transparent-box-title font-semibold">Редактирование</p>
-                </div>
-            </div>
-            <div class="page-selector-grid">
-                <div class="page-item" v-for="page in Object.keys(pagesEnum)" :class="selectPage === page ? 'page-item-selected' : ''" @click="switchPage(page)">
-                    <span class="select-none font-semibold" >{{ page }}</span>
-                </div>
-            </div>
-            <component :is="pagesEnum[selectPage]"/>
         </div>
+        <div
+          class="flex any-white-container items-center blue-hover justify-center w-10 h-10"
+          style="margin-left: auto;"
+          @click="reloadFrame()"
+        >
+          <Icon
+            icon="mdi:reload"
+            class="hover-item"
+          />
+        </div>
+      </div>
+      <div
+        class="any-contaier-row"
+        style="width: 100%; gap: 12px;"
+      >
+        <div class="transparent-box">
+          <OpenIn40Icon class="w-6 h-6 changeable-icon" />
+          <p class="transparent-box-title font-semibold">
+            Открыть в контексте
+          </p>
+        </div>
+        <div class="transparent-box">
+          <BoxIcon class="w-6 h-6 changeable-icon" />
+          <p class="transparent-box-title font-semibold">
+            Модули
+          </p>
+        </div>
+        <div class="transparent-box">
+          <KeyIcon class="w-6 h-6 changeable-icon" />
+          <p class="transparent-box-title font-semibold">
+            API
+          </p>
+        </div>
+        <div class="transparent-box">
+          <EditPencilIcon class="w-6 h-6 changeable-icon" />
+          <p class="transparent-box-title font-semibold">
+            Редактирование
+          </p>
+        </div>
+      </div>
+      <div class="page-selector-grid">
+        <div
+          v-for="page in Object.keys(pagesEnum)"
+          class="page-item"
+          :class="selectPage === page ? 'page-item-selected' : ''"
+          @click="switchPage(page)"
+        >
+          <span class="select-none font-semibold">{{ page }}</span>
+        </div>
+      </div>
+      <component :is="pagesEnum[selectPage as keyof typeof pagesEnum]" />
     </div>
-    <div class="load-container" v-if="menuStore.fetchDataLoad">
-        <Icon icon="line-md:loading-loop" class="text-blue-600" width="120"/>
-    </div>
+  </div>
+  <div
+    v-if="menuStore.fetchDataLoad"
+    class="load-container"
+  >
+    <Icon
+      icon="line-md:loading-loop"
+      class="text-blue-600"
+      width="120"
+    />
+  </div>
 </template>
+
 <style scoped>
 @import '~/assets/css/any-container.css';
 .app-container{
@@ -283,8 +298,6 @@ function switchPage(page : string){
     padding: 50px 100px;
     background-color: #f8fbfc;
 }
-
-
 
 .modal-overlay{
     animation: modal-overlay-show 0.15s ease-out;
@@ -476,5 +489,4 @@ function switchPage(page : string){
         opacity: 1;
     }
 }
-
 </style>
