@@ -114,10 +114,13 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
   }
 }
 
+// Пусто = свойство неприменимо к offer'у (null/undefined/''). Для boolean-свойств
+// 'N' — это ВАЛИДНОЕ значение «нет/false», а НЕ пустота: иначе любое выключенное
+// boolean-поле пропадало бы из вида (у boolean не бывает значений кроме Y/N).
 function isEmptyOfferValue(v: OfferPropValue): boolean {
   if (v === null || v === undefined || v === '') return true
-  if (typeof v === 'object') return v.value === null || v.value === undefined || v.value === '' || v.value === 'N'
-  return v === 'N'
+  if (typeof v === 'object') return v.value === null || v.value === undefined || v.value === ''
+  return false
 }
 
 /** Инвалидация зеркала каталога: следующий getCatalogMirror перечитает из Bitrix. */
@@ -155,15 +158,21 @@ export function moduleFieldsForProduct(mirror: ICatalogMirror, parentProductId: 
   return mirror.properties
     .filter(p => relevant.has(offerKey(p)))
     .map((p) => {
+      const enums = p.propertyType === 'L' ? (mirror.enumsByProperty?.[p.id] ?? []) : []
+      // L-свойство с единственным вариантом («Да» / «-») в Bitrix — это чекбокс, а не
+      // список: показываем как boolean, иначе получаем бессмысленный селектор из одного пункта.
+      const isFlag = p.propertyType === 'L' && enums.length === 1
       const meta: IFieldMeta = {
         code: offerKey(p),
         title: p.name,
-        type: CATALOG_TYPE_MAP[p.propertyType] ?? 'string',
+        type: isFlag ? 'boolean' : (CATALOG_TYPE_MAP[p.propertyType] ?? 'string'),
         isRequired: false,
         isMultiple: false
       }
-      // Списочному свойству прокидываем варианты — иначе селектор пуст
-      if (p.propertyType === 'L') meta.items = mirror.enumsByProperty?.[p.id] ?? []
+      // Настоящему списку (>1 варианта) прокидываем варианты — иначе селектор пуст
+      if (p.propertyType === 'L' && !isFlag) meta.items = enums
+      // У flag-поля запоминаем id варианта «Да» — для записи значения в Bitrix
+      if (isFlag) meta.trueEnumId = enums[0]?.id
       return meta
     })
 }
@@ -183,6 +192,12 @@ export function buildOfferPayload(mirror: ICatalogMirror, parentProductId: numbe
   for (const field of fields) {
     if (!(field.code in values)) continue
     const raw = values[field.code]
+    // Flag-поле (L с одним вариантом «Да»): включён → { value: <id «Да»> }, выключен → '' (Bitrix ставит «-»)
+    if (field.trueEnumId) {
+      const on = raw === true || raw === 'Y' || raw === 1 || raw === '1' || String(raw) === field.trueEnumId
+      payload[field.code] = on ? { value: field.trueEnumId } : ''
+      continue
+    }
     if (raw === undefined || raw === null || raw === '') continue
     if (field.type === 'enumeration') payload[field.code] = { value: raw }
     else if (field.type === 'double') payload[field.code] = Number(raw)

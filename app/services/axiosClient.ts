@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, IUser } from '~~/shared/models/APIModels'
+import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, IUser } from '~~/shared/models/APIModels'
 import { Bitrix24Placement, type IResponseArrayNewBitrix } from '~~/shared/models/bitrixModels'
 
 export const BitrixPlacementMap: Record<Bitrix24Placement, (frame: B24Frame) => Promise<string>> = {
@@ -105,6 +105,16 @@ export class axiosClient {
     return response.data as IPortalBinding
   }
 
+  async getFieldGroups() {
+    const response = await this.AxiosClient.get('portal/field-groups')
+    return response.data as FieldGroupsByKind
+  }
+
+  async patchFieldGroups(parent_product_id: number, groups: IFieldGroup[]) {
+    const response = await this.AxiosClient.patch('portal/field-groups', { parent_product_id, groups })
+    return response.data as IFieldGroup[]
+  }
+
   async getBitrixTypes() {
     const response = await this.AxiosClient.get('bitrix/types.list')
     return response.data as { entityTypeId: number, title: string }[]
@@ -160,7 +170,7 @@ export class axiosClient {
       return response.data as IModuleMetadataResponse
     } catch (e) {
       console.error('[getModuleMetadata] не удалось получить метаданные каталога', e)
-      return { configured: false, kinds: [], fieldsByKind: {} } as IModuleMetadataResponse
+      return { configured: false, kinds: [], fieldsByKind: {}, groupsByKind: {} } as IModuleMetadataResponse
     }
   }
 

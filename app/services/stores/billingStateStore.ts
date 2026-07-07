@@ -1,4 +1,4 @@
-import type { IContract, IFieldMeta, IModule, IModuleKind, IConnection, IConnectionStatus, IConnectionType, IUser } from '~~/shared/models/APIModels'
+import type { IContract, IFieldMeta, IModule, IModuleKind, FieldGroupsByKind, IConnection, IConnectionStatus, IConnectionType, IUser } from '~~/shared/models/APIModels'
 
 const usebillingStateStore = defineStore('billingState', () => {
   const contracts = ref<IContract[]>([])
@@ -10,6 +10,7 @@ const usebillingStateStore = defineStore('billingState', () => {
   const metadataConfigured = ref<boolean>(true)
   const moduleKinds = ref<IModuleKind[]>([])
   const moduleFieldsByKind = ref<Record<number, IFieldMeta[]>>({})
+  const moduleGroupsByKind = ref<FieldGroupsByKind>({})
   const moduleMetadataConfigured = ref<boolean>(true)
   const connections = ref<IConnection[]>([])
   const connection_statuses = ref<IConnectionStatus[]>([])
@@ -29,6 +30,7 @@ const usebillingStateStore = defineStore('billingState', () => {
     metadataConfigured,
     moduleKinds,
     moduleFieldsByKind,
+    moduleGroupsByKind,
     moduleMetadataConfigured,
     connections,
     connection_statuses,

@@ -17,6 +17,7 @@ import { VisuallyHidden } from 'reka-ui'
 import { pagesEnum } from '~/components/pages'
 import { modalsEnum } from '~/components/modals'
 import ErrorModal from '~/components/modals/ErrorModal.vue'
+import ConfirmModal from '~/components/modals/ConfirmModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
 import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
@@ -71,6 +72,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     billingStateStore.metadataConfigured = contractMetadata.configured
     billingStateStore.moduleKinds = moduleMetadata.kinds
     billingStateStore.moduleFieldsByKind = moduleMetadata.fieldsByKind
+    billingStateStore.moduleGroupsByKind = moduleMetadata.groupsByKind
     billingStateStore.moduleMetadataConfigured = moduleMetadata.configured
     billingStateStore.modules = modules
     billingStateStore.connection_statuses = connectionStatuses
@@ -110,6 +112,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       billingStateStore.contractsTariff = mockContracts
       billingStateStore.moduleKinds = mockModuleMetadata.kinds
       billingStateStore.moduleFieldsByKind = mockModuleMetadata.fieldsByKind
+      billingStateStore.moduleGroupsByKind = mockModuleMetadata.groupsByKind
       billingStateStore.moduleMetadataConfigured = mockModuleMetadata.configured
       billingStateStore.modules = mockModules
       billingStateStore.connection_statuses = connectionStatuses
@@ -160,7 +163,7 @@ function switchPage(page: string) {
       <DialogContent
         v-if="modalStore.openModalHigher"
         class="modal-content any-white-container"
-        style="z-index: 200;"
+        style="z-index: 250;"
       >
         <VisuallyHidden as-child>
           <DialogTitle />
@@ -175,6 +178,7 @@ function switchPage(page: string) {
   </DialogRoot>
   <Toast />
   <ErrorModal />
+  <ConfirmModal />
   <div
     class="app-container"
     @click="menuStore.closeAllMenu"
@@ -318,7 +322,8 @@ function switchPage(page: string) {
   max-height: 85vh;
   padding: 25px;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 100;
+  /* Строго выше overlay (100): иначе при равном z-index затемнение перехватывает клики */
+  z-index: 150;
 }
 
 .modal-content[data-state="open"] {

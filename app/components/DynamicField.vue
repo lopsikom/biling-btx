@@ -34,9 +34,16 @@ const textValue = computed<string | number | null | undefined>({
   set: (v) => { model.value = v }
 })
 
+// Для flag-поля (L-свойство «Да»/«-») в values может лежать id варианта «Да» —
+// считаем чекбокс включённым и по нему тоже.
 const boolValue = computed<boolean>({
-  get: () => model.value === true || model.value === 'Y' || model.value === '1' || model.value === 1,
-  set: (v) => { model.value = v }
+  get: () => {
+    const v = model.value
+    if (v === true || v === 'Y' || v === '1' || v === 1) return true
+    if (props.field.trueEnumId && String(v) === props.field.trueEnumId) return true
+    return false
+  },
+  set: (v) => { model.value = v ? 'Y' : 'N' }
 })
 
 const isNumber = computed(() => ['integer', 'double', 'money'].includes(props.field.type))

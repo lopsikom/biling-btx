@@ -27,7 +27,8 @@ export const mockModuleMetadata: IModuleMetadataResponse = {
   configured: true,
   kinds: [
     { parent_product_id: 4930, name: 'Обзвон' },
-    { parent_product_id: 4940, name: 'Голосовой робот' }
+    { parent_product_id: 4940, name: 'Голосовой робот' },
+    { parent_product_id: 4965, name: 'Интеллектуальный Чат-бот' }
   ],
   fieldsByKind: {
     4930: [
@@ -49,7 +50,17 @@ export const mockModuleMetadata: IModuleMetadataResponse = {
         code: 'property311', title: 'Кол-во линий', type: 'enumeration', isRequired: false, isMultiple: false,
         items: [{ id: '91', value: '1' }, { id: '92', value: '3' }, { id: '95', value: '10' }]
       }
+    ],
+    // Чат-бот: flag-каналы (L-свойства «Да»/«-» → boolean) — кандидаты на мультиселект
+    4965: [
+      { code: 'property318', title: 'Tg', type: 'boolean', isRequired: false, isMultiple: false, trueEnumId: '120' },
+      { code: 'property319', title: 'Виджет', type: 'boolean', isRequired: false, isMultiple: false, trueEnumId: '121' },
+      { code: 'property321', title: 'VK', type: 'boolean', isRequired: false, isMultiple: false, trueEnumId: '123' }
     ]
+  },
+  // Группа «Мессенджеры» у чат-бота — три boolean-канала как один мультиселект
+  groupsByKind: {
+    4965: [{ name: 'Мессенджеры', fields: ['property318', 'property319', 'property321'] }]
   }
 }
 

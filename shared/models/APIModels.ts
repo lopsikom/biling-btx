@@ -49,6 +49,9 @@ export interface IFieldMeta {
   isMultiple: boolean
   items?: { id: string, value: string }[]
   default?: unknown
+  // Для flag-поля (L-свойство каталога с одним вариантом «Да», отрендеренного как boolean):
+  // id варианта «Да» — им пишется значение в Bitrix при включённом чекбоксе.
+  trueEnumId?: string
 }
 
 export interface IMetadataResponse {
@@ -112,10 +115,21 @@ export interface IModuleKind {
   parent_product_id: number
   name: string
 }
+
+// Мультиселект-группа полей вида модуля (field group): объединяет несколько
+// boolean-свойств offer'а в один селектор в форме (см. миграция 0003).
+export interface IFieldGroup {
+  name: string
+  fields: string[]
+}
+export type FieldGroupsByKind = Record<number, IFieldGroup[]>
+
 export interface IModuleMetadataResponse {
   configured: boolean
   kinds: IModuleKind[]
   fieldsByKind: Record<number, IFieldMeta[]>
+  // Группы полей по видам (для схлопывания boolean-полей в мультиселект)
+  groupsByKind: FieldGroupsByKind
 }
 
 export const Connection = z.object({

@@ -1,5 +1,6 @@
 import { getCatalogMirror, moduleFieldsForProduct } from '~~/server/services/catalogMetadata'
 import { getBitrixTokenByRedis } from '~~/server/utils/getBitrixToken'
+import { getFieldGroupsByKind } from '~~/server/utils/prisma/FieldGroup'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import type { IModuleMetadataResponse } from '~~/shared/models/APIModels'
 
@@ -9,7 +10,7 @@ export default defineEventHandler(async (event): Promise<IModuleMetadataResponse
   const portalCtx = event.context.portal as PortalDataType
   const portal = await getPortal({ id: portalCtx.portal.id })
   const productIds = portal?.module_product_ids ?? []
-  if (!productIds.length) return { configured: false, kinds: [], fieldsByKind: {} }
+  if (!productIds.length) return { configured: false, kinds: [], fieldsByKind: {}, groupsByKind: {} }
 
   const token = await getBitrixTokenByRedis(portalCtx)
   if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
@@ -25,7 +26,8 @@ export default defineEventHandler(async (event): Promise<IModuleMetadataResponse
     const kinds = productIds.map(id => ({ parent_product_id: id, name: mirror.productNames[id] ?? `Товар ${id}` }))
     const fieldsByKind: Record<number, ReturnType<typeof moduleFieldsForProduct>> = {}
     for (const id of productIds) fieldsByKind[id] = moduleFieldsForProduct(mirror, id)
-    return { configured: true, kinds, fieldsByKind }
+    const groupsByKind = await getFieldGroupsByKind(portal!.id)
+    return { configured: true, kinds, fieldsByKind, groupsByKind }
   } catch (e) {
     console.error('[metadata/module] не удалось получить метаданные каталога', e)
     throw createError({ statusCode: 502, statusMessage: 'Bitrix error', message: 'Не удалось получить описания полей каталога' })

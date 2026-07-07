@@ -4,8 +4,10 @@ import usebillingStateStore from '~/services/stores/billingStateStore'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
 import useMenuStore from '~/services/stores/menuStores'
+import useConfirmStore from '~/services/stores/confirmStore'
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import type { SelectorObject } from '~/services/models'
-import type { IModule, IModulePost, IModuleUpdate } from '~~/shared/models/APIModels'
+import type { IModule, IModulePost, IModuleUpdate, IFieldMeta } from '~~/shared/models/APIModels'
 
 // Generic-модалка модулей (ADR-0004/0006): список модулей + добавление по видам каталога.
 // Форма вида рендерится DynamicField по метаданным каталога — как договор в этапе 1.
@@ -13,6 +15,7 @@ const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
 const menuStore = useMenuStore()
+const confirmStore = useConfirmStore()
 const { $axios } = useNuxtApp()
 
 // Договоры для привязки (selector) — по имени
@@ -32,19 +35,45 @@ const quantity = ref<number>(1)
 const active = ref<boolean>(true)
 const values = ref<Record<string, unknown>>({})
 
+// Вид, поля которого редактируем (add — выбранный, edit — вид модуля).
+const currentKindId = computed(() => mode.value === 'edit' ? editing.value?.parent_product_id : (selectedKind.value ? Number(selectedKind.value.label) : undefined))
+
 // Поля выбранного вида — из метаданных каталога.
-// В add — по выбранному виду, в edit — по виду редактируемого модуля.
 const kindFields = computed(() => {
-  const pid = mode.value === 'edit' ? editing.value?.parent_product_id : (selectedKind.value ? Number(selectedKind.value.label) : undefined)
-  if (pid === undefined) return []
-  return billingStateStore.moduleFieldsByKind[pid] ?? []
+  if (currentKindId.value === undefined) return []
+  return billingStateStore.moduleFieldsByKind[currentKindId.value] ?? []
 })
+
+// Мультиселект-группы вида (field group): часть boolean-полей схлопнута в группы.
+const kindGroups = computed(() => currentKindId.value !== undefined ? (billingStateStore.moduleGroupsByKind[currentKindId.value] ?? []) : [])
+// Коды полей, входящих в любую группу — их не рендерим по отдельности
+const groupedCodes = computed(() => new Set(kindGroups.value.flatMap(g => g.fields)))
+// Поля вне групп — рендерятся обычным DynamicField
+const ungroupedFields = computed(() => kindFields.value.filter(f => !groupedCodes.value.has(f.code)))
+
+// IFieldMeta[] полей группы (по кодам) — для MultiSelectGroup
+function groupFields(codes: string[]): IFieldMeta[] {
+  return codes
+    .map(code => kindFields.value.find(f => f.code === code))
+    .filter((f): f is IFieldMeta => !!f)
+}
 
 watch(selectedKind, (k) => {
   // Сброс значений при смене вида — только при создании (в edit вид фиксирован)
   if (mode.value !== 'add') return
   values.value = {}
   if (k && !title.value) title.value = String(k.value)
+})
+
+// Кнопка «+»: создать новый договор поверх (высшая модалка). AddContract кладёт
+// созданный договор в contractsTariff и в addContractTariff.selected_contract —
+// подхватываем его как выбранный.
+function openAddContract() {
+  modalStore.addContractTariff = { item: null, selected_contract: undefined }
+  modalStore.showHigherModal(ModalEnum.ADD_CONTRACT)
+}
+watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
+  if (sel) selectedContract.value = sel
 })
 
 onBeforeMount(async () => {
@@ -126,7 +155,15 @@ async function saveEdit() {
   } finally { menuStore.fetchDataLoad = false }
 }
 
-async function removeModule(module: IModule) {
+function removeModule(module: IModule) {
+  confirmStore.ask({
+    title: 'Удалить модуль?',
+    message: `Модуль «${module.title}» будет удалён из договора и из Bitrix. Действие необратимо.`,
+    onConfirm: () => doRemoveModule(module)
+  })
+}
+
+async function doRemoveModule(module: IModule) {
   menuStore.fetchDataLoad = true
   try {
     const ok = await $axios.deleteModule(module.id)
@@ -245,41 +282,49 @@ function resetForm() {
         style="width: 100%;"
       >
         <div class="flex gap-[10px]">
-          <Selector
-            v-model="selectedContract"
-            style="width: 50%;"
-            title="Договор"
-            :required="true"
-            :items="contractItems"
-          />
-          <Selector
-            v-if="mode === 'add'"
-            v-model="selectedKind"
-            style="width: 50%;"
-            title="Вид модуля"
-            :required="true"
-            :items="kindItems"
-          />
-          <div
-            v-else
-            class="flex flex-col gap-[5px]"
-            style="width: 50%;"
-          >
-            <span class="select-none font-semibold text-sm">Вид модуля</span>
-            <div class="kind-locked text-sm flex items-center px-3">
-              {{ selectedKind?.value ?? kindName(editing?.parent_product_id ?? 0) }}
-            </div>
-          </div>
-        </div>
-        <div class="flex gap-[10px]">
           <InputBox
             v-model="title"
             placeholder="Название..."
             :resize="false"
             title="Название"
             :required="true"
-            style="width: 50%;"
+            style="width: 80%;"
           />
+          <div class="flex items-center gap-3 mt-5">
+            <CheckboxRoot
+              v-model="active"
+              :class="active ? 'checkbox-active' : 'checkbox-disable'"
+            >
+              <CheckboxIndicator>
+                <Icon
+                  icon="radix-icons:check"
+                  style="color: white;"
+                />
+              </CheckboxIndicator>
+            </CheckboxRoot>
+            <span class="select-none font-semibold text-sm">Активен</span>
+          </div>
+        </div>
+        <div class="flex gap-[10px] items-end">
+          <Selector
+            v-model="selectedContract"
+            style="width: 100%;"
+            title="Договор"
+            :required="true"
+            :items="contractItems"
+          />
+          <div
+            class="add-contract-btn blue-hover flex justify-center items-center"
+            title="Создать договор"
+            @click="openAddContract()"
+          >
+            <Icon
+              icon="rivet-icons:plus"
+              class="w-4 h-4 hover-item"
+            />
+          </div>
+        </div>
+        <div class="flex gap-[10px]">
           <InputBox
             v-model="price"
             type="number"
@@ -294,31 +339,48 @@ function resetForm() {
             title="Количество"
             style="width: 25%;"
           />
+                    <Selector
+            v-if="mode === 'add'"
+            v-model="selectedKind"
+            style="width: 45%;"
+            title="Вид модуля"
+            :required="true"
+            :items="kindItems"
+          />
+          <div
+            v-else
+            class="flex flex-col gap-[5px]"
+            style="width: 45%;"
+          >
+            <span class="select-none font-semibold text-sm">Вид модуля</span>
+            <div class="kind-locked text-sm flex items-center px-3">
+              {{ selectedKind?.value ?? kindName(editing?.parent_product_id ?? 0) }}
+            </div>
+          </div>
         </div>
         <div
-          v-if="kindFields.length"
+          v-if="ungroupedFields.length"
           class="fields-grid"
         >
           <DynamicField
-            v-for="field in kindFields"
+            v-for="field in ungroupedFields"
             :key="field.code"
             v-model="values[field.code]"
             :field="field"
           />
         </div>
-        <div class="flex items-center gap-3 mt-1">
-          <CheckboxRoot
-            v-model="active"
-            :class="active ? 'checkbox-active' : 'checkbox-disable'"
-          >
-            <CheckboxIndicator>
-              <Icon
-                icon="radix-icons:check"
-                style="color: white;"
-              />
-            </CheckboxIndicator>
-          </CheckboxRoot>
-          <span class="select-none font-semibold text-sm">Активен</span>
+        <!-- Мультиселект-группы: flag-поля объединены в один селектор (старый дизайн) -->
+        <div
+          v-if="kindGroups.length"
+          class="fields-grid"
+        >
+          <MultiSelectGroup
+            v-for="group in kindGroups"
+            :key="group.name"
+            v-model="values"
+            :title="group.name"
+            :fields="groupFields(group.fields)"
+          />
         </div>
       </div>
       <div
@@ -356,6 +418,8 @@ function resetForm() {
 .module-row:first-child{ border-top: 0; }
 .fields-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; }
 .kind-locked{ height: 38px; background-color: #edf2f7; border-radius: 5px; color: #64748b; }
+.add-contract-btn{ height: 38px; min-width: 38px; border: 1.5px solid #e7eaee; border-radius: 5px; cursor: pointer; }
+.blue-hover:hover .hover-item{ color: #437db4; transition: color 0.15s ease; }
 .save-btn{ background: #3182ce; border-radius: 5px; cursor: pointer; }
 .save-btn:hover{ background: #5899d7; transition: background 0.15s ease; }
 .add-btn{ background: #3182ce; border-radius: 8px; cursor: pointer; }

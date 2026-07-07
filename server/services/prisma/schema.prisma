@@ -173,6 +173,7 @@ model portal {
   contact_email           contact_email[]
   contact_phones          contact_phones[]
   contract                contract[]
+  field_group             field_group[]
   field_metadata          field_metadata[]
   invoice                 invoice[]
   module                  module[]
@@ -297,4 +298,15 @@ model module {
   @@unique([portal_id, bitrix_id], map: "module_portal_bitrix_uq")
   @@index([contract_id], map: "module_contract_idx")
   @@index([parent_product_id], map: "module_parent_idx")
+}
+
+model field_group {
+  id                Int      @id @default(autoincrement())
+  portal_id         Int
+  parent_product_id Int
+  name              String
+  fields            String[] @default([])
+  portal            portal   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "field_group_portal_fk")
+
+  @@index([portal_id, parent_product_id], map: "field_group_portal_kind_idx")
 }
