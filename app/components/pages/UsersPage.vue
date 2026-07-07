@@ -28,6 +28,26 @@ function filterItems(code: string): SelectorObject[] {
   return a
 }
 
+// Столбцы таблицы: по дефолту — все поля из зеркала метаданных договора.
+// (позже сузится настройкой портала)
+const columns = computed(() => billingStateStore.contractFields)
+
+// Человекочитаемое значение ячейки: enum → value по id, даты — локально, прочее — как есть
+function cellValue(contract: IContract, field: typeof columns.value[number]): string {
+  const raw = contract.values?.[field.code]
+  if (raw === undefined || raw === null || raw === '') return '—'
+  if (field.type === 'enumeration') {
+    const ids = Array.isArray(raw) ? raw : [raw]
+    return ids.map(id => field.items?.find(i => String(i.id) === String(id))?.value ?? String(id)).join(', ')
+  }
+  if (field.type === 'boolean') return (raw === true || raw === 'Y' || raw === 1 || raw === '1') ? 'Да' : 'Нет'
+  if (field.type === 'date' || field.type === 'datetime') {
+    const d = new Date(String(raw))
+    return Number.isNaN(d.getTime()) ? String(raw) : d.toLocaleDateString('ru-RU')
+  }
+  return String(raw)
+}
+
 const timeOutSearch = ref<NodeJS.Timeout>()
 
 function openEdit(item: IContract) {
@@ -205,9 +225,17 @@ async function inputSearch(e: InputEvent) {
               <div
                 class="users-list-row h-[50px]"
                 style="border-width: 0;"
+                :style="{ gridTemplateColumns: `minmax(160px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
               >
                 <div class="font-semibold">
                   Имя
+                </div>
+                <div
+                  v-for="col in columns"
+                  :key="col.code"
+                  class="font-semibold cell-ellipsis"
+                >
+                  {{ col.title }}
                 </div>
               </div>
               <div style="overflow-y: auto;">
@@ -217,10 +245,18 @@ async function inputSearch(e: InputEvent) {
                 >
                   <div
                     class="users-list-row users-item"
+                    :style="{ gridTemplateColumns: `minmax(160px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
                     @click="openEdit(value)"
                   >
-                    <p style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    <p class="cell-ellipsis">
                       {{ value.name }}
+                    </p>
+                    <p
+                      v-for="col in columns"
+                      :key="col.code"
+                      class="cell-ellipsis text-gray-600 text-sm"
+                    >
+                      {{ cellValue(value, col) }}
                     </p>
                   </div>
                 </div>
@@ -379,13 +415,12 @@ async function inputSearch(e: InputEvent) {
     transition: background 0.15s ease;
 }
 .search-box{
-    height: 65%;
-    margin-top: auto;
+    height: 40px;
     padding: 7px 10px;
     background-color: #edf2f7;
     border-radius: 5px;
     border: 1px solid rgba(255, 0, 0, 0);
-    width: 60%;
+    width: 100%;
     align-items: center;
 }
 .search-input{
@@ -416,6 +451,12 @@ async function inputSearch(e: InputEvent) {
     gap: 10px;
     border-top: 1px solid #d1d5db;
     padding: 10px 5px 10px 5px;
+    min-width: max-content;
+}
+.cell-ellipsis{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 .status-box{
     align-self: center;

@@ -240,6 +240,16 @@ export class bitrixAPI {
     return response.data as bitrixResponse<{ productProperties: IBitrixCatalogProperty[] }>
   }
 
+  /** Варианты (enum) списочных свойств каталога по их propertyId — для items у полей-селекторов. */
+  async getCatalogPropertyEnums(domain: string, token: string, propertyIds: number[]) {
+    const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.productPropertyEnum.list`, {
+      select: ['id', 'propertyId', 'value', 'sort'],
+      filter: { propertyId: propertyIds },
+      order: { sort: 'asc' }
+    }, { params: { auth: token } })
+    return response.data as bitrixResponse<{ productPropertyEnums: { id: number, propertyId: number, value: string, sort: number }[] }>
+  }
+
   /** Offer'ы (торговые предложения) по родительскому товару — для образца полей вида. */
   async getCatalogOffers(domain: string, token: string, iblockId: number, parentId: number, propertyCodes: string[]) {
     const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.product.offer.list`, {

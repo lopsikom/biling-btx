@@ -10,7 +10,7 @@ import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
 import { bilingPagesEnum, type ICompanyNew, type ICompnany } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockInvoice, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMetadata, mockContracts, mockInvoice, mockModuleMetadata, mockModules, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
@@ -92,28 +92,26 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       bitrixStateStore.companyAddress = mockAddress
       bitrixStateStore.companyInvoice = mockInvoice
 
+      // Договоры/модули/метаданные — из фронт-моков (работа без живого Bitrix).
+      // Connections пока не мокаем — тянем реальные.
       const [
-        contractMetadata,
-        moduleMetadata,
-        modules,
         connectionStatuses,
         connectionTypes,
         connections
       ] = await Promise.all([
-        $axios.getContractMetadata(),
-        $axios.getModuleMetadata(),
-        $axios.getModules({ company_bitrix_id: '2' }),
         $axios.getConnectionStatus(),
         $axios.getConnectionType(),
         $axios.getConnectionList({ company_id: '2' })
       ])
 
-      billingStateStore.contractFields = contractMetadata.fields
-      billingStateStore.metadataConfigured = contractMetadata.configured
-      billingStateStore.moduleKinds = moduleMetadata.kinds
-      billingStateStore.moduleFieldsByKind = moduleMetadata.fieldsByKind
-      billingStateStore.moduleMetadataConfigured = moduleMetadata.configured
-      billingStateStore.modules = modules
+      billingStateStore.contractFields = mockContractMetadata.fields
+      billingStateStore.metadataConfigured = mockContractMetadata.configured
+      billingStateStore.contracts = mockContracts
+      billingStateStore.contractsTariff = mockContracts
+      billingStateStore.moduleKinds = mockModuleMetadata.kinds
+      billingStateStore.moduleFieldsByKind = mockModuleMetadata.fieldsByKind
+      billingStateStore.moduleMetadataConfigured = mockModuleMetadata.configured
+      billingStateStore.modules = mockModules
       billingStateStore.connection_statuses = connectionStatuses
       billingStateStore.connection_types = connectionTypes
       billingStateStore.connections = connections

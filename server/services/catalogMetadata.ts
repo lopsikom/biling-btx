@@ -22,6 +22,12 @@ export interface IBitrixCatalogProperty {
   propertyType: string
 }
 
+// Вариант списочного (L) свойства: id — то, что лежит в offer'е, value — человекочитаемое
+export interface ICatalogPropertyEnum {
+  id: string
+  value: string
+}
+
 // Ключ свойства offer'а в ответе Bitrix — property<id> (НЕ code). code — только для справки.
 function offerKey(prop: IBitrixCatalogProperty): string {
   return `property${prop.id}`
@@ -38,6 +44,8 @@ export interface ICatalogMirror {
   fieldsByProduct: Record<number, string[]>
   // Имена видов (parentId → название товара)
   productNames: Record<number, string>
+  // Варианты списочных свойств: propertyId → [{ id, value }] (для items у селекторов)
+  enumsByProperty?: Record<number, ICatalogPropertyEnum[]>
 }
 
 const MIRROR_TTL_MS = 10 * 60 * 1000
@@ -60,6 +68,16 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
     // Ключи для select и для чтения значений — property<id> (Bitrix отдаёт по ним, не по code)
     const propKeys = properties.map(offerKey)
 
+    // Варианты списочных (L) свойств — для items у полей-селекторов
+    const enumPropIds = properties.filter(p => p.propertyType === 'L').map(p => p.id)
+    const enumsByProperty: Record<number, ICatalogPropertyEnum[]> = {}
+    if (enumPropIds.length) {
+      const enumsResp = await bitrixAPI.getCatalogPropertyEnums(data.domain, data.token, enumPropIds)
+      for (const e of enumsResp.result.productPropertyEnums) {
+        (enumsByProperty[e.propertyId] ??= []).push({ id: String(e.id), value: e.value })
+      }
+    }
+
     const fieldsByProduct: Record<number, string[]> = {}
     const productNames: Record<number, string> = {}
 
@@ -80,7 +98,7 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
       fieldsByProduct[parentId] = propKeys.filter(key => !isEmptyOfferValue(sample[key] as OfferPropValue))
     }
 
-    const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames }
+    const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames, enumsByProperty }
     await prisma.field_metadata.upsert({
       where: { portal_id_entity: { portal_id: data.portal_id, entity: 'module' } },
       update: { fields: mirror as unknown as object, updated_at: new Date() },
@@ -136,13 +154,18 @@ export function moduleFieldsForProduct(mirror: ICatalogMirror, parentProductId: 
   const relevant = new Set(mirror.fieldsByProduct[parentProductId] ?? [])
   return mirror.properties
     .filter(p => relevant.has(offerKey(p)))
-    .map(p => ({
-      code: offerKey(p),
-      title: p.name,
-      type: CATALOG_TYPE_MAP[p.propertyType] ?? 'string',
-      isRequired: false,
-      isMultiple: false
-    }))
+    .map((p) => {
+      const meta: IFieldMeta = {
+        code: offerKey(p),
+        title: p.name,
+        type: CATALOG_TYPE_MAP[p.propertyType] ?? 'string',
+        isRequired: false,
+        isMultiple: false
+      }
+      // Списочному свойству прокидываем варианты — иначе селектор пуст
+      if (p.propertyType === 'L') meta.items = mirror.enumsByProperty?.[p.id] ?? []
+      return meta
+    })
 }
 
 export function catalogTypeMap() {

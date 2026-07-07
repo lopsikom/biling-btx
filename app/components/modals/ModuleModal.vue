@@ -5,7 +5,7 @@ import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
 import useMenuStore from '~/services/stores/menuStores'
 import type { SelectorObject } from '~/services/models'
-import type { IModule, IModulePost } from '~~/shared/models/APIModels'
+import type { IModule, IModulePost, IModuleUpdate } from '~~/shared/models/APIModels'
 
 // Generic-модалка модулей (ADR-0004/0006): список модулей + добавление по видам каталога.
 // Форма вида рендерится DynamicField по метаданным каталога — как договор в этапе 1.
@@ -19,9 +19,11 @@ const { $axios } = useNuxtApp()
 const contractItems = computed<SelectorObject[]>(() => billingStateStore.contractsTariff.map(c => ({ label: c.id, value: c.name })))
 const kindItems = computed<SelectorObject[]>(() => billingStateStore.moduleKinds.map(k => ({ label: k.parent_product_id, value: k.name })))
 
-const mode = ref<'list' | 'add'>('list')
+const mode = ref<'list' | 'add' | 'edit'>('list')
+// В режиме edit — редактируемый модуль (вид менять нельзя, offer привязан к виду)
+const editing = ref<IModule>()
 
-// Форма нового модуля
+// Форма модуля (общая для add/edit)
 const selectedContract = ref<SelectorObject>()
 const selectedKind = ref<SelectorObject>()
 const title = ref<string>('')
@@ -30,15 +32,19 @@ const quantity = ref<number>(1)
 const active = ref<boolean>(true)
 const values = ref<Record<string, unknown>>({})
 
-// Поля выбранного вида — из метаданных каталога
+// Поля выбранного вида — из метаданных каталога.
+// В add — по выбранному виду, в edit — по виду редактируемого модуля.
 const kindFields = computed(() => {
-  if (!selectedKind.value) return []
-  return billingStateStore.moduleFieldsByKind[Number(selectedKind.value.label)] ?? []
+  const pid = mode.value === 'edit' ? editing.value?.parent_product_id : (selectedKind.value ? Number(selectedKind.value.label) : undefined)
+  if (pid === undefined) return []
+  return billingStateStore.moduleFieldsByKind[pid] ?? []
 })
 
 watch(selectedKind, (k) => {
+  // Сброс значений при смене вида — только при создании (в edit вид фиксирован)
+  if (mode.value !== 'add') return
   values.value = {}
-  if (k && !title.value) title.value = k.value
+  if (k && !title.value) title.value = String(k.value)
 })
 
 onBeforeMount(async () => {
@@ -81,6 +87,45 @@ async function saveModule() {
   } finally { menuStore.fetchDataLoad = false }
 }
 
+// Открыть форму редактирования: предзаполнить из модуля, вид зафиксировать
+function openEdit(module: IModule) {
+  editing.value = module
+  selectedContract.value = contractItems.value.find(c => Number(c.label) === module.contract_id)
+  selectedKind.value = kindItems.value.find(k => Number(k.label) === module.parent_product_id)
+  title.value = module.title
+  price.value = module.price
+  quantity.value = module.quantity
+  active.value = module.active
+  values.value = { ...(module.values ?? {}) }
+  mode.value = 'edit'
+}
+
+async function saveEdit() {
+  if (!editing.value) return
+  menuStore.fetchDataLoad = true
+  try {
+    if (!selectedContract.value || isEmpty(title.value)) throw new Error('Validation Error')
+    const data: IModuleUpdate = {
+      contract_id: Number(selectedContract.value.label),
+      title: title.value,
+      price: Number(price.value) || 0,
+      quantity: Number(quantity.value) || 1,
+      active: active.value,
+      values: { ...values.value }
+    }
+    const updated = await $axios.patchModule(editing.value.id, data)
+    const idx = billingStateStore.modules.findIndex(m => m.id === updated.id)
+    if (idx > -1) billingStateStore.modules[idx] = updated
+    toastStore.openToast('Модуль обновлён')
+    resetForm()
+    mode.value = 'list'
+  } catch (e) {
+    console.error(e)
+    if ((e as Error).message === 'Validation Error') toastStore.openToast('Заполните договор и название')
+    else toastStore.openToast('Не удалось обновить модуль')
+  } finally { menuStore.fetchDataLoad = false }
+}
+
 async function removeModule(module: IModule) {
   menuStore.fetchDataLoad = true
   try {
@@ -96,6 +141,7 @@ async function removeModule(module: IModule) {
 }
 
 function resetForm() {
+  editing.value = undefined
   selectedContract.value = undefined
   selectedKind.value = undefined
   title.value = ''
@@ -176,6 +222,11 @@ function resetForm() {
             <span class="text-xs">{{ m.active ? 'Активен' : 'Отключён' }}</span>
           </div>
           <Icon
+            icon="mdi:pencil-outline"
+            class="w-5 h-5 text-sky-600 cursor-pointer"
+            @click="openEdit(m)"
+          />
+          <Icon
             icon="mdi:trash-can-outline"
             class="w-5 h-5 text-red-500 cursor-pointer"
             @click="removeModule(m)"
@@ -184,7 +235,7 @@ function resetForm() {
       </div>
     </div>
 
-    <!-- Добавление модуля -->
+    <!-- Добавление / редактирование модуля -->
     <div
       v-else
       class="assign-modal"
@@ -202,12 +253,23 @@ function resetForm() {
             :items="contractItems"
           />
           <Selector
+            v-if="mode === 'add'"
             v-model="selectedKind"
             style="width: 50%;"
             title="Вид модуля"
             :required="true"
             :items="kindItems"
           />
+          <div
+            v-else
+            class="flex flex-col gap-[5px]"
+            style="width: 50%;"
+          >
+            <span class="select-none font-semibold text-sm">Вид модуля</span>
+            <div class="kind-locked text-sm flex items-center px-3">
+              {{ selectedKind?.value ?? kindName(editing?.parent_product_id ?? 0) }}
+            </div>
+          </div>
         </div>
         <div class="flex gap-[10px]">
           <InputBox
@@ -265,7 +327,7 @@ function resetForm() {
       >
         <div
           class="save-btn justify-center items-center px-[12px] py-[8px]"
-          @click="saveModule()"
+          @click="mode === 'edit' ? saveEdit() : saveModule()"
         >
           <p
             class="select-none text-sm"
@@ -293,6 +355,7 @@ function resetForm() {
 .module-row{ border-top: 1px solid #edf2f7; }
 .module-row:first-child{ border-top: 0; }
 .fields-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; }
+.kind-locked{ height: 38px; background-color: #edf2f7; border-radius: 5px; color: #64748b; }
 .save-btn{ background: #3182ce; border-radius: 5px; cursor: pointer; }
 .save-btn:hover{ background: #5899d7; transition: background 0.15s ease; }
 .add-btn{ background: #3182ce; border-radius: 8px; cursor: pointer; }

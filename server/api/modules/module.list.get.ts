@@ -1,6 +1,7 @@
 import z, { ZodError } from 'zod'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { getModuleList, moduleToApi } from '~~/server/utils/prisma/modules/Module'
+import { healZeroKindModules } from '~~/server/services/contractProductSync/healContractModules'
 import { ModuleFilter, type IModuleFilter } from '~~/shared/models/APIModels'
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +15,13 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Invalid filter' })
       }
     }
-    const data = await getModuleList(portal.portal.id, filterParse)
+    let data = await getModuleList(portal.portal.id, filterParse)
+    // Self-heal: если есть модули с parent_product_id=0 (плейсхолдер миграции) —
+    // пересинкаем их договоры из Bitrix и перечитываем (см. healZeroKindModules).
+    if (data.some(m => m.parent_product_id === 0)) {
+      const healed = await healZeroKindModules(data, portal)
+      if (healed) data = await getModuleList(portal.portal.id, filterParse)
+    }
     return data.map(moduleToApi)
   } catch (e) {
     console.error(e)

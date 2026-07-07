@@ -1,12 +1,14 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(npx tsc *)",
       "Bash(node_modules/.bin/tsc --noEmit --project .)",
       "mcp__b24-dev-mcp__bitrix-method-details",
       "mcp__b24-dev-mcp__bitrix-search",
-      "Bash(git -C /home/lopsik/biling-btx ls-files)"
-    ]
+      "Bash(git -C /home/lopsik/biling-btx ls-files)",
+      "Bash(timeout 240 npx vue-tsc --noEmit -p tsconfig.json)",
+      "Bash(timeout 300 npm run typecheck)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }
