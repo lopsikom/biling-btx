@@ -112,12 +112,20 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
       for (const p of products.result.products) productNames[p.id] = p.name
     }
 
-    // Релевантность полей (ADR-0006): свойство принадлежит виду, если непусто ХОТЯ БЫ У ОДНОГО
-    // offer'а вида. null = свойство неприменимо к этому SKU; 'N' — валидное «нет» (не пусто).
+    // Flag-поля (L с единственным вариантом «Да» → чекбокс Y/N): у offer'ов ВСЕХ видов
+    // они заполнены N, поэтому «не-null» их не отсекает (мессенджеры лезут ко всем видам).
+    // Для них релевантность строже: флаг принадлежит виду, только если хоть один offer'
+    // имеет Y (вид реально его использует). Проверено на портале: Y есть только у Чат-бота.
+    const flagKeys = new Set(properties.filter(p => p.propertyType === 'L' && (enumsByProperty[p.id]?.length ?? 0) === 1).map(offerKey))
+
+    // Релевантность полей (ADR-0006): свойство принадлежит виду, если непусто хотя бы у одного
+    // offer'а (null = неприменимо к SKU). Flag-поля — только если хоть у одного offer'а Y.
     // Сканируем все offer'ы вида, а не первый — образец бывает пустым черновиком.
     for (const parentId of data.productIds) {
       const offers = (await bitrixAPI.getCatalogOffers(data.domain, data.token, OFFER_IBLOCK_ID, parentId, propKeys)).result.offers
-      fieldsByProduct[parentId] = propKeys.filter(key => offers.some(o => !isEmptyOfferValue(o[key] as OfferPropValue)))
+      fieldsByProduct[parentId] = propKeys.filter(key => flagKeys.has(key)
+        ? offers.some(o => isOfferFlagOn(o[key] as OfferPropValue))
+        : offers.some(o => !isEmptyOfferValue(o[key] as OfferPropValue)))
     }
 
     const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames, enumsByProperty }
@@ -143,6 +151,13 @@ function isEmptyOfferValue(v: OfferPropValue): boolean {
   if (v === null || v === undefined || v === '') return true
   if (typeof v === 'object') return v.value === null || v.value === undefined || v.value === ''
   return false
+}
+
+// Flag-поле «включено» = значение 'Y' (offer хранит flag как Y/N-строку, объектом {value:'Y'}).
+// По этому сигналу определяем, что вид реально использует флаг (см. релевантность в getCatalogMirror).
+function isOfferFlagOn(v: OfferPropValue): boolean {
+  if (typeof v === 'object' && v !== null) return v.value === 'Y'
+  return v === 'Y'
 }
 
 /** Инвалидация зеркала каталога: следующий getCatalogMirror перечитает из Bitrix. */
