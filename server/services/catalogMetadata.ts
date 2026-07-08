@@ -231,10 +231,11 @@ export function buildOfferPayload(mirror: ICatalogMirror, parentProductId: numbe
   for (const field of fields) {
     if (!(field.code in values)) continue
     const raw = values[field.code]
-    // Flag-поле (L с одним вариантом «Да»): включён → { value: <id «Да»> }, выключен → '' (Bitrix ставит «-»)
+    // Flag-поле (L с одним вариантом «Да»): Bitrix хранит и ждёт его как голую строку
+    // 'Y'/'N' (проверено catalog.product.get), а НЕ как { value: <id> } — иначе не применяется.
     if (field.trueEnumId) {
       const on = raw === true || raw === 'Y' || raw === 1 || raw === '1' || String(raw) === field.trueEnumId
-      payload[field.code] = on ? { value: field.trueEnumId } : ''
+      payload[field.code] = on ? 'Y' : 'N'
       continue
     }
     if (raw === undefined || raw === null || raw === '') continue
