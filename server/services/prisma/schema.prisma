@@ -167,6 +167,7 @@ model portal {
   access_token            String?
   contract_entity_type_id Int?
   module_product_ids      Int[]            @default([])
+  module_root_section_id  Int?
   address                 address[]
   company                 company[]
   contact                 contact[]

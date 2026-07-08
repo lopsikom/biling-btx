@@ -26,9 +26,9 @@ export const mockContractMetadata: IMetadataResponse = {
 export const mockModuleMetadata: IModuleMetadataResponse = {
   configured: true,
   kinds: [
-    { parent_product_id: 4930, name: 'Обзвон' },
-    { parent_product_id: 4940, name: 'Голосовой робот' },
-    { parent_product_id: 4965, name: 'Интеллектуальный Чат-бот' }
+    { parent_product_id: 4930, name: 'Обзвон', category_id: 39, category_name: 'Автоинформирование' },
+    { parent_product_id: 4940, name: 'Голосовой робот', category_id: 38, category_name: 'Голосовой робот' },
+    { parent_product_id: 4965, name: 'Интеллектуальный Чат-бот', category_id: 40, category_name: 'Чат-бот' }
   ],
   fieldsByKind: {
     4930: [

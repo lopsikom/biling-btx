@@ -29,7 +29,7 @@ export async function provisionModule(body: IModulePost, ctx: PortalDataType) {
   const portalRow = await getPortal({ id: ctx.portal.id })
   const mirror = await getCatalogMirror({
     portal_id: ctx.portal.id, domain: ctx.portal.domain, token: token.access_token,
-    productIds: portalRow?.module_product_ids ?? []
+    rootSectionId: portalRow?.module_root_section_id ?? 0
   })
   const offerProps = buildOfferPayload(mirror, body.parent_product_id, body.values)
 
@@ -86,7 +86,7 @@ export async function updateModuleProvisioning(id: number, body: IModuleUpdate, 
   const portalRow = await getPortal({ id: ctx.portal.id })
   const mirror = await getCatalogMirror({
     portal_id: ctx.portal.id, domain: ctx.portal.domain, token: token.access_token,
-    productIds: portalRow?.module_product_ids ?? []
+    rootSectionId: portalRow?.module_root_section_id ?? 0
   })
   const offerProps = body.values ? buildOfferPayload(mirror, old.parent_product_id, body.values) : undefined
 

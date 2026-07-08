@@ -7,7 +7,8 @@ import type { IPortalBinding } from '~~/shared/models/APIModels'
 
 const BindingPatch = z.object({
   contract_entity_type_id: z.number().int().positive().optional(),
-  module_product_ids: z.array(z.number().int().positive()).optional()
+  module_product_ids: z.array(z.number().int().positive()).optional(),
+  module_root_section_id: z.number().int().positive().optional()
 })
 
 // Смена привязки портала: какой смарт-процесс — договор, какие товары — виды модулей.
@@ -20,14 +21,16 @@ export default defineEventHandler(async (event): Promise<IPortalBinding> => {
       where: { id: portalCtx.portal.id },
       data: {
         contract_entity_type_id: body.contract_entity_type_id,
-        module_product_ids: body.module_product_ids
+        module_product_ids: body.module_product_ids,
+        module_root_section_id: body.module_root_section_id
       }
     })
     if (body.contract_entity_type_id) await invalidateFieldsMirror(portal.id, 'contract')
-    if (body.module_product_ids !== undefined) await invalidateCatalogMirror(portal.id)
+    if (body.module_product_ids !== undefined || body.module_root_section_id !== undefined) await invalidateCatalogMirror(portal.id)
     return {
       contract_entity_type_id: portal.contract_entity_type_id,
-      module_product_ids: portal.module_product_ids
+      module_product_ids: portal.module_product_ids,
+      module_root_section_id: portal.module_root_section_id
     }
   } catch (e) {
     console.error(e)

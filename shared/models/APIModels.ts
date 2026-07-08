@@ -62,6 +62,7 @@ export interface IMetadataResponse {
 export interface IPortalBinding {
   contract_entity_type_id: number | null
   module_product_ids: number[]
+  module_root_section_id: number | null
 }
 
 // Модуль на динамических полях (ADR-0004/0006): системные поля — явные ключи,
@@ -114,6 +115,9 @@ export type IModuleUpdate = z.infer<typeof ModuleUpdate>
 export interface IModuleKind {
   parent_product_id: number
   name: string
+  // Категория вида = папка-подраздел каталога (для группировки видов в UI)
+  category_id: number | null
+  category_name: string | null
 }
 
 // Мультиселект-группа полей вида модуля (field group): объединяет несколько

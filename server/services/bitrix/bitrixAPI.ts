@@ -231,6 +231,23 @@ export class bitrixAPI {
     return response.data as bitrixResponse<{ products: { id: number, name: string, iblockSectionId: number | null }[] }>
   }
 
+  /** Все разделы инфоблока (для обхода поддерева корневого раздела каталога). */
+  async getCatalogSections(domain: string, token: string, iblockId: number) {
+    const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.section.list`, {
+      filter: { iblockId: iblockId }
+    }, { params: { auth: token } })
+    return response.data as bitrixResponse<{ sections: { id: number, iblockSectionId: number | null, name: string }[] }>
+  }
+
+  /** Товары каталога в заданных разделах (виды модулей = товары под корневым разделом). */
+  async getCatalogProductsBySection(domain: string, token: string, iblockId: number, sectionIds: number[]) {
+    const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.product.list`, {
+      select: ['id', 'iblockId', 'name', 'iblockSectionId'],
+      filter: { iblockId: iblockId, iblockSectionId: sectionIds }
+    }, { params: { auth: token } })
+    return response.data as bitrixResponse<{ products: { id: number, name: string, iblockSectionId: number | null }[] }>
+  }
+
   /** Описания свойств offer'ов каталога (id/code/name/propertyType). */
   async getCatalogProperties(domain: string, token: string, iblockId: number) {
     const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.productProperty.list`, {

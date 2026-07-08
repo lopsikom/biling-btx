@@ -87,6 +87,19 @@ function kindName(pid: number) {
   return billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)?.name ?? `Товар ${pid}`
 }
 
+// Список модулей, сгруппированный по категории-папке каталога (как в старом окне).
+const modulesByCategory = computed(() => {
+  const kindOf = (pid: number) => billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)
+  const groups = new Map<string, IModule[]>()
+  for (const m of modulesList.value) {
+    const kind = kindOf(m.parent_product_id)
+    const cat = kind?.category_name ?? kind?.name ?? `Товар ${m.parent_product_id}`
+    if (!groups.has(cat)) groups.set(cat, [])
+    groups.get(cat)!.push(m)
+  }
+  return [...groups.entries()].map(([category, modules]) => ({ category, modules }))
+})
+
 function isEmpty(v: unknown) {
   return v === undefined || v === null || String(v).trim() === ''
 }
@@ -239,35 +252,43 @@ function resetForm() {
         >
           Модулей нет
         </div>
+        <!-- Группировка по категории-папке каталога -->
         <div
-          v-for="m in modulesList"
-          :key="m.id"
-          class="module-row flex items-center gap-3 py-2"
+          v-for="group in modulesByCategory"
+          :key="group.category"
+          class="flex flex-col gap-1"
         >
+          <span class="text-gray-500 text-xs font-semibold uppercase select-none mt-2">{{ group.category }}</span>
           <div
-            class="flex flex-col"
-            style="flex: 1;"
+            v-for="m in group.modules"
+            :key="m.id"
+            class="module-row flex items-center gap-3 py-2"
           >
-            <span class="font-semibold text-sm">{{ m.title }}</span>
-            <span class="text-gray-500 text-xs">{{ kindName(m.parent_product_id) }} · {{ m.price }} ₽ · {{ m.quantity }} шт</span>
+            <div
+              class="flex flex-col"
+              style="flex: 1;"
+            >
+              <span class="font-semibold text-sm">{{ m.title }}</span>
+              <span class="text-gray-500 text-xs">{{ kindName(m.parent_product_id) }} · {{ m.price }} ₽ · {{ m.quantity }} шт</span>
+            </div>
+            <div
+              :class="m.active ? 'any-green-container' : 'any-red-container'"
+              class="flex gap-1 py-0.5 px-1.5 items-center"
+              style="height: fit-content;"
+            >
+              <span class="text-xs">{{ m.active ? 'Активен' : 'Отключён' }}</span>
+            </div>
+            <Icon
+              icon="mdi:pencil-outline"
+              class="w-5 h-5 text-sky-600 cursor-pointer"
+              @click="openEdit(m)"
+            />
+            <Icon
+              icon="mdi:trash-can-outline"
+              class="w-5 h-5 text-red-500 cursor-pointer"
+              @click="removeModule(m)"
+            />
           </div>
-          <div
-            :class="m.active ? 'any-green-container' : 'any-red-container'"
-            class="flex gap-1 py-0.5 px-1.5 items-center"
-            style="height: fit-content;"
-          >
-            <span class="text-xs">{{ m.active ? 'Активен' : 'Отключён' }}</span>
-          </div>
-          <Icon
-            icon="mdi:pencil-outline"
-            class="w-5 h-5 text-sky-600 cursor-pointer"
-            @click="openEdit(m)"
-          />
-          <Icon
-            icon="mdi:trash-can-outline"
-            class="w-5 h-5 text-red-500 cursor-pointer"
-            @click="removeModule(m)"
-          />
         </div>
       </div>
     </div>

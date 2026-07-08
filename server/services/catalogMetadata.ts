@@ -59,18 +59,23 @@ export interface ICatalogMirror {
   productNames: Record<number, string>
   // Варианты списочных свойств: propertyId → [{ id, value }] (для items у селекторов)
   enumsByProperty?: Record<number, ICatalogPropertyEnum[]>
+  // Категория вида = папка-подраздел корня (parentId → id категории). Для группировки видов.
+  categoryByProduct?: Record<number, number>
+  // Имена категорий (id подпапки корня → название, напр. «ВАТС»)
+  categoryNames?: Record<number, string>
 }
 
 const MIRROR_TTL_MS = 10 * 60 * 1000
 
 /**
  * Зеркало метаданных каталога (ADR-0006). Аналог field metadata договора, но источник —
- * каталог: штатные поля offer'ов (catalog.product.offer.getFieldsByFilter, даёт
+ * каталог: виды = все товары под корневым разделом rootSectionId (его поддерево) +
+ * штатные поля offer'ов (catalog.product.offer.getFieldsByFilter, даёт
  * name/type/isMultiple/isRequired) + варианты списков (productPropertyEnum.list) +
  * эвристика релевантности «свойство принадлежит виду, если непусто хотя бы у одного
  * offer'а вида» (нативной привязки свойство↔вид в каталоге нет). entity='module'.
  */
-export async function getCatalogMirror(data: { portal_id: number, domain: string, token: string, productIds: number[], force?: boolean }): Promise<ICatalogMirror> {
+export async function getCatalogMirror(data: { portal_id: number, domain: string, token: string, rootSectionId: number, force?: boolean }): Promise<ICatalogMirror> {
   const row = await prisma.field_metadata.findUnique({
     where: { portal_id_entity: { portal_id: data.portal_id, entity: 'module' } }
   })
@@ -106,10 +111,26 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
     const fieldsByProduct: Record<number, string[]> = {}
     const productNames: Record<number, string> = {}
 
-    // Имена видов
-    if (data.productIds.length) {
-      const products = await bitrixAPI.getCatalogProducts(data.domain, data.token, PRODUCT_IBLOCK_ID, data.productIds)
-      for (const p of products.result.products) productNames[p.id] = p.name
+    // Виды = все товары под корневым разделом каталога (его поддерево разделов).
+    // Бизнес кладёт товар в папку «Нового каталога» — он автоматически становится видом.
+    const sectionsResp = await bitrixAPI.getCatalogSections(data.domain, data.token, PRODUCT_IBLOCK_ID)
+    const sections = sectionsResp.result.sections
+    const sectionIds = collectSectionSubtree(sections, data.rootSectionId)
+    const products = await bitrixAPI.getCatalogProductsBySection(data.domain, data.token, PRODUCT_IBLOCK_ID, sectionIds)
+    const productIds = products.result.products.map(p => p.id)
+
+    // Категории = прямые подпапки корня (напр. «ВАТС», «Чат-бот»). Каждый вид относится
+    // к своей категории — по ней виды группируются в UI (как в старом окне модулей).
+    const parentOf = new Map(sections.map(s => [s.id, s.iblockSectionId]))
+    const categoryNames: Record<number, string> = {}
+    for (const s of sections) if (s.iblockSectionId === data.rootSectionId) categoryNames[s.id] = s.name
+    const categoryByProduct: Record<number, number> = {}
+    for (const p of products.result.products) {
+      productNames[p.id] = p.name
+      // Поднимаемся от раздела товара до прямой подпапки корня — это его категория.
+      let sec: number | null = p.iblockSectionId
+      while (sec != null && parentOf.get(sec) !== data.rootSectionId) sec = parentOf.get(sec) ?? null
+      if (sec != null) categoryByProduct[p.id] = sec
     }
 
     // Flag-поля (L с единственным вариантом «Да» → чекбокс Y/N): у offer'ов ВСЕХ видов
@@ -121,14 +142,14 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
     // Релевантность полей (ADR-0006): свойство принадлежит виду, если непусто хотя бы у одного
     // offer'а (null = неприменимо к SKU). Flag-поля — только если хоть у одного offer'а Y.
     // Сканируем все offer'ы вида, а не первый — образец бывает пустым черновиком.
-    for (const parentId of data.productIds) {
+    for (const parentId of productIds) {
       const offers = (await bitrixAPI.getCatalogOffers(data.domain, data.token, OFFER_IBLOCK_ID, parentId, propKeys)).result.offers
       fieldsByProduct[parentId] = propKeys.filter(key => flagKeys.has(key)
         ? offers.some(o => isOfferFlagOn(o[key] as OfferPropValue))
         : offers.some(o => !isEmptyOfferValue(o[key] as OfferPropValue)))
     }
 
-    const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames, enumsByProperty }
+    const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames, enumsByProperty, categoryByProduct, categoryNames }
     await prisma.field_metadata.upsert({
       where: { portal_id_entity: { portal_id: data.portal_id, entity: 'module' } },
       update: { fields: mirror as unknown as object, updated_at: new Date() },
@@ -158,6 +179,23 @@ function isEmptyOfferValue(v: OfferPropValue): boolean {
 function isOfferFlagOn(v: OfferPropValue): boolean {
   if (typeof v === 'object' && v !== null) return v.value === 'Y'
   return v === 'Y'
+}
+
+// Раздел + все его подразделы (обход дерева вниз по parent-ссылкам).
+// Возвращает id корня и всех потомков — товары в них становятся видами модулей.
+function collectSectionSubtree(sections: { id: number, iblockSectionId: number | null }[], rootId: number): number[] {
+  const children = new Map<number, number[]>()
+  for (const s of sections) {
+    if (s.iblockSectionId != null) (children.get(s.iblockSectionId) ?? children.set(s.iblockSectionId, []).get(s.iblockSectionId)!).push(s.id)
+  }
+  const result: number[] = []
+  const stack = [rootId]
+  while (stack.length) {
+    const id = stack.pop()!
+    result.push(id)
+    for (const c of children.get(id) ?? []) stack.push(c)
+  }
+  return result
 }
 
 /** Инвалидация зеркала каталога: следующий getCatalogMirror перечитает из Bitrix. */

@@ -21,17 +21,20 @@ type ModuleType = {
   count: number
 }
 
-// Плитки модулей: группировка единого списка по виду (parent_product_id),
-// имя вида — из метаданных каталога (moduleKinds)
+// Плитки модулей: группировка по КАТЕГОРИИ-папке каталога (ВАТС, Чат-бот…).
+// Вид → его категория берётся из метаданных (moduleKinds). Модули без категории
+// (вид вне «Нового каталога») группируются по имени вида как фолбэк.
 const modulesComputed = computed(() => {
-  const kindName = (pid: number) => billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)?.name ?? `Товар ${pid}`
-  const counts = new Map<number, number>()
+  const kindOf = (pid: number) => billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)
+  const counts = new Map<string, number>()
   for (const m of billingStateStore.modules) {
     if (!m.active) continue
-    counts.set(m.parent_product_id, (counts.get(m.parent_product_id) ?? 0) + 1)
+    const kind = kindOf(m.parent_product_id)
+    const title = kind?.category_name ?? kind?.name ?? `Товар ${m.parent_product_id}`
+    counts.set(title, (counts.get(title) ?? 0) + 1)
   }
   const data: ModuleType[] = []
-  for (const [pid, count] of counts) data.push({ title: kindName(pid), count })
+  for (const [title, count] of counts) data.push({ title, count })
   return data
 })
 

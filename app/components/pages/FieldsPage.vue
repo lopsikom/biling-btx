@@ -333,7 +333,7 @@ const typeNames: Record<string, string> = {
             <span class="select-none font-semibold text-sm">Новая группа</span>
             <InputBox
               v-model="newGroupName"
-              placeholder="Имя группы, напр. «Мессенджеры»"
+              placeholder="Имя группы"
               :resize="false"
               title="Название"
               style="width: 50%;"
