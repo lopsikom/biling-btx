@@ -101,11 +101,14 @@ export async function reconcileContractProducts(args: ReconcileArgs): Promise<Re
   return summary
 }
 
-// Значение свойства offer'а: список приходит {value, valueEnum}, храним valueEnum (человекочитаемо)
+// Значение свойства offer'а: список приходит { value: <id>, valueEnum: <текст> }.
+// Храним ID варианта (value), а НЕ текст (valueEnum) — селектор матчит по id, и виджет
+// тоже кладёт id. Иначе пересинк-модули хранят «Стандартный» вместо 35 → селектор пуст.
+// Числовой id приводим к числу для единообразия с виджетом. Flag-поля (Y/N) — скаляр, как есть.
 function normalizeOfferValue(v: unknown): unknown {
   if (v && typeof v === 'object' && 'value' in v) {
-    const o = v as { value: unknown, valueEnum?: unknown }
-    return o.valueEnum ?? o.value
+    const id = (v as { value: unknown }).value
+    return typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : id
   }
   return v
 }
