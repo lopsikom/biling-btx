@@ -20,7 +20,20 @@ export interface IBitrixCatalogProperty {
   name: string
   code: string
   propertyType: string
+  isMultiple?: boolean
+  isRequired?: boolean
 }
+
+// Ответ catalog.product.offer.getFieldsByFilter: ключ = property<id> или системное поле.
+export interface IOfferFieldMeta {
+  name: string
+  propertyType?: string
+  isMultiple?: boolean
+  isRequired?: boolean
+  isDynamic?: boolean
+  type?: string
+}
+export type OfferFieldsMap = Record<string, IOfferFieldMeta>
 
 // Вариант списочного (L) свойства: id — то, что лежит в offer'е, value — человекочитаемое
 export interface ICatalogPropertyEnum {
@@ -52,9 +65,10 @@ const MIRROR_TTL_MS = 10 * 60 * 1000
 
 /**
  * Зеркало метаданных каталога (ADR-0006). Аналог field metadata договора, но источник —
- * каталог: описания свойств offer'ов (catalog.productProperty.list) + эвристика
- * релевантности «свойство принадлежит виду, если у образцового offer'а оно непусто».
- * Хранится в field_metadata с entity='module'.
+ * каталог: штатные поля offer'ов (catalog.product.offer.getFieldsByFilter, даёт
+ * name/type/isMultiple/isRequired) + варианты списков (productPropertyEnum.list) +
+ * эвристика релевантности «свойство принадлежит виду, если непусто хотя бы у одного
+ * offer'а вида» (нативной привязки свойство↔вид в каталоге нет). entity='module'.
  */
 export async function getCatalogMirror(data: { portal_id: number, domain: string, token: string, productIds: number[], force?: boolean }): Promise<ICatalogMirror> {
   const row = await prisma.field_metadata.findUnique({
@@ -63,8 +77,19 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
   const fresh = row && (Date.now() - row.updated_at.getTime()) < MIRROR_TTL_MS
   if (row && fresh && !data.force) return row.fields as unknown as ICatalogMirror
   try {
-    const propsResp = await bitrixAPI.getCatalogProperties(data.domain, data.token, OFFER_IBLOCK_ID)
-    const properties = propsResp.result.productProperties.filter(p => p.propertyType in CATALOG_TYPE_MAP)
+    // Метаданные полей offer'а штатным методом (name/propertyType/isMultiple/isRequired) —
+    // как crm.item.fields. Берём только динамические property* примитивных типов.
+    const offerFields = await bitrixAPI.getOfferFields(data.domain, data.token, OFFER_IBLOCK_ID)
+    const properties: IBitrixCatalogProperty[] = Object.entries(offerFields)
+      .filter(([key, f]) => key.startsWith('property') && f.propertyType && f.propertyType in CATALOG_TYPE_MAP)
+      .map(([key, f]) => ({
+        id: Number(key.replace('property', '')),
+        name: f.name,
+        code: key,
+        propertyType: f.propertyType as string,
+        isMultiple: f.isMultiple,
+        isRequired: f.isRequired
+      }))
     // Ключи для select и для чтения значений — property<id> (Bitrix отдаёт по ним, не по code)
     const propKeys = properties.map(offerKey)
 
@@ -87,15 +112,12 @@ export async function getCatalogMirror(data: { portal_id: number, domain: string
       for (const p of products.result.products) productNames[p.id] = p.name
     }
 
-    // Релевантность полей: по образцовому offer'у каждого вида (свойство релевантно, если непусто)
+    // Релевантность полей (ADR-0006): свойство принадлежит виду, если непусто ХОТЯ БЫ У ОДНОГО
+    // offer'а вида. null = свойство неприменимо к этому SKU; 'N' — валидное «нет» (не пусто).
+    // Сканируем все offer'ы вида, а не первый — образец бывает пустым черновиком.
     for (const parentId of data.productIds) {
-      const offers = await bitrixAPI.getCatalogOffers(data.domain, data.token, OFFER_IBLOCK_ID, parentId, propKeys)
-      const sample = offers.result.offers[0]
-      if (!sample) {
-        fieldsByProduct[parentId] = []
-        continue
-      }
-      fieldsByProduct[parentId] = propKeys.filter(key => !isEmptyOfferValue(sample[key] as OfferPropValue))
+      const offers = (await bitrixAPI.getCatalogOffers(data.domain, data.token, OFFER_IBLOCK_ID, parentId, propKeys)).result.offers
+      fieldsByProduct[parentId] = propKeys.filter(key => offers.some(o => !isEmptyOfferValue(o[key] as OfferPropValue)))
     }
 
     const mirror: ICatalogMirror = { properties, fieldsByProduct, productNames, enumsByProperty }
@@ -166,8 +188,10 @@ export function moduleFieldsForProduct(mirror: ICatalogMirror, parentProductId: 
         code: offerKey(p),
         title: p.name,
         type: isFlag ? 'boolean' : (CATALOG_TYPE_MAP[p.propertyType] ?? 'string'),
-        isRequired: false,
-        isMultiple: false
+        // isRequired/isMultiple — из штатных метаданных offer'а (getFieldsByFilter).
+        // Flag-поле (boolean-чекбокс) по определению не множественное.
+        isRequired: !!p.isRequired,
+        isMultiple: !isFlag && !!p.isMultiple
       }
       // Настоящему списку (>1 варианта) прокидываем варианты — иначе селектор пуст
       if (p.propertyType === 'L' && !isFlag) meta.items = enums

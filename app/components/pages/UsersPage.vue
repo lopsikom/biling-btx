@@ -28,6 +28,15 @@ function filterItems(code: string): SelectorObject[] {
   return a
 }
 
+// Дефолт каждого фильтра — «Все» (id 0), чтобы селектор не выглядел пустым.
+// Поля грузятся асинхронно из метаданных — инициализируем по их появлении.
+function initFilterDefaults() {
+  for (const f of filterFields.value) {
+    if (!filterValues.value[f.code]) filterValues.value[f.code] = ALL_OPTION
+  }
+}
+watch(filterFields, initFilterDefaults, { immediate: true })
+
 // Столбцы таблицы: по дефолту — все поля из зеркала метаданных договора.
 // (позже сузится настройкой портала)
 const columns = computed(() => billingStateStore.contractFields)
@@ -57,6 +66,7 @@ function openEdit(item: IContract) {
 
 function clearFilter() {
   filterValues.value = {}
+  initFilterDefaults()
   search.value = ''
   toastStore.openToast('Фильтр очищен')
 }

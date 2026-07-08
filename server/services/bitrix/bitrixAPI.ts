@@ -4,7 +4,7 @@ import type { AnyProduct, IAppInfo, IBitrixToken, IProductCatalogCreate, IProduc
 import { ICatalogProduct, ICompnany, IContractBitrix } from '../models'
 import type { bitrixTokens } from '~~/server/utils/getBitrixToken'
 import type { IBitrixFieldMeta } from '../fieldMetadata'
-import type { IBitrixCatalogProperty } from '../catalogMetadata'
+import type { IBitrixCatalogProperty, OfferFieldsMap } from '../catalogMetadata'
 import { config } from 'process'
 import { useNuxtApp } from 'nuxt/app'
 import { b24RateLimiter, extractHost } from '~~/server/utils/rateLimiter'
@@ -238,6 +238,19 @@ export class bitrixAPI {
       filter: { iblockId: iblockId }
     }, { params: { auth: token } })
     return response.data as bitrixResponse<{ productProperties: IBitrixCatalogProperty[] }>
+  }
+
+  /**
+   * Штатные поля offer'ов каталога (catalog.product.offer.getFieldsByFilter) — аналог
+   * crm.item.fields: name/propertyType/isMultiple/isRequired/isDynamic. Ключи — property<id>.
+   */
+  async getOfferFields(domain: string, token: string, iblockId: number) {
+    const response = await this.AxiosClient.post(`https://${domain}/rest/catalog.product.offer.getFieldsByFilter`, {
+      filter: { iblockId: iblockId }
+    }, { params: { auth: token } })
+    const r = response.data as { result?: { offer?: OfferFieldsMap, product?: OfferFieldsMap, sku?: OfferFieldsMap } }
+    const fields = r.result?.offer ?? r.result?.product ?? r.result?.sku ?? {}
+    return fields
   }
 
   /** Варианты (enum) списочных свойств каталога по их propertyId — для items у полей-селекторов. */
