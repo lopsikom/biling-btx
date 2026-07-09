@@ -7,10 +7,11 @@ import useMenuStore from '~/services/stores/menuStores'
 import useConfirmStore from '~/services/stores/confirmStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import type { SelectorObject } from '~/services/models'
-import type { IModule, IModulePost, IModuleUpdate, IFieldMeta } from '~~/shared/models/APIModels'
+import type { IModule, IModulePost, IModuleUpdate, IFieldMeta, IModuleKind } from '~~/shared/models/APIModels'
 
-// Generic-модалка модулей (ADR-0004/0006): список модулей + добавление по видам каталога.
-// Форма вида рендерится DynamicField по метаданным каталога — как договор в этапе 1.
+// Модалка модулей (ADR-0004/0006), аккордеон-дизайн: категории-папки каталога →
+// модули внутри → инлайн-редактор полей (DynamicField/группы). «Добавить проект» —
+// черновик с выбором вида из категории.
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
@@ -18,63 +19,7 @@ const menuStore = useMenuStore()
 const confirmStore = useConfirmStore()
 const { $axios } = useNuxtApp()
 
-// Договоры для привязки (selector) — по имени
 const contractItems = computed<SelectorObject[]>(() => billingStateStore.contractsTariff.map(c => ({ label: c.id, value: c.name })))
-const kindItems = computed<SelectorObject[]>(() => billingStateStore.moduleKinds.map(k => ({ label: k.parent_product_id, value: k.name })))
-
-const mode = ref<'list' | 'add' | 'edit'>('list')
-// В режиме edit — редактируемый модуль (вид менять нельзя, offer привязан к виду)
-const editing = ref<IModule>()
-
-// Форма модуля (общая для add/edit)
-const selectedContract = ref<SelectorObject>()
-const selectedKind = ref<SelectorObject>()
-const title = ref<string>('')
-const price = ref<number>(0)
-const quantity = ref<number>(1)
-const active = ref<boolean>(true)
-const values = ref<Record<string, unknown>>({})
-
-// Вид, поля которого редактируем (add — выбранный, edit — вид модуля).
-const currentKindId = computed(() => mode.value === 'edit' ? editing.value?.parent_product_id : (selectedKind.value ? Number(selectedKind.value.label) : undefined))
-
-// Поля выбранного вида — из метаданных каталога.
-const kindFields = computed(() => {
-  if (currentKindId.value === undefined) return []
-  return billingStateStore.moduleFieldsByKind[currentKindId.value] ?? []
-})
-
-// Мультиселект-группы вида (field group): часть boolean-полей схлопнута в группы.
-const kindGroups = computed(() => currentKindId.value !== undefined ? (billingStateStore.moduleGroupsByKind[currentKindId.value] ?? []) : [])
-// Коды полей, входящих в любую группу — их не рендерим по отдельности
-const groupedCodes = computed(() => new Set(kindGroups.value.flatMap(g => g.fields)))
-// Поля вне групп — рендерятся обычным DynamicField
-const ungroupedFields = computed(() => kindFields.value.filter(f => !groupedCodes.value.has(f.code)))
-
-// IFieldMeta[] полей группы (по кодам) — для MultiSelectGroup
-function groupFields(codes: string[]): IFieldMeta[] {
-  return codes
-    .map(code => kindFields.value.find(f => f.code === code))
-    .filter((f): f is IFieldMeta => !!f)
-}
-
-watch(selectedKind, (k) => {
-  // Сброс значений при смене вида — только при создании (в edit вид фиксирован)
-  if (mode.value !== 'add') return
-  values.value = {}
-  if (k && !title.value) title.value = String(k.value)
-})
-
-// Кнопка «+»: создать новый договор поверх (высшая модалка). AddContract кладёт
-// созданный договор в contractsTariff и в addContractTariff.selected_contract —
-// подхватываем его как выбранный.
-function openAddContract() {
-  modalStore.addContractTariff = { item: null, selected_contract: undefined }
-  modalStore.showHigherModal(ModalEnum.ADD_CONTRACT)
-}
-watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
-  if (sel) selectedContract.value = sel
-})
 
 onBeforeMount(async () => {
   if (!billingStateStore.contractsTariff.length) {
@@ -82,137 +27,221 @@ onBeforeMount(async () => {
   }
 })
 
-const modulesList = computed(() => billingStateStore.modules)
-function kindName(pid: number) {
-  return billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)?.name ?? `Товар ${pid}`
-}
-
-// Список модулей, сгруппированный по категории-папке каталога (как в старом окне).
-const modulesByCategory = computed(() => {
-  const kindOf = (pid: number) => billingStateStore.moduleKinds.find(k => k.parent_product_id === pid)
-  const groups = new Map<string, IModule[]>()
-  for (const m of modulesList.value) {
-    const kind = kindOf(m.parent_product_id)
-    const cat = kind?.category_name ?? kind?.name ?? `Товар ${m.parent_product_id}`
-    if (!groups.has(cat)) groups.set(cat, [])
-    groups.get(cat)!.push(m)
+// --- Категории (папки) с видами и модулями ---
+interface Category { name: string, kinds: IModuleKind[], kindIds: Set<number>, modules: IModule[] }
+const categories = computed<Category[]>(() => {
+  const map = new Map<string, Category>()
+  for (const k of billingStateStore.moduleKinds) {
+    const cat = k.category_name ?? k.name
+    if (!map.has(cat)) map.set(cat, { name: cat, kinds: [], kindIds: new Set(), modules: [] })
+    const c = map.get(cat)!
+    c.kinds.push(k)
+    c.kindIds.add(k.parent_product_id)
   }
-  return [...groups.entries()].map(([category, modules]) => ({ category, modules }))
+  for (const m of billingStateStore.modules) {
+    for (const c of map.values()) if (c.kindIds.has(m.parent_product_id)) { c.modules.push(m); break }
+  }
+  return [...map.values()]
 })
 
-function isEmpty(v: unknown) {
-  return v === undefined || v === null || String(v).trim() === ''
+// --- Раскрытие категорий ---
+const openCats = ref<Set<string>>(new Set())
+function toggleCat(name: string) {
+  if (openCats.value.has(name)) openCats.value.delete(name)
+  else openCats.value.add(name)
+  openCats.value = new Set(openCats.value)
 }
 
-async function saveModule() {
+// Открытие из плитки «Подключённые модули»: раскрыть переданную категорию.
+onMounted(() => {
+  const cat = modalStore.argsModal.category as string | undefined
+  if (cat) openCats.value = new Set([cat])
+})
+
+// --- Поля/группы вида ---
+function fieldsFor(pid: number): IFieldMeta[] {
+  return billingStateStore.moduleFieldsByKind[pid] ?? []
+}
+function groupsFor(pid: number) {
+  return billingStateStore.moduleGroupsByKind[pid] ?? []
+}
+function ungroupedFor(pid: number): IFieldMeta[] {
+  const grouped = new Set(groupsFor(pid).flatMap(g => g.fields))
+  return fieldsFor(pid).filter(f => !grouped.has(f.code))
+}
+function groupFieldsFor(pid: number, codes: string[]): IFieldMeta[] {
+  return codes.map(c => fieldsFor(pid).find(f => f.code === c)).filter((f): f is IFieldMeta => !!f)
+}
+
+// --- Инлайн-редактор существующих модулей (буфер по id) ---
+interface Buffer { title: string, price: number, quantity: number, values: Record<string, unknown>, contract?: SelectorObject }
+const buffers = ref<Record<number, Buffer>>({})
+const menuOpen = ref<Record<number, boolean>>({})
+
+// Геттер буфера (не-undefined для шаблона под noUncheckedIndexedAccess). Использовать
+// только под v-if="buffers[m.id]" — иначе вернёт undefined.
+function buf(id: number): Buffer {
+  return buffers.value[id] as Buffer
+}
+
+function toggleModule(m: IModule) {
+  if (buffers.value[m.id]) { delete buffers.value[m.id]; buffers.value = { ...buffers.value }; return }
+  buffers.value = {
+    ...buffers.value,
+    [m.id]: {
+      title: m.title,
+      price: m.price,
+      quantity: m.quantity,
+      values: { ...(m.values ?? {}) },
+      contract: contractItems.value.find(c => Number(c.label) === m.contract_id)
+    }
+  }
+}
+
+function storeReplace(updated: IModule) {
+  const idx = billingStateStore.modules.findIndex(x => x.id === updated.id)
+  if (idx > -1) billingStateStore.modules[idx] = updated
+}
+
+async function toggleActive(m: IModule) {
   menuStore.fetchDataLoad = true
   try {
-    if (!selectedContract.value || !selectedKind.value || isEmpty(title.value)) throw new Error('Validation Error')
-    const data: IModulePost = {
-      contract_id: Number(selectedContract.value.label),
-      parent_product_id: Number(selectedKind.value.label),
-      title: title.value,
-      price: Number(price.value) || 0,
-      quantity: Number(quantity.value) || 1,
-      active: active.value,
-      values: { ...values.value }
-    }
-    const module = await $axios.postModule(data)
-    billingStateStore.modules.unshift(module)
-    toastStore.openToast('Модуль добавлен')
-    resetForm()
-    mode.value = 'list'
+    const updated = await $axios.patchModule(m.id, { active: !m.active })
+    storeReplace(updated)
   } catch (e) {
-    console.error(e)
-    if ((e as Error).message === 'Validation Error') toastStore.openToast('Заполните договор, вид и название')
-    else toastStore.openToast('Не удалось добавить модуль')
+    console.error(e); toastStore.openToast('Не удалось изменить статус')
   } finally { menuStore.fetchDataLoad = false }
 }
 
-// Открыть форму редактирования: предзаполнить из модуля, вид зафиксировать
-function openEdit(module: IModule) {
-  editing.value = module
-  selectedContract.value = contractItems.value.find(c => Number(c.label) === module.contract_id)
-  selectedKind.value = kindItems.value.find(k => Number(k.label) === module.parent_product_id)
-  title.value = module.title
-  price.value = module.price
-  quantity.value = module.quantity
-  active.value = module.active
-  values.value = { ...(module.values ?? {}) }
-  mode.value = 'edit'
-}
-
-async function saveEdit() {
-  if (!editing.value) return
+async function saveModule(m: IModule) {
+  const buf = buffers.value[m.id]
+  if (!buf) return
+  if (!buf.contract || !buf.title.trim()) { toastStore.openToast('Заполните договор и название'); return }
   menuStore.fetchDataLoad = true
   try {
-    if (!selectedContract.value || isEmpty(title.value)) throw new Error('Validation Error')
     const data: IModuleUpdate = {
-      contract_id: Number(selectedContract.value.label),
-      title: title.value,
-      price: Number(price.value) || 0,
-      quantity: Number(quantity.value) || 1,
-      active: active.value,
-      values: { ...values.value }
+      contract_id: Number(buf.contract.label),
+      title: buf.title.trim(),
+      price: Number(buf.price) || 0,
+      quantity: Number(buf.quantity) || 1,
+      values: { ...buf.values }
     }
-    const updated = await $axios.patchModule(editing.value.id, data)
-    const idx = billingStateStore.modules.findIndex(m => m.id === updated.id)
-    if (idx > -1) billingStateStore.modules[idx] = updated
+    const updated = await $axios.patchModule(m.id, data)
+    storeReplace(updated)
+    delete buffers.value[m.id]; buffers.value = { ...buffers.value }
     toastStore.openToast('Модуль обновлён')
-    resetForm()
-    mode.value = 'list'
   } catch (e) {
-    console.error(e)
-    if ((e as Error).message === 'Validation Error') toastStore.openToast('Заполните договор и название')
-    else toastStore.openToast('Не удалось обновить модуль')
+    console.error(e); toastStore.openToast('Не удалось обновить модуль')
   } finally { menuStore.fetchDataLoad = false }
 }
 
-function removeModule(module: IModule) {
+function removeModule(m: IModule) {
+  menuOpen.value[m.id] = false
   confirmStore.ask({
     title: 'Удалить модуль?',
-    message: `Модуль «${module.title}» будет удалён из договора и из Bitrix. Действие необратимо.`,
-    onConfirm: () => doRemoveModule(module)
+    message: `Модуль «${m.title}» будет удалён из договора и из Bitrix. Действие необратимо.`,
+    onConfirm: () => doRemoveModule(m)
   })
 }
-
-async function doRemoveModule(module: IModule) {
+async function doRemoveModule(m: IModule) {
   menuStore.fetchDataLoad = true
   try {
-    const ok = await $axios.deleteModule(module.id)
+    const ok = await $axios.deleteModule(m.id)
     if (ok) {
-      billingStateStore.modules = billingStateStore.modules.filter(m => m.id !== module.id)
+      billingStateStore.modules = billingStateStore.modules.filter(x => x.id !== m.id)
       toastStore.openToast('Модуль удалён')
     } else toastStore.openToast('Не удалось удалить модуль')
   } catch (e) {
-    console.error(e)
-    toastStore.openToast('Не удалось удалить модуль')
+    console.error(e); toastStore.openToast('Не удалось удалить модуль')
   } finally { menuStore.fetchDataLoad = false }
 }
 
-function resetForm() {
-  editing.value = undefined
-  selectedContract.value = undefined
-  selectedKind.value = undefined
-  title.value = ''
-  price.value = 0
-  quantity.value = 1
-  active.value = true
-  values.value = {}
+// --- Черновики новых модулей (по категории) ---
+interface Draft { kind?: SelectorObject, title: string, price: number, quantity: number, values: Record<string, unknown>, contract?: SelectorObject }
+const drafts = ref<Record<string, Draft[]>>({})
+
+function draftsFor(cat: string): Draft[] {
+  return drafts.value[cat] ?? []
 }
+
+function kindItemsFor(cat: Category): SelectorObject[] {
+  return cat.kinds.map(k => ({ label: k.parent_product_id, value: k.name }))
+}
+
+function addDraft(cat: Category) {
+  const only = cat.kinds.length === 1 ? cat.kinds[0] : undefined
+  const list = drafts.value[cat.name] ?? []
+  list.push({
+    kind: only ? { label: only.parent_product_id, value: only.name } : undefined,
+    title: only ? only.name : '',
+    price: 0, quantity: 1, values: {}, contract: undefined
+  })
+  drafts.value = { ...drafts.value, [cat.name]: list }
+  if (!openCats.value.has(cat.name)) toggleCat(cat.name)
+}
+
+function removeDraft(cat: string, i: number) {
+  const list = drafts.value[cat]
+  if (!list) return
+  list.splice(i, 1)
+  drafts.value = { ...drafts.value }
+}
+
+function onDraftKind(d: Draft) {
+  d.values = {}
+  if (d.kind && !d.title.trim()) d.title = String(d.kind.value)
+}
+
+async function saveDraft(cat: string, i: number) {
+  const d = drafts.value[cat]?.[i]
+  if (!d) return
+  if (!d.contract || !d.kind || !d.title.trim()) { toastStore.openToast('Заполните договор, вид и название'); return }
+  menuStore.fetchDataLoad = true
+  try {
+    const data: IModulePost = {
+      contract_id: Number(d.contract.label),
+      parent_product_id: Number(d.kind.label),
+      title: d.title.trim(),
+      price: Number(d.price) || 0,
+      quantity: Number(d.quantity) || 1,
+      active: true,
+      values: { ...d.values }
+    }
+    const created = await $axios.postModule(data)
+    billingStateStore.modules.unshift(created)
+    removeDraft(cat, i)
+    toastStore.openToast('Модуль добавлен')
+  } catch (e) {
+    console.error(e); toastStore.openToast('Не удалось добавить модуль')
+  } finally { menuStore.fetchDataLoad = false }
+}
+
+// --- Создание договора поверх (высшая модалка), подхват в нужный буфер/черновик ---
+let contractTarget: ((sel: SelectorObject) => void) | null = null
+function openAddContract(setter: (sel: SelectorObject) => void) {
+  contractTarget = setter
+  modalStore.addContractTariff = { item: null, selected_contract: undefined }
+  modalStore.showHigherModal(ModalEnum.ADD_CONTRACT)
+}
+watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
+  if (sel && contractTarget) { contractTarget(sel); contractTarget = null }
+})
 </script>
 
 <template>
-  <div class="flex mb-[25px]">
+  <div class="flex mb-[20px]">
     <div class="flex flex-col">
       <span class="text-lg font-semibold select-none">Модули</span>
-      <span class="text-gray-500 text-sm select-none">биллинговые услуги договоров</span>
+      <span class="text-gray-500 text-sm select-none">Измените, добавьте или продлите тарифный план или модули</span>
     </div>
     <div
       style="margin-left: auto; margin-top: 5px;"
       @click="modalStore.hideModal"
     >
-      <Icon icon="maki:cross" />
+      <Icon
+        icon="maki:cross"
+        class="cursor-pointer"
+      />
     </div>
   </div>
 
@@ -220,233 +249,337 @@ function resetForm() {
     v-if="!billingStateStore.moduleMetadataConfigured"
     class="text-gray-500 text-sm select-none py-6"
   >
-    Виды модулей не настроены: отметьте товары каталога как биллинговые на странице «Поля».
+    Каталог не настроен: задайте корневой раздел каталога модулей.
   </div>
 
-  <template v-else>
-    <!-- Список модулей -->
+  <div
+    v-else
+    class="flex flex-col gap-[15px]"
+  >
     <div
-      v-if="mode === 'list'"
-      class="assign-modal"
+      v-for="cat in categories"
+      :key="cat.name"
+      class="flex flex-col"
     >
-      <div class="flex">
-        <div
-          class="add-btn items-center flex px-3 py-2 gap-1"
+      <!-- Заголовок категории -->
+      <div
+        class="block-module blue-hover"
+        @click="toggleCat(cat.name)"
+      >
+        <span class="font-semibold select-none hover-item">{{ cat.name }}</span>
+        <span
+          v-if="cat.modules.length"
+          class="text-gray-400 text-xs ml-2 select-none"
+        >{{ cat.modules.length }}</span>
+        <Icon
           style="margin-left: auto;"
-          @click="mode = 'add'"
+          class="hover-item"
+          :icon="openCats.has(cat.name) ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'"
+        />
+      </div>
+
+      <!-- Содержимое категории -->
+      <div
+        v-if="openCats.has(cat.name)"
+        class="flex flex-col"
+      >
+        <!-- Существующие модули -->
+        <div
+          v-for="m in cat.modules"
+          :key="m.id"
+        >
+          <div
+            class="item-module blue-hover cursor-pointer mt-[10px]"
+            @click="toggleModule(m)"
+            @mouseleave="menuOpen[m.id] = false"
+          >
+            <div class="flex items-center gap-[16px]">
+              <div @click.stop>
+                <CheckboxRoot
+                  :model-value="m.active"
+                  :class="m.active ? 'checkbox-active' : 'checkbox-disable'"
+                  @update:model-value="toggleActive(m)"
+                >
+                  <CheckboxIndicator>
+                    <Icon
+                      icon="radix-icons:check"
+                      style="color: white;"
+                    />
+                  </CheckboxIndicator>
+                </CheckboxRoot>
+              </div>
+              <span
+                class="select-none text-sm"
+                style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 320px;"
+              >{{ m.title }}</span>
+            </div>
+            <div style="display: flex; flex-direction: row-reverse; margin-left: auto; gap: 12px; align-items: center;">
+              <div style="position: relative;">
+                <Icon
+                  icon="material-symbols:more-vert"
+                  class="cursor-pointer"
+                  @click.stop="menuOpen[m.id] = !menuOpen[m.id]"
+                />
+                <div
+                  v-show="menuOpen[m.id]"
+                  class="menu-edit-container"
+                  @click.stop
+                >
+                  <div
+                    class="flex gap-2 py-1 px-2 blue-hover items-center cursor-pointer"
+                    @click.stop="menuOpen[m.id] = false; toggleModule(m)"
+                  >
+                    <Icon
+                      icon="mdi:edit"
+                      class="text-gray-500 w-4 h-4 hover-item"
+                    />
+                    <span class="text-gray-500 text-sm select-none hover-item">Изменить</span>
+                  </div>
+                  <div
+                    class="flex gap-2 py-1 px-2 blue-hover items-center cursor-pointer"
+                    @click.stop="removeModule(m)"
+                  >
+                    <Icon
+                      icon="mdi:trash-outline"
+                      class="text-red-500 w-4 h-4"
+                    />
+                    <span class="text-red-500 text-sm select-none">Удалить</span>
+                  </div>
+                </div>
+              </div>
+              <Icon :icon="buffers[m.id] ? 'radix-icons:chevron-up' : 'radix-icons:chevron-down'" />
+            </div>
+          </div>
+
+          <!-- Инлайн-редактор модуля -->
+          <div
+            v-if="buffers[m.id]"
+            class="flex flex-col gap-[12px] px-[15px] py-[12px]"
+          >
+            <div class="flex gap-[12px]">
+              <InputBox
+                v-model="buf(m.id).title"
+                :resize="false"
+                title="Название"
+                :required="true"
+                style="width: 50%;"
+              />
+              <InputBox
+                v-model="buf(m.id).price"
+                type="number"
+                :resize="false"
+                title="Цена, ₽"
+                style="width: 25%;"
+              />
+              <InputBox
+                v-model="buf(m.id).quantity"
+                type="number"
+                :resize="false"
+                title="Количество"
+                style="width: 25%;"
+              />
+            </div>
+            <div
+              v-if="ungroupedFor(m.parent_product_id).length"
+              class="fields-grid"
+            >
+              <DynamicField
+                v-for="field in ungroupedFor(m.parent_product_id)"
+                :key="field.code"
+                v-model="buf(m.id).values[field.code]"
+                :field="field"
+              />
+            </div>
+            <div
+              v-for="group in groupsFor(m.parent_product_id)"
+              :key="group.name"
+              class="fields-grid"
+            >
+              <MultiSelectGroup
+                v-model="buf(m.id).values"
+                :title="group.name"
+                :fields="groupFieldsFor(m.parent_product_id, group.fields)"
+              />
+            </div>
+            <div
+              class="flex gap-[10px]"
+              style="align-items: end;"
+            >
+              <Selector
+                v-model="buf(m.id).contract"
+                style="width: 100%;"
+                title="Договор"
+                :required="true"
+                :items="contractItems"
+              />
+              <div
+                class="add-contract-btn blue-hover flex justify-center items-center"
+                @click="openAddContract(sel => buf(m.id).contract = sel)"
+              >
+                <Icon
+                  icon="rivet-icons:plus"
+                  class="w-4 h-4 hover-item"
+                />
+              </div>
+            </div>
+            <div
+              class="save-btn justify-center items-center px-[12px] py-[8px]"
+              style="margin-left: auto; width: fit-content;"
+              @click="saveModule(m)"
+            >
+              <span
+                class="select-none text-sm"
+                style="color: white;"
+              >Сохранить</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Черновики новых модулей -->
+        <div
+          v-for="(d, i) in draftsFor(cat.name)"
+          :key="'d' + i"
+          class="flex flex-col gap-[12px] px-[15px] py-[12px] draft-box mt-[10px]"
+        >
+          <div class="flex gap-[12px]">
+            <Selector
+              v-if="cat.kinds.length > 1"
+              v-model="d.kind"
+              style="width: 50%;"
+              title="Вид модуля"
+              :required="true"
+              :items="kindItemsFor(cat)"
+              @update:model-value="onDraftKind(d)"
+            />
+            <InputBox
+              v-model="d.title"
+              :resize="false"
+              title="Название"
+              :required="true"
+              :style="cat.kinds.length > 1 ? 'width: 50%;' : 'width: 100%;'"
+            />
+          </div>
+          <div class="flex gap-[12px]">
+            <InputBox
+              v-model="d.price"
+              type="number"
+              :resize="false"
+              title="Цена, ₽"
+              style="width: 50%;"
+            />
+            <InputBox
+              v-model="d.quantity"
+              type="number"
+              :resize="false"
+              title="Количество"
+              style="width: 50%;"
+            />
+          </div>
+          <template v-if="d.kind">
+            <div
+              v-if="ungroupedFor(Number(d.kind.label)).length"
+              class="fields-grid"
+            >
+              <DynamicField
+                v-for="field in ungroupedFor(Number(d.kind.label))"
+                :key="field.code"
+                v-model="d.values[field.code]"
+                :field="field"
+              />
+            </div>
+            <div
+              v-for="group in groupsFor(Number(d.kind.label))"
+              :key="group.name"
+              class="fields-grid"
+            >
+              <MultiSelectGroup
+                v-model="d.values"
+                :title="group.name"
+                :fields="groupFieldsFor(Number(d.kind.label), group.fields)"
+              />
+            </div>
+          </template>
+          <div
+            class="flex gap-[10px]"
+            style="align-items: end;"
+          >
+            <Selector
+              v-model="d.contract"
+              style="width: 100%;"
+              title="Договор"
+              :required="true"
+              :items="contractItems"
+            />
+            <div
+              class="add-contract-btn blue-hover flex justify-center items-center"
+              @click="openAddContract(sel => d.contract = sel)"
+            >
+              <Icon
+                icon="rivet-icons:plus"
+                class="w-4 h-4 hover-item"
+              />
+            </div>
+          </div>
+          <div
+            class="flex gap-[12px]"
+            style="margin-left: auto; flex-direction: row-reverse;"
+          >
+            <div
+              class="save-btn justify-center items-center px-[12px] py-[8px]"
+              @click="saveDraft(cat.name, i)"
+            >
+              <span
+                class="select-none text-sm"
+                style="color: white;"
+              >Сохранить</span>
+            </div>
+            <div
+              class="close-btn blue-hover justify-center items-center px-[12px] py-[8px] cursor-pointer"
+              @click="removeDraft(cat.name, i)"
+            >
+              <span class="select-none text-sm">Отмена</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Добавить проект -->
+        <div
+          class="flex justify-center blue-hover items-center close-btn gap-[10px] mt-[10px] cursor-pointer h-[35px]"
+          @click="addDraft(cat)"
         >
           <Icon
-            icon="mdi:plus"
-            class="w-5 h-5 text-slate-50"
+            class="h-[12px] w-[12px] hover-item"
+            icon="rivet-icons:plus"
           />
-          <span class="select-none text-sm text-slate-50 font-semibold">Добавить модуль</span>
-        </div>
-      </div>
-      <div
-        class="any-white-container p-4 flex flex-col gap-2"
-        style="width: 100%;"
-      >
-        <div
-          v-if="!modulesList.length"
-          class="text-gray-500 text-sm select-none py-4 text-center"
-        >
-          Модулей нет
-        </div>
-        <!-- Группировка по категории-папке каталога -->
-        <div
-          v-for="group in modulesByCategory"
-          :key="group.category"
-          class="flex flex-col gap-1"
-        >
-          <span class="text-gray-500 text-xs font-semibold uppercase select-none mt-2">{{ group.category }}</span>
-          <div
-            v-for="m in group.modules"
-            :key="m.id"
-            class="module-row flex items-center gap-3 py-2"
-          >
-            <div
-              class="flex flex-col"
-              style="flex: 1;"
-            >
-              <span class="font-semibold text-sm">{{ m.title }}</span>
-              <span class="text-gray-500 text-xs">{{ kindName(m.parent_product_id) }} · {{ m.price }} ₽ · {{ m.quantity }} шт</span>
-            </div>
-            <div
-              :class="m.active ? 'any-green-container' : 'any-red-container'"
-              class="flex gap-1 py-0.5 px-1.5 items-center"
-              style="height: fit-content;"
-            >
-              <span class="text-xs">{{ m.active ? 'Активен' : 'Отключён' }}</span>
-            </div>
-            <Icon
-              icon="mdi:pencil-outline"
-              class="w-5 h-5 text-sky-600 cursor-pointer"
-              @click="openEdit(m)"
-            />
-            <Icon
-              icon="mdi:trash-can-outline"
-              class="w-5 h-5 text-red-500 cursor-pointer"
-              @click="removeModule(m)"
-            />
-          </div>
+          <span class="font-semibold select-none hover-item text-sm">Добавить проект</span>
         </div>
       </div>
     </div>
-
-    <!-- Добавление / редактирование модуля -->
-    <div
-      v-else
-      class="assign-modal"
-    >
-      <div
-        class="any-white-container p-5 gap-3 flex flex-col"
-        style="width: 100%;"
-      >
-        <div class="flex gap-[10px]">
-          <InputBox
-            v-model="title"
-            placeholder="Название..."
-            :resize="false"
-            title="Название"
-            :required="true"
-            style="width: 80%;"
-          />
-          <div class="flex items-center gap-3 mt-5">
-            <CheckboxRoot
-              v-model="active"
-              :class="active ? 'checkbox-active' : 'checkbox-disable'"
-            >
-              <CheckboxIndicator>
-                <Icon
-                  icon="radix-icons:check"
-                  style="color: white;"
-                />
-              </CheckboxIndicator>
-            </CheckboxRoot>
-            <span class="select-none font-semibold text-sm">Активен</span>
-          </div>
-        </div>
-        <div class="flex gap-[10px] items-end">
-          <Selector
-            v-model="selectedContract"
-            style="width: 100%;"
-            title="Договор"
-            :required="true"
-            :items="contractItems"
-          />
-          <div
-            class="add-contract-btn blue-hover flex justify-center items-center"
-            title="Создать договор"
-            @click="openAddContract()"
-          >
-            <Icon
-              icon="rivet-icons:plus"
-              class="w-4 h-4 hover-item"
-            />
-          </div>
-        </div>
-        <div class="flex gap-[10px]">
-          <InputBox
-            v-model="price"
-            type="number"
-            :resize="false"
-            title="Цена, ₽"
-            style="width: 25%;"
-          />
-          <InputBox
-            v-model="quantity"
-            type="number"
-            :resize="false"
-            title="Количество"
-            style="width: 25%;"
-          />
-                    <Selector
-            v-if="mode === 'add'"
-            v-model="selectedKind"
-            style="width: 45%;"
-            title="Вид модуля"
-            :required="true"
-            :items="kindItems"
-          />
-          <div
-            v-else
-            class="flex flex-col gap-[5px]"
-            style="width: 45%;"
-          >
-            <span class="select-none font-semibold text-sm">Вид модуля</span>
-            <div class="kind-locked text-sm flex items-center px-3">
-              {{ selectedKind?.value ?? kindName(editing?.parent_product_id ?? 0) }}
-            </div>
-          </div>
-        </div>
-        <div
-          v-if="ungroupedFields.length"
-          class="fields-grid"
-        >
-          <DynamicField
-            v-for="field in ungroupedFields"
-            :key="field.code"
-            v-model="values[field.code]"
-            :field="field"
-          />
-        </div>
-        <!-- Мультиселект-группы: flag-поля объединены в один селектор (старый дизайн) -->
-        <div
-          v-if="kindGroups.length"
-          class="fields-grid"
-        >
-          <MultiSelectGroup
-            v-for="group in kindGroups"
-            :key="group.name"
-            v-model="values"
-            :title="group.name"
-            :fields="groupFields(group.fields)"
-          />
-        </div>
-      </div>
-      <div
-        class="flex mt-[20px] gap-[15px]"
-        style="margin-left: auto; flex-direction: row-reverse;"
-      >
-        <div
-          class="save-btn justify-center items-center px-[12px] py-[8px]"
-          @click="mode === 'edit' ? saveEdit() : saveModule()"
-        >
-          <p
-            class="select-none text-sm"
-            style="color: white;"
-          >
-            Сохранить
-          </p>
-        </div>
-        <div
-          class="close-btn blue-hover justify-center items-center px-[12px] py-[8px]"
-          @click="mode = 'list'; resetForm()"
-        >
-          <p class="select-none text-sm">
-            Назад
-          </p>
-        </div>
-      </div>
-    </div>
-  </template>
+  </div>
 </template>
 
 <style scoped>
 @import '~/assets/css/any-container.css';
-.assign-modal{ display: flex; flex-direction: column; gap: 15px; width: 100%; }
-.module-row{ border-top: 1px solid #edf2f7; }
-.module-row:first-child{ border-top: 0; }
 .fields-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; }
-.kind-locked{ height: 38px; background-color: #edf2f7; border-radius: 5px; color: #64748b; }
+.block-module{
+    height: 44px; padding: 10px 14px; display: flex; align-items: center;
+    border: 1.5px solid #d9dbdf; border-radius: 8px; cursor: pointer;
+}
+.item-module{
+    display: flex; height: 44px; align-items: center; border-radius: 8px; padding: 10px 14px;
+}
+.menu-edit-container{
+    position: absolute; top: 100%; right: 0; z-index: 20;
+    height: fit-content; width: fit-content; border-radius: 8px; padding: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); background: white; border: 1px solid #e7eaee;
+}
+.draft-box{ background: #f7fafc; border-radius: 8px; }
 .add-contract-btn{ height: 38px; min-width: 38px; border: 1.5px solid #e7eaee; border-radius: 5px; cursor: pointer; }
-.blue-hover:hover .hover-item{ color: #437db4; transition: color 0.15s ease; }
 .save-btn{ background: #3182ce; border-radius: 5px; cursor: pointer; }
 .save-btn:hover{ background: #5899d7; transition: background 0.15s ease; }
-.add-btn{ background: #3182ce; border-radius: 8px; cursor: pointer; }
-.add-btn:hover{ background: #5899d7; transition: background 0.15s ease; }
-.close-btn{ border-color: #e7eaee; border-width: 1.5px; border-radius: 5px; cursor: pointer; }
+.close-btn{ border: 1.5px solid #e7eaee; border-radius: 5px; }
 .blue-hover:hover{ background-color: #ebf8ff; transition: background-color 0.15s ease; }
+.blue-hover:hover .hover-item{ color: #437db4; transition: color 0.15s ease; }
 .checkbox-disable{ background-color: #edf2f7; border: 1px solid #e7eaee; border-radius: 5px; display: flex; width: 20px; height: 20px; align-items: center; justify-content: center; }
 .checkbox-active{ background-color: #3182ce; border: 1px solid #e7eaee; border-radius: 5px; display: flex; width: 20px; height: 20px; align-items: center; justify-content: center; }
 </style>

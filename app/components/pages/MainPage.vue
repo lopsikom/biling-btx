@@ -152,7 +152,7 @@ async function deleteConnection(item: IConnection) {
         >
           <div
             class="flex items-center gap-[12px]"
-            @click="modalStore.showModal(ModalEnum.TARIFF_MODAL)"
+            @click="modalStore.showModal(ModalEnum.TARIFF_MODAL, { key: 'category', data: value.title })"
           >
             <Icon
               class="text-sky-600 w-5 h-5"

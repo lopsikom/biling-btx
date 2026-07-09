@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import useConfirmStore from '~/services/stores/confirmStore'
 
-// Диалог подтверждения деструктивных действий. Управляется confirmStore.ask().
 const confirm = useConfirmStore()
 </script>
 
@@ -46,8 +45,6 @@ const confirm = useConfirmStore()
     justify-content: center;
     align-items: center;
     z-index: 99999999999999999999;
-    /* Radix Dialog при открытой модалке ставит pointer-events:none на body —
-       возвращаем клики этому оверлею, иначе кнопки диалога не реагируют */
     pointer-events: auto;
 }
 .confirm-card{
