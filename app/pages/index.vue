@@ -93,9 +93,6 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       bitrixStateStore.addresTypes = mockAddressTypes
       bitrixStateStore.companyAddress = mockAddress
       bitrixStateStore.companyInvoice = mockInvoice
-
-      // Договоры/модули/метаданные — из фронт-моков (работа без живого Bitrix).
-      // Connections пока не мокаем — тянем реальные.
       const [
         connectionStatuses,
         connectionTypes,

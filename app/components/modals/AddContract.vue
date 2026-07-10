@@ -1,28 +1,34 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import usebillingStateStore from '~/services/stores/billingStateStore'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
+import type { SelectorObject } from '~/services/models'
 import type { IContractPost } from '~~/shared/models/APIModels'
 
 const billingStateStore = usebillingStateStore()
+const bitrixStateStore = useBitrixStateStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
 const menuStore = useMenuStore()
 const { $axios } = useNuxtApp()
 
 const name = ref<string>('')
+const selectMyCompany = ref<SelectorObject>()
 // Значения динамических полей: ключ = код поля Bitrix из зеркала метаданных
 const values = ref<Record<string, unknown>>({})
 
 const fields = computed(() => billingStateStore.contractFields)
+const selectMyCompanyItems = computed<SelectorObject[]>(() => bitrixStateStore.bitrixisMyCompanys.map(c => ({ label: c.id, value: c.title })))
 
 // Дефолты из настроек полей Bitrix (виджет семантически слеп — знает только метаданные)
 onMounted(() => {
   for (const field of fields.value) {
     if (field.default !== undefined && field.default !== null) values.value[field.code] = field.default
   }
+  if (selectMyCompanyItems.value.length) selectMyCompany.value = selectMyCompanyItems.value[0]
 })
 
 function isEmptyValue(v: unknown) {
@@ -33,11 +39,13 @@ async function saveData() {
   menuStore.fetchDataLoad = true
   try {
     if (isEmptyValue(name.value)) throw new Error('Validation Error')
+    if (!selectMyCompany.value) throw new Error('Validation Error')
     for (const field of fields.value) {
       if (field.isRequired && isEmptyValue(values.value[field.code])) throw new Error('Validation Error')
     }
     const data: IContractPost = {
       name: name.value,
+      mycompany_id: selectMyCompany.value?.label as number | undefined,
       values: { ...values.value }
     }
     const newContract = await $axios.postContract(data)
@@ -88,6 +96,15 @@ async function saveData() {
             title="Название договора"
             :required="true"
             style="width: 100%;"
+          />
+        </div>
+        <div class="flex gap-[10px]">
+          <Selector
+            v-model="selectMyCompany"
+            style="width: 100%;"
+            title="Наша компания"
+            :required="true"
+            :items="selectMyCompanyItems"
           />
         </div>
         <div

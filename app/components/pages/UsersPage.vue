@@ -248,7 +248,7 @@ async function inputSearch(e: InputEvent) {
                   {{ col.title }}
                 </div>
               </div>
-              <div style="overflow-y: auto;">
+              <div style="overflow-y: auto; overflow-x: hidden;">
                 <div
                   v-for="(value, index) in billingStateStore.contracts"
                   :key="index"

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import usebillingStateStore from '~/services/stores/billingStateStore'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
+import type { SelectorObject } from '~/services/models'
 import type { IContractUpdate } from '~~/shared/models/APIModels'
 
 const billingStateStore = usebillingStateStore()
+const bitrixStateStore = useBitrixStateStore()
 const modalStore = useModalStore()
 const menuStore = useMenuStore()
 const toastStore = useToastStore()
@@ -16,10 +19,12 @@ const { EditContract } = storeToRefs(modalStore)
 
 const contractId = ref<number>()
 const name = ref<string>('')
+const selectMyCompany = ref<SelectorObject>()
 // Значения динамических полей: инициализируются из values договора (replace-зеркала Bitrix)
 const values = ref<Record<string, unknown>>({})
 
 const fields = computed(() => billingStateStore.contractFields)
+const selectMyCompanyItems = computed<SelectorObject[]>(() => bitrixStateStore.bitrixisMyCompanys.map(c => ({ label: c.id, value: c.title })))
 
 onMounted(() => {
   if (!EditContract.value) { modalStore.hideModal(); return }
@@ -28,6 +33,11 @@ onMounted(() => {
   for (const field of fields.value) {
     const v = EditContract.value.values?.[field.code]
     if (v !== undefined && v !== null) values.value[field.code] = structuredClone(toRaw(v))
+  }
+  // mycompanyId — системное поле Bitrix, лежит в values как часть зеркала целиком (не в contractFields)
+  const mycompanyId = EditContract.value.values?.mycompanyId
+  if (mycompanyId !== undefined && mycompanyId !== null) {
+    selectMyCompany.value = selectMyCompanyItems.value.find(i => String(i.label) === String(mycompanyId))
   }
 })
 
@@ -39,11 +49,13 @@ async function saveData() {
   menuStore.fetchDataLoad = true
   try {
     if (isEmptyValue(name.value)) throw new Error('Validation Error')
+    if (!selectMyCompany.value) throw new Error('Validation Error')
     for (const field of fields.value) {
       if (field.isRequired && isEmptyValue(values.value[field.code])) throw new Error('Validation Error')
     }
     const data: IContractUpdate = {
       name: name.value,
+      mycompany_id: selectMyCompany.value?.label as number | undefined,
       values: { ...values.value }
     }
     const newContract = await $axios.patchContract(data, contractId.value!)
@@ -99,6 +111,15 @@ async function deleteData() {
             :required="true"
             title="Название договора"
             style="width: 100%;"
+          />
+        </div>
+        <div class="flex gap-[10px]">
+          <Selector
+            v-model="selectMyCompany"
+            style="width: 100%;"
+            title="Наша компания"
+            :required="true"
+            :items="selectMyCompanyItems"
           />
         </div>
         <div

@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
       opened: 'N',
       assignedById: Number(portal.bitrix_user_id),
       companyId: ZBody.bitrix_id ? Number(ZBody.bitrix_id) : undefined,
-      mycompanyId: myCompanys[0]?.id,
+      mycompanyId: ZBody.mycompany_id ?? myCompanys[0]?.id,
       ...payload
     }
     const created = await bitrixAPI.addItem<BitrixItem>(portal.portal.domain, token.access_token, entityTypeId, fields)

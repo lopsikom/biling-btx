@@ -45,6 +45,7 @@ export default defineEventHandler(async (event) => {
     }
     const fields: Record<string, unknown> = { ...payload }
     if (data.name) fields.title = data.name
+    if (data.mycompany_id) fields.mycompanyId = data.mycompany_id
 
     await acquireLock(existing.bitrix_id, portal.portal.id)
     try {
