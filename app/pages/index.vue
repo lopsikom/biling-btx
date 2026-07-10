@@ -73,6 +73,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     billingStateStore.moduleKinds = moduleMetadata.kinds
     billingStateStore.moduleFieldsByKind = moduleMetadata.fieldsByKind
     billingStateStore.moduleGroupsByKind = moduleMetadata.groupsByKind
+    billingStateStore.moduleHiddenByKind = moduleMetadata.hiddenByKind
     billingStateStore.moduleMetadataConfigured = moduleMetadata.configured
     billingStateStore.modules = modules
     billingStateStore.connection_statuses = connectionStatuses
@@ -110,6 +111,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       billingStateStore.moduleKinds = mockModuleMetadata.kinds
       billingStateStore.moduleFieldsByKind = mockModuleMetadata.fieldsByKind
       billingStateStore.moduleGroupsByKind = mockModuleMetadata.groupsByKind
+      billingStateStore.moduleHiddenByKind = mockModuleMetadata.hiddenByKind
       billingStateStore.moduleMetadataConfigured = mockModuleMetadata.configured
       billingStateStore.modules = mockModules
       billingStateStore.connection_statuses = connectionStatuses

@@ -115,6 +115,11 @@ export class axiosClient {
     return response.data as IFieldGroup[]
   }
 
+  async patchFieldVisibility(parent_product_id: number, hidden_fields: string[]) {
+    const response = await this.AxiosClient.patch('portal/field-visibility', { parent_product_id, hidden_fields })
+    return response.data as string[]
+  }
+
   async getBitrixTypes() {
     const response = await this.AxiosClient.get('bitrix/types.list')
     return response.data as { entityTypeId: number, title: string }[]
@@ -170,7 +175,7 @@ export class axiosClient {
       return response.data as IModuleMetadataResponse
     } catch (e) {
       console.error('[getModuleMetadata] не удалось получить метаданные каталога', e)
-      return { configured: false, kinds: [], fieldsByKind: {}, groupsByKind: {} } as IModuleMetadataResponse
+      return { configured: false, kinds: [], fieldsByKind: {}, groupsByKind: {}, hiddenByKind: {} } as IModuleMetadataResponse
     }
   }
 

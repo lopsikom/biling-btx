@@ -117,7 +117,7 @@ async function deleteData() {
           <Selector
             v-model="selectMyCompany"
             style="width: 100%;"
-            title="Наша компания"
+            title="Организация"
             :required="true"
             :items="selectMyCompanyItems"
           />

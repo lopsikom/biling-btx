@@ -18,6 +18,13 @@ export default defineEventHandler(async (event): Promise<IFieldGroup[]> => {
   const portalCtx = event.context.portal as PortalDataType
   try {
     const body = FieldGroupsPatch.parse(await readBody(event))
+    const seen = new Set<string>()
+    for (const g of body.groups) {
+      for (const code of g.fields) {
+        if (seen.has(code)) throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: `Field ${code} is used in more than one group` })
+        seen.add(code)
+      }
+    }
     const groups = await replaceFieldGroupsForKind(portalCtx.portal.id, body.parent_product_id, body.groups)
     await invalidateCatalogMirror(portalCtx.portal.id)
     return groups
@@ -27,6 +34,7 @@ export default defineEventHandler(async (event): Promise<IFieldGroup[]> => {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
       throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: mess })
     }
+    if (typeof e === 'object' && e && 'statusCode' in e) throw e
     throw createError({ statusCode: 500, statusMessage: 'Server Error' })
   }
 })

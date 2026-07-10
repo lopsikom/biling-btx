@@ -7,7 +7,8 @@
       "mcp__b24-dev-mcp__bitrix-search",
       "Bash(git -C /home/lopsik/biling-btx ls-files)",
       "Bash(timeout 240 npx vue-tsc --noEmit -p tsconfig.json)",
-      "Bash(timeout 300 npm run typecheck)"
+      "Bash(timeout 300 npm run typecheck)",
+      "Bash(npx eslint *)"
     ],
     "defaultMode": "bypassPermissions"
   }

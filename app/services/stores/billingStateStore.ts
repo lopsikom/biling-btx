@@ -11,6 +11,7 @@ const usebillingStateStore = defineStore('billingState', () => {
   const moduleKinds = ref<IModuleKind[]>([])
   const moduleFieldsByKind = ref<Record<number, IFieldMeta[]>>({})
   const moduleGroupsByKind = ref<FieldGroupsByKind>({})
+  const moduleHiddenByKind = ref<Record<number, string[]>>({})
   const moduleMetadataConfigured = ref<boolean>(true)
   const connections = ref<IConnection[]>([])
   const connection_statuses = ref<IConnectionStatus[]>([])
@@ -31,6 +32,7 @@ const usebillingStateStore = defineStore('billingState', () => {
     moduleKinds,
     moduleFieldsByKind,
     moduleGroupsByKind,
+    moduleHiddenByKind,
     moduleMetadataConfigured,
     connections,
     connection_statuses,

@@ -65,12 +65,23 @@ function fieldsFor(pid: number): IFieldMeta[] {
 function groupsFor(pid: number) {
   return billingStateStore.moduleGroupsByKind[pid] ?? []
 }
+// Видимость (field visibility) ортогональна группам: скрытые коды вычитаются
+// и из одиночных полей, и из состава каждой группы (см. CONTEXT.md).
+function hiddenFor(pid: number): Set<string> {
+  return new Set(billingStateStore.moduleHiddenByKind[pid] ?? [])
+}
 function ungroupedFor(pid: number): IFieldMeta[] {
   const grouped = new Set(groupsFor(pid).flatMap(g => g.fields))
-  return fieldsFor(pid).filter(f => !grouped.has(f.code))
+  const hidden = hiddenFor(pid)
+  return fieldsFor(pid).filter(f => !grouped.has(f.code) && !hidden.has(f.code))
 }
 function groupFieldsFor(pid: number, codes: string[]): IFieldMeta[] {
-  return codes.map(c => fieldsFor(pid).find(f => f.code === c)).filter((f): f is IFieldMeta => !!f)
+  const hidden = hiddenFor(pid)
+  return codes.filter(c => !hidden.has(c)).map(c => fieldsFor(pid).find(f => f.code === c)).filter((f): f is IFieldMeta => !!f)
+}
+// Группа, у которой скрыты все поля, не рендерится
+function visibleGroupsFor(pid: number) {
+  return groupsFor(pid).filter(g => groupFieldsFor(pid, g.fields).length)
 }
 
 // --- Инлайн-редактор существующих модулей (буфер по id) ---
@@ -391,7 +402,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
               />
             </div>
             <div
-              v-for="group in groupsFor(m.parent_product_id)"
+              v-for="group in visibleGroupsFor(m.parent_product_id)"
               :key="group.name"
               class="fields-grid"
             >
@@ -488,7 +499,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
               />
             </div>
             <div
-              v-for="group in groupsFor(Number(d.kind.label))"
+              v-for="group in visibleGroupsFor(Number(d.kind.label))"
               :key="group.name"
               class="fields-grid"
             >

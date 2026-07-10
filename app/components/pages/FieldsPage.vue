@@ -4,7 +4,7 @@ import usebillingStateStore from '~/services/stores/billingStateStore'
 import useToastStore from '~/services/stores/toastStore'
 import useConfirmStore from '~/services/stores/confirmStore'
 import type { SelectorObject } from '~/services/models'
-import type { IFieldGroup } from '~~/shared/models/APIModels'
+import type { IFieldGroup, IFieldMeta, IModuleKind } from '~~/shared/models/APIModels'
 
 // Страница «Поля»: два режима (тумблер) — поля договора (привязка смарт-процесса)
 // и поля модулей (по видам каталога + мультиселект-группы, field group).
@@ -22,14 +22,58 @@ const selectedType = ref<SelectorObject>()
 const typeItems = computed(() => types.value.map(t => ({ label: t.entityTypeId, value: t.title } as SelectorObject)))
 const fields = computed(() => billingStateStore.contractFields)
 
-// --- Режим модулей ---
+// --- Режим модулей: каскад «папка (категория) → вид» (как в ModuleModal) ---
+interface FieldCategory { name: string, kinds: IModuleKind[] }
+const categories = computed<FieldCategory[]>(() => {
+  const map = new Map<string, FieldCategory>()
+  for (const k of billingStateStore.moduleKinds) {
+    const cat = k.category_name ?? k.name
+    if (!map.has(cat)) map.set(cat, { name: cat, kinds: [] })
+    map.get(cat)!.kinds.push(k)
+  }
+  return [...map.values()]
+})
+const categoryItems = computed(() => categories.value.map(c => ({ label: c.name, value: c.name } as SelectorObject)))
+const selectedCategory = ref<SelectorObject>()
+const selectedCategoryObj = computed(() => categories.value.find(c => c.name === selectedCategory.value?.label))
+
 const selectedKind = ref<SelectorObject>()
-const kindItems = computed(() => billingStateStore.moduleKinds.map(k => ({ label: k.parent_product_id, value: k.name } as SelectorObject)))
+const kindItems = computed(() => selectedCategoryObj.value?.kinds.map(k => ({ label: k.parent_product_id, value: k.name } as SelectorObject)) ?? [])
 const kindId = computed(() => selectedKind.value ? Number(selectedKind.value.label) : undefined)
+
+// Смена папки: категория с одним видом выбирает его сразу, иначе — второй селектор
+watch(selectedCategory, (cat) => {
+  const category = categories.value.find(c => c.name === cat?.label)
+  const only = category?.kinds.length === 1 ? category.kinds[0] : undefined
+  selectedKind.value = only ? { label: only.parent_product_id, value: only.name } : undefined
+})
 const kindFields = computed(() => kindId.value !== undefined ? (billingStateStore.moduleFieldsByKind[kindId.value] ?? []) : [])
-// Только boolean-поля можно группировать в мультиселект
-const groupableFields = computed(() => kindFields.value.filter(f => f.type === 'boolean'))
 const kindGroups = computed(() => kindId.value !== undefined ? (billingStateStore.moduleGroupsByKind[kindId.value] ?? []) : [])
+// Только boolean-поля можно группировать в мультиселект, за вычетом уже занятых в других группах вида
+const groupedFieldCodes = computed(() => new Set(kindGroups.value.flatMap(g => g.fields)))
+const allBooleanFields = computed(() => kindFields.value.filter(f => f.type === 'boolean'))
+const groupableFields = computed(() => allBooleanFields.value.filter(f => !groupedFieldCodes.value.has(f.code)))
+
+// Видимость полей в форме модуля (field visibility): скрытие — презентационное,
+// обязательные поля скрыть нельзя.
+const hiddenFieldCodes = computed(() => new Set(kindId.value !== undefined ? (billingStateStore.moduleHiddenByKind[kindId.value] ?? []) : []))
+function isFieldHidden(code: string) {
+  return hiddenFieldCodes.value.has(code)
+}
+async function toggleFieldVisibility(field: IFieldMeta) {
+  if (field.isRequired || kindId.value === undefined) return
+  const id = kindId.value
+  const current = billingStateStore.moduleHiddenByKind[id] ?? []
+  const next = current.includes(field.code) ? current.filter(c => c !== field.code) : [...current, field.code]
+  billingStateStore.moduleHiddenByKind = { ...billingStateStore.moduleHiddenByKind, [id]: next }
+  try {
+    await $axios.patchFieldVisibility(id, next)
+  } catch (e) {
+    console.error(e)
+    billingStateStore.moduleHiddenByKind = { ...billingStateStore.moduleHiddenByKind, [id]: current }
+    toastStore.openToast('Не удалось изменить видимость поля')
+  }
+}
 
 // Форма новой группы
 const newGroupName = ref<string>('')
@@ -249,6 +293,13 @@ const typeNames: Record<string, string> = {
       <template v-else>
         <div class="flex mt-5 gap-5 items-end">
           <Selector
+            v-model="selectedCategory"
+            title="Папка"
+            :items="categoryItems"
+            :width="300"
+          />
+          <Selector
+            v-if="selectedCategoryObj && selectedCategoryObj.kinds.length > 1"
             v-model="selectedKind"
             title="Вид модуля"
             :items="kindItems"
@@ -266,7 +317,7 @@ const typeNames: Record<string, string> = {
           <!-- Поля вида -->
           <div class="fields-list mt-5">
             <div
-              class="fields-row font-semibold"
+              class="fields-row fields-row-module font-semibold"
               style="border-width: 0;"
             >
               <div>Название</div>
@@ -274,11 +325,13 @@ const typeNames: Record<string, string> = {
               <div>Тип</div>
               <div>Обязательное</div>
               <div>Варианты</div>
+              <div>Видимость</div>
             </div>
             <div
               v-for="field in kindFields"
               :key="field.code"
-              class="fields-row"
+              class="fields-row fields-row-module"
+              :class="{ 'field-row-hidden': isFieldHidden(field.code) }"
             >
               <div>{{ field.title }}</div>
               <div class="text-gray-500 text-sm">
@@ -288,6 +341,15 @@ const typeNames: Record<string, string> = {
               <div>{{ field.isRequired ? "Да" : "Нет" }}</div>
               <div class="text-sm text-gray-500">
                 {{ field.items?.map(i => i.value).join(", ") }}
+              </div>
+              <div>
+                <Icon
+                  :icon="isFieldHidden(field.code) ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+                  class="w-5 h-5"
+                  :class="field.isRequired ? 'text-gray-300' : 'text-blue-600 cursor-pointer'"
+                  :title="field.isRequired ? 'Обязательное поле нельзя скрыть' : (isFieldHidden(field.code) ? 'Показать поле в форме модуля' : 'Скрыть поле из формы модуля')"
+                  @click="toggleFieldVisibility(field)"
+                />
               </div>
             </div>
           </div>
@@ -367,7 +429,7 @@ const typeNames: Record<string, string> = {
             v-else
             class="text-gray-500 text-sm py-3"
           >
-            У этого вида недостаточно «Да/Нет» полей для группировки (нужно минимум 2)
+            {{ allBooleanFields.length >= 2 ? 'Свободных «Да/Нет» полей не осталось — остальные уже разбиты по группам' : 'У этого вида недостаточно «Да/Нет» полей для группировки (нужно минимум 2)' }}
           </div>
         </template>
       </template>
@@ -409,6 +471,12 @@ const typeNames: Record<string, string> = {
     gap: 10px;
     border-top: 1px solid #d1d5db;
     padding: 10px 5px 10px 5px;
+}
+.fields-row-module{
+    grid-template-columns: minmax(200px, 1.5fr) minmax(200px, 1.5fr) minmax(120px, 1fr) minmax(100px, 0.7fr) minmax(200px, 2fr) minmax(90px, 0.5fr);
+}
+.field-row-hidden{
+    opacity: 0.5;
 }
 .mode-toggle{
     background: #edf2f7;

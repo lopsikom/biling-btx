@@ -61,6 +61,10 @@ export const mockModuleMetadata: IModuleMetadataResponse = {
   // Группа «Мессенджеры» у чат-бота — три boolean-канала как один мультиселект
   groupsByKind: {
     4965: [{ name: 'Мессенджеры', fields: ['property318', 'property319', 'property321'] }]
+  },
+  // «Канал связи» у Обзвона скрыт из формы модуля (field visibility)
+  hiddenByKind: {
+    4930: ['property309']
   }
 }
 

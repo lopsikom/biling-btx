@@ -2,6 +2,7 @@
 import SearchIcon from '@bitrix24/b24icons-vue/outline/SearchIcon'
 import { Icon } from '@iconify/vue'
 import usebillingStateStore from '~/services/stores/billingStateStore'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import type { SelectorObject } from '~/services/models'
 import useModalStore from '~/services/stores/modalStore'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
@@ -9,6 +10,7 @@ import type { IContract, IContractFilter } from '~~/shared/models/APIModels'
 import useToastStore from '~/services/stores/toastStore'
 
 const billingStateStore = usebillingStateStore()
+const bitrixStateStore = useBitrixStateStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
 const { $axios } = useNuxtApp()
@@ -36,6 +38,19 @@ function initFilterDefaults() {
   }
 }
 watch(filterFields, initFilterDefaults, { immediate: true })
+
+// Фильтр по организации (mycompanyId) — системное поле Bitrix, лежит в values как часть зеркала целиком
+const myCompanyFilterItems = computed<SelectorObject[]>(() => {
+  const a = bitrixStateStore.bitrixisMyCompanys.map(c => ({ label: c.id, value: c.title } as SelectorObject))
+  a.unshift(ALL_OPTION)
+  return a
+})
+const myCompanyFilter = ref<SelectorObject>(ALL_OPTION)
+function myCompanyTitle(contract: IContract): string {
+  const id = contract.values?.mycompanyId
+  if (id === undefined || id === null) return '—'
+  return bitrixStateStore.bitrixisMyCompanys.find(c => String(c.id) === String(id))?.title ?? '—'
+}
 
 // Столбцы таблицы: по дефолту — все поля из зеркала метаданных договора.
 // (позже сузится настройкой портала)
@@ -67,6 +82,7 @@ function openEdit(item: IContract) {
 function clearFilter() {
   filterValues.value = {}
   initFilterDefaults()
+  myCompanyFilter.value = ALL_OPTION
   search.value = ''
   toastStore.openToast('Фильтр очищен')
 }
@@ -81,6 +97,7 @@ async function getContractPagination() {
     for (const [code, selected] of Object.entries(filterValues.value)) {
       if (selected && selected.label !== 0) values[code] = Number(selected.label)
     }
+    if (myCompanyFilter.value && myCompanyFilter.value.label !== 0) values.mycompanyId = Number(myCompanyFilter.value.label)
     if (Object.keys(values).length) filter.values = values
     if (search.value?.trim() !== '') filter.name = search.value
     const data = await $axios.getContracts({
@@ -106,6 +123,9 @@ watch(() => [
   pagePagination.value],
 async () => { await getContractPagination() })
 watch(filterValues, async () => { await getContractPagination() }, { deep: true })
+watch(myCompanyFilter, async () => {
+  await getContractPagination()
+})
 watch(() => billingStateStore.isRefreshContracts, async () => {
   if (billingStateStore.isRefreshContracts) {
     await getContractPagination()
@@ -194,10 +214,15 @@ async function inputSearch(e: InputEvent) {
           />
         </div>
       </div>
-      <div
-        v-if="filterFields.length"
-        class="flex mt-[15px] gap-5 flex-wrap"
-      >
+      <div class="flex mt-[15px] gap-5 flex-wrap">
+        <div class="flex">
+          <Selector
+            v-model="myCompanyFilter"
+            title="Организация"
+            :items="myCompanyFilterItems"
+            :width="200"
+          />
+        </div>
         <div
           v-for="field in filterFields"
           :key="field.code"
@@ -235,10 +260,13 @@ async function inputSearch(e: InputEvent) {
               <div
                 class="users-list-row h-[50px]"
                 style="border-width: 0;"
-                :style="{ gridTemplateColumns: `minmax(160px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
+                :style="{ gridTemplateColumns: `minmax(160px, 1fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
               >
                 <div class="font-semibold">
                   Имя
+                </div>
+                <div class="font-semibold cell-ellipsis">
+                  Организация
                 </div>
                 <div
                   v-for="col in columns"
@@ -255,11 +283,14 @@ async function inputSearch(e: InputEvent) {
                 >
                   <div
                     class="users-list-row users-item"
-                    :style="{ gridTemplateColumns: `minmax(160px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
+                    :style="{ gridTemplateColumns: `minmax(160px, 1fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
                     @click="openEdit(value)"
                   >
                     <p class="cell-ellipsis">
                       {{ value.name }}
+                    </p>
+                    <p class="cell-ellipsis text-gray-600 text-sm">
+                      {{ myCompanyTitle(value) }}
                     </p>
                     <p
                       v-for="col in columns"

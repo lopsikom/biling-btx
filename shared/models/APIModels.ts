@@ -136,6 +136,8 @@ export interface IModuleMetadataResponse {
   fieldsByKind: Record<number, IFieldMeta[]>
   // Группы полей по видам (для схлопывания boolean-полей в мультиселект)
   groupsByKind: FieldGroupsByKind
+  // Скрытые в форме поля по видам (field visibility, коды свойств не показываются)
+  hiddenByKind: Record<number, string[]>
 }
 
 export const Connection = z.object({
