@@ -28,12 +28,14 @@ export const ContractPost = z.object({
   bitrix_id: z.string().optional(),
   company_id: z.number().optional(),
   mycompany_id: z.number().optional(),
+  assigned_by_id: z.number().optional(),
   values: z.record(z.string(), z.unknown()).default({})
 })
 
 export const ContractUpdate = z.object({
   name: z.string().min(1).optional(),
   mycompany_id: z.number().optional(),
+  assigned_by_id: z.number().optional(),
   values: z.record(z.string(), z.unknown()).optional()
 })
 

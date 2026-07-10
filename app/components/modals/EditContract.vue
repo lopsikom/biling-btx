@@ -5,7 +5,7 @@ import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
-import type { SelectorObject } from '~/services/models'
+import type { IUser, SelectorObject } from '~/services/models'
 import type { IContractUpdate } from '~~/shared/models/APIModels'
 
 const billingStateStore = usebillingStateStore()
@@ -20,13 +20,15 @@ const { EditContract } = storeToRefs(modalStore)
 const contractId = ref<number>()
 const name = ref<string>('')
 const selectMyCompany = ref<SelectorObject>()
+const assignedUser = ref<IUser>()
 // Значения динамических полей: инициализируются из values договора (replace-зеркала Bitrix)
 const values = ref<Record<string, unknown>>({})
 
 const fields = computed(() => billingStateStore.contractFields)
 const selectMyCompanyItems = computed<SelectorObject[]>(() => bitrixStateStore.bitrixisMyCompanys.map(c => ({ label: c.id, value: c.title })))
+const portalUsers = computed(() => bitrixStateStore.bitrixPortalUsers)
 
-onMounted(() => {
+onMounted(async () => {
   if (!EditContract.value) { modalStore.hideModal(); return }
   contractId.value = EditContract.value.id
   name.value = EditContract.value.name
@@ -39,6 +41,12 @@ onMounted(() => {
   if (mycompanyId !== undefined && mycompanyId !== null) {
     selectMyCompany.value = selectMyCompanyItems.value.find(i => String(i.label) === String(mycompanyId))
   }
+  // assignedById — так же лежит в values целиком. Текущего ответственного может не быть
+  // среди активных (уволен) — довыгружаем отдельно, чтобы не терять отображение в форме.
+  const assignedById = EditContract.value.values?.assignedById
+  if (assignedById !== undefined && assignedById !== null) {
+    assignedUser.value = await bitrixStateStore.ensurePortalUser(assignedById as string | number)
+  }
 })
 
 function isEmptyValue(v: unknown) {
@@ -50,12 +58,14 @@ async function saveData() {
   try {
     if (isEmptyValue(name.value)) throw new Error('Validation Error')
     if (!selectMyCompany.value) throw new Error('Validation Error')
+    if (!assignedUser.value) throw new Error('Validation Error')
     for (const field of fields.value) {
       if (field.isRequired && isEmptyValue(values.value[field.code])) throw new Error('Validation Error')
     }
     const data: IContractUpdate = {
       name: name.value,
       mycompany_id: selectMyCompany.value?.label as number | undefined,
+      assigned_by_id: Number(assignedUser.value.ID),
       values: { ...values.value }
     }
     const newContract = await $axios.patchContract(data, contractId.value!)
@@ -120,6 +130,15 @@ async function deleteData() {
             title="Организация"
             :required="true"
             :items="selectMyCompanyItems"
+          />
+        </div>
+        <div class="flex gap-[10px]">
+          <UserSelector
+            v-model="assignedUser"
+            style="width: 100%;"
+            title="Ответственный"
+            :required="true"
+            :items="portalUsers"
           />
         </div>
         <div

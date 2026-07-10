@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     const fields: Record<string, unknown> = {
       title: ZBody.name,
       opened: 'N',
-      assignedById: Number(portal.bitrix_user_id),
+      assignedById: ZBody.assigned_by_id ?? Number(portal.bitrix_user_id),
       companyId: ZBody.bitrix_id ? Number(ZBody.bitrix_id) : undefined,
       mycompanyId: ZBody.mycompany_id ?? myCompanys[0]?.id,
       ...payload

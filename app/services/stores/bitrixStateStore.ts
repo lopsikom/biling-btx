@@ -8,6 +8,8 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
 
     const bitrixCompany = ref<ICompnany>();
     const bitrixisMyCompanys = ref<ICompanyNew[]>([]);
+    const bitrixPortalUsers = ref<IUser[]>([]);
+    const currentUser = ref<IUser>();
     const companyContacts = ref<IContact[]>();
     const companyRequisite = ref<IRequisite[]>();
     const companyAssignUser = ref<IUser>();
@@ -92,10 +94,24 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     function getBitrixClient(){
         return bitrixClient
     }
-    
+
+    // Ответственный редактируемого договора может быть уволен/деактивирован и потому
+    // отсутствовать в кэше активных сотрудников (bitrixPortalUsers) — довыгружаем отдельно.
+    async function ensurePortalUser(id : string | number) : Promise<IUser | undefined>{
+        const existing = bitrixPortalUsers.value.find(u => String(u.ID) === String(id));
+        if(existing) return existing;
+        const client = getBitrixClient();
+        if(!client) return undefined;
+        const fetched = (await client.getUser(id))[0];
+        if(fetched) bitrixPortalUsers.value = [...bitrixPortalUsers.value, fetched];
+        return fetched;
+    }
+
     return {
         bitrixCompany,
         bitrixisMyCompanys,
+        bitrixPortalUsers,
+        currentUser,
         companyContacts,
         companyAssignUser,
         companyRequisite,
@@ -109,7 +125,8 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         lastActivityCompany,
         lastActivityAssignUser,
         getBitrixClient,
-        setBitrixClient
+        setBitrixClient,
+        ensurePortalUser
     };
 
 })

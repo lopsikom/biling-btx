@@ -10,7 +10,7 @@ import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
 import { bilingPagesEnum, type ICompanyNew, type ICompnany } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMetadata, mockContracts, mockInvoice, mockModuleMetadata, mockModules, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMetadata, mockContracts, mockInvoice, mockModuleMetadata, mockModules, mockPortalUsers, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
@@ -49,6 +49,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     const [
       company,
       myCompanys,
+      portalUsers,
+      currentUser,
       contractMetadata,
       moduleMetadata,
       modules,
@@ -58,6 +60,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     ] = await Promise.all([
       bitrix.companyInfo(),
       bitrix.getItems<ICompanyNew>(4, { isMyCompany: 'Y' }),
+      bitrix.getAllActiveUsers(),
+      bitrix.getCurrentUser(),
       $axios.getContractMetadata(),
       $axios.getModuleMetadata(),
       $axios.getModules({ company_bitrix_id: companyId }),
@@ -68,6 +72,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
 
     bitrixStateStore.bitrixCompany = company
     bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
+    bitrixStateStore.bitrixPortalUsers = portalUsers
+    bitrixStateStore.currentUser = currentUser
     billingStateStore.contractFields = contractMetadata.fields
     billingStateStore.metadataConfigured = contractMetadata.configured
     billingStateStore.moduleKinds = moduleMetadata.kinds
@@ -91,6 +97,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       bitrixStateStore.companyContacts = mockContact
       bitrixStateStore.companyAssignUser = mockUser
       bitrixStateStore.bitrixisMyCompanys = myCompanysMock
+      bitrixStateStore.bitrixPortalUsers = mockPortalUsers
+      bitrixStateStore.currentUser = mockUser
       bitrixStateStore.addresTypes = mockAddressTypes
       bitrixStateStore.companyAddress = mockAddress
       bitrixStateStore.companyInvoice = mockInvoice

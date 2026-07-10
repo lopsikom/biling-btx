@@ -5,7 +5,7 @@ import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useMenuStore from '~/services/stores/menuStores'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
-import type { SelectorObject } from '~/services/models'
+import type { IUser, SelectorObject } from '~/services/models'
 import type { IContractPost } from '~~/shared/models/APIModels'
 
 const billingStateStore = usebillingStateStore()
@@ -17,11 +17,13 @@ const { $axios } = useNuxtApp()
 
 const name = ref<string>('')
 const selectMyCompany = ref<SelectorObject>()
+const assignedUser = ref<IUser>()
 // Значения динамических полей: ключ = код поля Bitrix из зеркала метаданных
 const values = ref<Record<string, unknown>>({})
 
 const fields = computed(() => billingStateStore.contractFields)
 const selectMyCompanyItems = computed<SelectorObject[]>(() => bitrixStateStore.bitrixisMyCompanys.map(c => ({ label: c.id, value: c.title })))
+const portalUsers = computed(() => bitrixStateStore.bitrixPortalUsers)
 
 // Дефолты из настроек полей Bitrix (виджет семантически слеп — знает только метаданные)
 onMounted(() => {
@@ -29,6 +31,10 @@ onMounted(() => {
     if (field.default !== undefined && field.default !== null) values.value[field.code] = field.default
   }
   if (selectMyCompanyItems.value.length) selectMyCompany.value = selectMyCompanyItems.value[0]
+  // Ответственный по умолчанию — текущий пользователь виджета, можно сменить.
+  // Берём из кэша активных (там есть фото), а не напрямую из currentUser (user.current фото не отдаёт).
+  const currentId = bitrixStateStore.currentUser?.ID
+  if (currentId) assignedUser.value = portalUsers.value.find(u => String(u.ID) === String(currentId)) ?? bitrixStateStore.currentUser
 })
 
 function isEmptyValue(v: unknown) {
@@ -40,12 +46,14 @@ async function saveData() {
   try {
     if (isEmptyValue(name.value)) throw new Error('Validation Error')
     if (!selectMyCompany.value) throw new Error('Validation Error')
+    if (!assignedUser.value) throw new Error('Validation Error')
     for (const field of fields.value) {
       if (field.isRequired && isEmptyValue(values.value[field.code])) throw new Error('Validation Error')
     }
     const data: IContractPost = {
       name: name.value,
       mycompany_id: selectMyCompany.value?.label as number | undefined,
+      assigned_by_id: Number(assignedUser.value.ID),
       values: { ...values.value }
     }
     const newContract = await $axios.postContract(data)
@@ -105,6 +113,15 @@ async function saveData() {
             title="Организация"
             :required="true"
             :items="selectMyCompanyItems"
+          />
+        </div>
+        <div class="flex gap-[10px]">
+          <UserSelector
+            v-model="assignedUser"
+            style="width: 100%;"
+            title="Ответственный"
+            :required="true"
+            :items="portalUsers"
           />
         </div>
         <div
