@@ -125,6 +125,21 @@ export class axiosClient {
     return response.data as { entityTypeId: number, title: string }[]
   }
 
+  async getCatalogSections() {
+    const response = await this.AxiosClient.get('bitrix/catalog-sections.list')
+    return response.data as { id: number, iblockSectionId: number | null, name: string }[]
+  }
+
+  async getCatalogSectionProductsCount(sectionId: number) {
+    const response = await this.AxiosClient.get('bitrix/catalog-sections/products-count', { params: { sectionId } })
+    return response.data as { productCount: number }
+  }
+
+  async postPortalSync() {
+    const response = await this.AxiosClient.post<boolean>('portal/sync')
+    return response.data
+  }
+
   async getContracts(data: { filter?: Partial<IContractFilter> }): Promise<IContract[]>
   async getContracts(data: { filter?: Partial<IContractFilter>, pagination?: { skip: number, limit: number } }): Promise<IPagionationResponse<IContract>>
   async getContracts(data: { filter?: Partial<IContractFilter>, pagination?: { skip: number, limit: number } }) {

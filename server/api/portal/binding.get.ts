@@ -8,7 +8,6 @@ export default defineEventHandler(async (event): Promise<IPortalBinding> => {
   if (!portal) throw createError({ statusCode: 404, statusMessage: 'Portal not found' })
   return {
     contract_entity_type_id: portal.contract_entity_type_id,
-    module_product_ids: portal.module_product_ids,
     module_root_section_id: portal.module_root_section_id
   }
 })

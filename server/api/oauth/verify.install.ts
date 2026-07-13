@@ -1,7 +1,9 @@
-import bitrixAPI from "~~/server/services/bitrix/bitrixAPI";
-import syncService from "~~/server/services/syncService";
 import getPortalByUserBitrix from "~~/server/utils/prisma/getPortalByUserBitrix";
 
+// Лёгкая проверка перед формой привязки на установке: портал уже заведён
+// в БД (создан при обмене OAuth-кодом) и токен рабочий. Первичный sync
+// компаний/юзеров — отдельным шагом, см. portal/sync.post.ts, вызывается
+// после того, как админ сохранит привязку (смарт-процесс + раздел каталога).
 export default defineEventHandler(async (event) =>{
     const token = getHeader(event, "Authorization");
     if(!token){
@@ -18,8 +20,6 @@ export default defineEventHandler(async (event) =>{
         if(!portal.portal.refresh_token) {
             return false
         }
-        const sync = await syncService.installSync(portal.portal.id);
-        if(!sync) return false
         return true
     }catch(e){
         console.error(e)

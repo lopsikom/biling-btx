@@ -183,7 +183,7 @@ function isOfferFlagOn(v: OfferPropValue): boolean {
 
 // Раздел + все его подразделы (обход дерева вниз по parent-ссылкам).
 // Возвращает id корня и всех потомков — товары в них становятся видами модулей.
-function collectSectionSubtree(sections: { id: number, iblockSectionId: number | null }[], rootId: number): number[] {
+export function collectSectionSubtree(sections: { id: number, iblockSectionId: number | null }[], rootId: number): number[] {
   const children = new Map<number, number[]>()
   for (const s of sections) {
     if (s.iblockSectionId != null) (children.get(s.iblockSectionId) ?? children.set(s.iblockSectionId, []).get(s.iblockSectionId)!).push(s.id)

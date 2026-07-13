@@ -65,7 +65,6 @@ export interface IMetadataResponse {
 
 export interface IPortalBinding {
   contract_entity_type_id: number | null
-  module_product_ids: number[]
   module_root_section_id: number | null
 }
 
