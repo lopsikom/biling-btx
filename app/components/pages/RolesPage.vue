@@ -29,7 +29,7 @@ const selectedUser = ref<IUser>()
 const selectedRole = computed(() => roles.value.find(r => r.bitrix_id === selectedUser.value?.ID))
 
 const roleItems: SelectorObject[] = [
-  { label: 'admin', value: 'Админ' },
+  { label: 'admin', value: 'Администратор' },
   { label: 'manager', value: 'Менеджер' },
   { label: 'viewer', value: 'Наблюдатель' }
 ]
