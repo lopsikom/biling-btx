@@ -1,8 +1,10 @@
 import { prisma } from '~~/server/services/prisma/prismaClient'
 import type { AssignableRole } from '~~/shared/models/APIModels'
 
-// «Наблюдатель» — отсутствие строки в user_role, а не значение. «Админ» сюда
-// никогда не пишется — вычисляется из Bitrix (см. ADR-0007).
+// «Наблюдатель» — отсутствие строки в user_role, а не значение. «Админ» тоже
+// может быть здесь записан как явный грант (ADR-0008) — это независимый от
+// Bitrix путь получить админку виджета, финальная роль берёт максимум
+// из гранта и вычисленного из Bitrix статуса (см. requirePortal.ts).
 export async function getUserRolePrisma(portal_id: number, user_bitrix_id: number): Promise<AssignableRole> {
   const grant = await prisma.user_role.findUnique({
     where: { portal_id_user_bitrix_id: { portal_id, user_bitrix_id } },

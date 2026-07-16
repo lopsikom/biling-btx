@@ -4,9 +4,10 @@ import { setUserRolePrisma } from '~~/server/utils/prisma/UserRole'
 import { requireRole } from '~~/server/utils/requireRole'
 import { UserRolePatch, type IUserRolePatch } from '~~/shared/models/APIModels'
 
-// Назначение/снятие роли «менеджер» пользователю портала. 'admin' сюда не
-// назначается — вычисляется из Bitrix, попытка передать его отклонит Zod-схема
-// ещё до похода в БД (см. ADR-0007).
+// Назначение/снятие роли пользователю портала — включая 'admin' как независимый
+// от Bitrix грант виджета (ADR-0008): итоговая роль пользователя всё равно берёт
+// максимум с вычисленным из Bitrix статусом (см. requirePortal.ts), так что этот
+// грант не может кого-то *понизить* ниже реального админства Bitrix-портала.
 export default defineEventHandler(async (event): Promise<IUserRolePatch> => {
   requireRole(event, 'admin')
   const portal = event.context.portal as PortalDataType

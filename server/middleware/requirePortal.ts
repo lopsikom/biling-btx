@@ -7,10 +7,12 @@ import { redisClient } from '../services/redis'
 import { getUserRolePrisma } from '../utils/prisma/UserRole'
 import type { Role } from '~~/shared/models/APIModels'
 
-// Финальная роль = 'admin', если пользователь админ Bitrix-портала (вычисляется,
-// не хранится), иначе грант из БД ('manager') или дефолт 'viewer' (ADR-0007).
-// isBitrixAdmin кешируется вместе с токеном (300с) — это внешний REST-вызов;
-// грант читается из БД на каждый запрос, чтобы отзыв «менеджера» действовал сразу.
+// Финальная роль = максимум из двух источников (ADR-0007, ADR-0008):
+// 'admin', если пользователь админ Bitrix-портала (вычисляется, не хранится),
+// ИЛИ явный грант из БД (в т.ч. 'admin' — грант виджета, независимый от Bitrix),
+// иначе дефолт 'viewer'. isBitrixAdmin кешируется вместе с токеном (300с) — это
+// внешний REST-вызов; грант читается из БД на каждый запрос, чтобы отзыв
+// действовал сразу.
 async function resolveRole(portalId: number, userBitrixId: number, isBitrixAdmin: boolean): Promise<Role> {
   if (isBitrixAdmin) return 'admin'
   return getUserRolePrisma(portalId, userBitrixId)

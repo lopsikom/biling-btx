@@ -5,9 +5,13 @@ import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import type { IUser, SelectorObject } from '~/services/models'
 import type { AssignableRole, IUserRole } from '~~/shared/models/APIModels'
 
-// Управление ролью «менеджер»/«наблюдатель» (ADR-0007). Страница целиком
-// admin-only — видимость вкладки гейтится в index.vue по bitrixStateStore.isAdmin,
-// но сам API тоже проверяет роль на сервере (см. server/api/portal/roles.*).
+// Управление ролью «админ»/«менеджер»/«наблюдатель» (ADR-0007, ADR-0008).
+// Страница целиком admin-only — видимость вкладки гейтится в index.vue по
+// bitrixStateStore.isAdmin, но сам API тоже проверяет роль на сервере
+// (см. server/api/portal/roles.*). «Админ» здесь — независимый от Bitrix
+// грант виджета: не отнимает права у реального админа Bitrix-портала (тот
+// всё равно вычисляется отдельно и не понижается через этот UI), но
+// позволяет выдать полный доступ и без него.
 // Поток: выбрать сотрудника (тот же UserSelector, что и «Ответственный» в
 // EditContract.vue) → селектор роли, предзаполненный текущей → «Сохранить».
 const toastStore = useToastStore()
@@ -25,16 +29,16 @@ const selectedUser = ref<IUser>()
 const selectedRole = computed(() => roles.value.find(r => r.bitrix_id === selectedUser.value?.ID))
 
 const roleItems: SelectorObject[] = [
+  { label: 'admin', value: 'Админ' },
   { label: 'manager', value: 'Менеджер' },
   { label: 'viewer', value: 'Наблюдатель' }
 ]
 const pendingRoleOption = ref<SelectorObject>()
 
-
+// При смене сотрудника подставляем в селектор роли его текущую роль
+// (дефолт — 'наблюдатель', если гранта в БД нет).
 watch(selectedRole, (r) => {
-  pendingRoleOption.value = r?.role ? roleItems.find(i => i.label === r?.role) : {label : 'viewer', value : "Наблюдатель"}
-  console.log(r?.role)
-  console.log(pendingRoleOption.value)
+  pendingRoleOption.value = roleItems.find(i => i.label === (r?.role ?? 'viewer'))
 })
 
 const hasChanges = computed(() =>
@@ -74,9 +78,10 @@ async function save() {
       <div class="flex flex-col gap-1">
         <span class="select-none font-semibold">Роли</span>
         <span class="text-gray-500">
-          Кто может редактировать данные биллинга, а кто только просматривает.
-          Администраторы Bitrix-портала получают полный доступ автоматически —
-          назначать им роль здесь не нужно.
+          Администратор — полный доступ, включая эти настройки. Менеджер — может
+          редактировать данные биллинга. Наблюдатель — только просматривает.
+          Администраторы Bitrix-портала получают полный доступ автоматически,
+          независимо от того, что выбрано здесь.
         </span>
       </div>
       <div
@@ -95,7 +100,6 @@ async function save() {
             v-model="selectedUser"
             title="Сотрудник"
             :items="portalUsers"
-            
             :width="300"
           />
           <Selector
