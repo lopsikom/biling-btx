@@ -2,10 +2,12 @@ import { ZodError } from 'zod'
 import { provisionModule } from '~~/server/services/moduleProvisioning'
 import { moduleToApi } from '~~/server/utils/prisma/modules/Module'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 import { ModulePost } from '~~/shared/models/APIModels'
 
 // Создание модуля: Bitrix-first провижининг (ADR-0002), values → свойства offer'а.
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const portal = event.context.portal as PortalDataType
   try {
     const body = await ModulePost.parseAsync(await readBody(event))

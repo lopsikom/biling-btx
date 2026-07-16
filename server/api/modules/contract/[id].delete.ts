@@ -5,10 +5,12 @@ import { getBitrixTokenByRedis } from '~~/server/utils/getBitrixToken'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { deleteContractPrisma, getContractById, requireContract } from '~~/server/utils/prisma/modules/Contract'
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
+import { requireRole } from '~~/server/utils/requireRole'
 import { entityType } from '~~/shared/models/APIModels'
 
 // Удаление договора: Bitrix-first, затем БД (вебхук DELETE скипнется по локу).
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const id = getRouterParams(event).id
   const portal = event.context.portal as PortalDataType
   if (!id) throw createError({ statusCode: 404, statusMessage: 'none id' })

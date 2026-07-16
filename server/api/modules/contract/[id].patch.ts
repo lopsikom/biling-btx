@@ -7,10 +7,12 @@ import { getBitrixTokenByRedis } from '~~/server/utils/getBitrixToken'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { contractToApi, getContractById, requireContract, upsertContractFromBitrix } from '~~/server/utils/prisma/modules/Contract'
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
+import { requireRole } from '~~/server/utils/requireRole'
 import { ContractUpdate, entityType } from '~~/shared/models/APIModels'
 
 // Правка договора: Bitrix-first, field_values перезаписывается из ответа Bitrix (ADR-0005).
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const id = getRouterParams(event).id
   const portal = event.context.portal as PortalDataType
   const body = await readBody(event)

@@ -6,7 +6,7 @@ import type { IFieldMeta } from '~~/shared/models/APIModels'
 
 // Рендерер динамического поля: описание из зеркала метаданных → инпут.
 // model — сырое значение поля в values (как его понимает Bitrix).
-const props = defineProps<{ field: IFieldMeta }>()
+const props = withDefaults(defineProps<{ field: IFieldMeta, disabled?: boolean }>(), { disabled: false })
 const model = defineModel<unknown>()
 
 // enumeration: в values лежит id варианта, Selector работает с SelectorObject
@@ -57,6 +57,7 @@ const isDate = computed(() => ['date', 'datetime'].includes(props.field.type))
     :title="field.title"
     :required="field.isRequired"
     :items="enumItems"
+    :disabled="disabled"
     style="width: 100%;"
   />
   <DateRangePicker
@@ -64,6 +65,7 @@ const isDate = computed(() => ['date', 'datetime'].includes(props.field.type))
     v-model="dateValue"
     :title="field.title"
     :required="field.isRequired"
+    :disabled="disabled"
   />
   <div
     v-else-if="field.type === 'boolean'"
@@ -72,6 +74,7 @@ const isDate = computed(() => ['date', 'datetime'].includes(props.field.type))
   >
     <CheckboxRoot
       v-model="boolValue"
+      :disabled="disabled"
       :class="boolValue ? 'checkbox-active' : 'checkbox-disable'"
     >
       <CheckboxIndicator>
@@ -91,6 +94,7 @@ const isDate = computed(() => ['date', 'datetime'].includes(props.field.type))
     :resize="false"
     :title="field.title"
     :required="field.isRequired"
+    :disabled="disabled"
     style="width: 100%;"
   />
 </template>
@@ -117,5 +121,10 @@ const isDate = computed(() => ['date', 'datetime'].includes(props.field.type))
     height: 20px;
     align-items: center;
     justify-content: center;
+}
+[data-disabled].checkbox-active,
+[data-disabled].checkbox-disable{
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>

@@ -20,3 +20,9 @@ export default async function getPortalByUserBitrix(token : string){
         return {portal, user_id : user.id, bitrix_user_id : user.bitrix_id}
 }
 export type PortalDataType = NonNullable<Awaited<ReturnType<typeof getPortalByUserBitrix>>>
+// Форма event.context.portal внутри HTTP-хендлеров: requirePortal всегда навешивает
+// role поверх PortalDataType после резолва (сама функция выше про isBitrixAdmin не
+// знает). Не путать с голым PortalDataType — им пользуются вебхук-хендлеры и
+// внутренние хелперы (getBitrixTokenByRedis и т.п.), собирающие контекст в обход
+// middleware, где role нет и не нужна.
+export type AuthedPortalDataType = PortalDataType & { role: import('~~/shared/models/APIModels').Role }

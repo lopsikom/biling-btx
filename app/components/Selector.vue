@@ -6,9 +6,11 @@ const props = withDefaults(defineProps<{
     items : T[],
     title? : string,
     width? : number,
-    required? : boolean
+    required? : boolean,
+    disabled? : boolean
 }>(),{
-    required : false
+    required : false,
+    disabled : false
 })
 
 const model = defineModel<T>()
@@ -35,7 +37,7 @@ const displayText = computed(() => {
 <template>
 <div class="flex flex-col gap-[5px]">
     <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
-    <SelectRoot v-model="model">
+    <SelectRoot v-model="model" :disabled="disabled">
     <SelectTrigger class="select-menu text-sm gap-[10px]" :class="{ 'select-menu-error': hasError }" :style="width ? `width:${width}px`:''" @focusout="touched = true; error = false">
         <SelectValue style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 80%; text-align: start;">{{ displayText }}</SelectValue>
         <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
@@ -74,6 +76,11 @@ const displayText = computed(() => {
     background-color: #fff0f0;
     border-color: #e53e3e;
     transition: border-color 0.15s ease;
+}
+
+.select-menu[data-disabled]{
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .select-content{

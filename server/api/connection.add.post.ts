@@ -4,8 +4,10 @@ import { connectionMapPostPrisma } from "../utils/mappers";
 import { ZodError } from "zod";
 import { eventsAudit, EventEntity } from "../services/EventsAudit";
 import { PortalDataType } from "../utils/prisma/getPortalByUserBitrix";
+import { requireRole } from "../utils/requireRole";
 
 export default defineEventHandler(async (event) => {
+    requireRole(event, 'manager')
     try{
         const portal_id = event.context.portal as PortalDataType;
         const body = await ConnectionPost.transform(val => connectionMapPostPrisma(val, portal_id!.portal.id)).parseAsync(await readBody(event))

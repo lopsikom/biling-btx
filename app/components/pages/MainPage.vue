@@ -184,6 +184,7 @@ async function deleteConnection(item: IConnection) {
           <span class="text-gray-500 select-none">Подключенные аккаунты и сервисы</span>
         </div>
         <div
+          v-if="bitrixStateStore.canEditData"
           class="add-user-btn items-center flex px-3 py-2 gap-1"
           @click="modalStore.showModal(ModalEnum.ADD_CONNECTION)"
         >
@@ -238,7 +239,10 @@ async function deleteConnection(item: IConnection) {
                     class="text-xs"
                   >{{ value.statusData.name }}</span>
                 </div>
-                <DropdownMenuRoot v-model="value.isOpen">
+                <DropdownMenuRoot
+                  v-if="bitrixStateStore.canEditData"
+                  v-model="value.isOpen"
+                >
                   <DropdownMenuTrigger>
                     <MoreBox />
                   </DropdownMenuTrigger>
@@ -308,7 +312,10 @@ async function deleteConnection(item: IConnection) {
                     class="text-xs"
                   >{{ value.statusData.name }}</span>
                 </div>
-                <DropdownMenuRoot v-model="value.isOpen">
+                <DropdownMenuRoot
+                  v-if="bitrixStateStore.canEditData"
+                  v-model="value.isOpen"
+                >
                   <DropdownMenuTrigger>
                     <MoreBox />
                   </DropdownMenuTrigger>
@@ -378,7 +385,10 @@ async function deleteConnection(item: IConnection) {
                     class="text-xs"
                   >{{ value.statusData.name }}</span>
                 </div>
-                <DropdownMenuRoot v-model="value.isOpen">
+                <DropdownMenuRoot
+                  v-if="bitrixStateStore.canEditData"
+                  v-model="value.isOpen"
+                >
                   <DropdownMenuTrigger>
                     <MoreBox />
                   </DropdownMenuTrigger>
@@ -448,7 +458,10 @@ async function deleteConnection(item: IConnection) {
                     class="text-xs"
                   >{{ value.statusData.name }}</span>
                 </div>
-                <DropdownMenuRoot v-model="value.isOpen">
+                <DropdownMenuRoot
+                  v-if="bitrixStateStore.canEditData"
+                  v-model="value.isOpen"
+                >
                   <DropdownMenuTrigger>
                     <MoreBox />
                   </DropdownMenuTrigger>

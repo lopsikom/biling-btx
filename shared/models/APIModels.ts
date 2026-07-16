@@ -213,6 +213,22 @@ export interface IUser {
 
 }
 
+// Роль виджета (ADR-0007): 'admin' вычисляется из Bitrix и никогда не назначается
+// через API ниже — назначаемы только 'manager'/'viewer'.
+export type Role = 'admin' | 'manager' | 'viewer'
+export type AssignableRole = Exclude<Role, 'admin'>
+
+export interface IUserRole extends IUser {
+  bitrix_id: string
+  role: AssignableRole
+}
+
+export const UserRolePatch = z.object({
+  user_bitrix_id: z.number(),
+  role: z.enum(['manager', 'viewer'])
+})
+export type IUserRolePatch = z.infer<typeof UserRolePatch>
+
 export interface IMessengers {
   id: number
   name: string

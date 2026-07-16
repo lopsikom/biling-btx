@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { replaceFieldGroupsForKind } from '~~/server/utils/prisma/FieldGroup'
 import { invalidateCatalogMirror } from '~~/server/services/catalogMetadata'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 import type { IFieldGroup } from '~~/shared/models/APIModels'
 
 const FieldGroupsPatch = z.object({
@@ -15,6 +16,7 @@ const FieldGroupsPatch = z.object({
 // Replace-запись групп полей одного вида модуля. Пустой groups → очистка.
 // Зеркало каталога инвалидируется: метадата отдаст новые группы при следующем запросе.
 export default defineEventHandler(async (event): Promise<IFieldGroup[]> => {
+  requireRole(event, 'admin')
   const portalCtx = event.context.portal as PortalDataType
   try {
     const body = FieldGroupsPatch.parse(await readBody(event))

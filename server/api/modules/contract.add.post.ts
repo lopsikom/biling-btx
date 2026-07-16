@@ -10,10 +10,12 @@ import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitri
 import { contractToApi, upsertContractFromBitrix } from '~~/server/utils/prisma/modules/Contract'
 import getMyCompanysCache from '~~/server/utils/redis/getMyCompanys'
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
+import { requireRole } from '~~/server/utils/requireRole'
 import { ContractPost, entityType } from '~~/shared/models/APIModels'
 
 // Создание договора: Bitrix-first (ADR-0002), field_values — из ответа Bitrix (ADR-0005).
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const portal = event.context.portal as PortalDataType
   const body = await readBody(event)
   try {

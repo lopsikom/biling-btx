@@ -8,8 +8,10 @@ const props = withDefaults(defineProps<{
   title?: string
   width?: number
   required?: boolean
+  disabled?: boolean
 }>(), {
-  required: false
+  required: false,
+  disabled: false
 })
 
 const bitrixStateStore = useBitrixStateStore()
@@ -46,6 +48,7 @@ function byId(a?: IUser, b?: IUser) {
     <ComboboxRoot
       v-model="model"
       :by="byId"
+      :disabled="disabled"
       :style="width ? `width:${width}px` : ''"
     >
       <ComboboxAnchor
@@ -83,9 +86,12 @@ function byId(a?: IUser, b?: IUser) {
       <ComboboxPortal>
         <ComboboxContent
           :side-offset="2"
+          align="end"
           class="p-[5px]"
-          style="background: white; z-index: 999; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;"
+          style="background: white; z-index: 999; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;;"
           position="popper"
+          hide-when-detached
+          update-position-strategy="always"
         >
           <ComboboxViewport style="max-height: 260px; overflow-y: auto; scrollbar-width: thin;">
             <ComboboxEmpty class="user-select-item text-gray-500">
@@ -156,6 +162,10 @@ function byId(a?: IUser, b?: IUser) {
     border-color: #e53e3e;
     transition: border-color 0.15s ease;
 }
+.select-menu[data-disabled]{
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .combobox-input{
     background-color: transparent;
     border: none;
@@ -174,7 +184,7 @@ function byId(a?: IUser, b?: IUser) {
     display: flex;
     align-items: center;
     min-height: 44px;
-    min-width: 220px;
+    min-width: 300px;
     padding: 6px 10px;
     position: relative;
     user-select: none;

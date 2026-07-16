@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import usebillingStateStore from '~/services/stores/billingStateStore'
+import useBitrixStateStore from '~/services/stores/bitrixStateStore'
 import useModalStore from '~/services/stores/modalStore'
 import useToastStore from '~/services/stores/toastStore'
 import useMenuStore from '~/services/stores/menuStores'
@@ -13,6 +14,7 @@ import type { IModule, IModulePost, IModuleUpdate, IFieldMeta, IModuleKind } fro
 // модули внутри → инлайн-редактор полей (DynamicField/группы). «Добавить проект» —
 // черновик с выбором вида из категории.
 const billingStateStore = usebillingStateStore()
+const bitrixStateStore = useBitrixStateStore()
 const modalStore = useModalStore()
 const toastStore = useToastStore()
 const menuStore = useMenuStore()
@@ -308,6 +310,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
               <div @click.stop>
                 <CheckboxRoot
                   :model-value="m.active"
+                  :disabled="!bitrixStateStore.canEditData"
                   :class="m.active ? 'checkbox-active' : 'checkbox-disable'"
                   @update:model-value="toggleActive(m)"
                 >
@@ -325,7 +328,10 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
               >{{ m.title }}</span>
             </div>
             <div style="display: flex; flex-direction: row-reverse; margin-left: auto; gap: 12px; align-items: center;">
-              <div style="position: relative;">
+              <div
+                v-if="bitrixStateStore.canEditData"
+                style="position: relative;"
+              >
                 <Icon
                   icon="material-symbols:more-vert"
                   class="cursor-pointer"
@@ -373,6 +379,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 :resize="false"
                 title="Название"
                 :required="true"
+                :disabled="!bitrixStateStore.canEditData"
                 style="width: 50%;"
               />
               <InputBox
@@ -380,6 +387,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 type="number"
                 :resize="false"
                 title="Цена, ₽"
+                :disabled="!bitrixStateStore.canEditData"
                 style="width: 25%;"
               />
               <InputBox
@@ -387,6 +395,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 type="number"
                 :resize="false"
                 title="Количество"
+                :disabled="!bitrixStateStore.canEditData"
                 style="width: 25%;"
               />
             </div>
@@ -399,6 +408,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 :key="field.code"
                 v-model="buf(m.id).values[field.code]"
                 :field="field"
+                :disabled="!bitrixStateStore.canEditData"
               />
             </div>
             <div
@@ -410,6 +420,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 v-model="buf(m.id).values"
                 :title="group.name"
                 :fields="groupFieldsFor(m.parent_product_id, group.fields)"
+                :disabled="!bitrixStateStore.canEditData"
               />
             </div>
             <div
@@ -421,9 +432,11 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 style="width: 100%;"
                 title="Договор"
                 :required="true"
+                :disabled="!bitrixStateStore.canEditData"
                 :items="contractItems"
               />
               <div
+                v-if="bitrixStateStore.canEditData"
                 class="add-contract-btn blue-hover flex justify-center items-center"
                 @click="openAddContract(sel => buf(m.id).contract = sel)"
               >
@@ -434,6 +447,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
               </div>
             </div>
             <div
+              v-if="bitrixStateStore.canEditData"
               class="save-btn justify-center items-center px-[12px] py-[8px]"
               style="margin-left: auto; width: fit-content;"
               @click="saveModule(m)"
@@ -555,6 +569,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
 
         <!-- Добавить проект -->
         <div
+          v-if="bitrixStateStore.canEditData"
           class="flex justify-center blue-hover items-center close-btn gap-[10px] mt-[10px] cursor-pointer h-[35px]"
           @click="addDraft(cat)"
         >

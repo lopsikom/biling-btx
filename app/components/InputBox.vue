@@ -25,7 +25,8 @@ const props = withDefaults(defineProps<{
     resize? : boolean,
     type? : "text" | "number",
     step? : number,
-    required? : boolean
+    required? : boolean,
+    disabled? : boolean
 }>(), {
     title : undefined,
     rows : 1,
@@ -33,7 +34,8 @@ const props = withDefaults(defineProps<{
     resize : true,
     type : "text",
     step : 1,
-    required : false
+    required : false,
+    disabled : false
 })
 
 const touched = ref(false)
@@ -49,8 +51,8 @@ const hasError = computed(() => error.value || (props.required && touched.value 
 <template>
     <div class="flex flex-col gap-[5px]" v-bind="wrapperAttrs">
         <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
-        <textarea v-if="resize" v-bind="inputAttrs" :type="type" :step="step" v-model="model" :rows="rows" :placeholder="placeholder" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
-        <input v-else :type="type" :step="step" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
+        <textarea v-if="resize" v-bind="inputAttrs" :type="type" :step="step" v-model="model" :rows="rows" :placeholder="placeholder" :disabled="disabled" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
+        <input v-else :type="type" :step="step" v-bind="inputAttrs" v-model="model" :placeholder="placeholder" :disabled="disabled" class="edit-input" :class="{ 'input-error': hasError }" @blur="touched = true; error = false"/>
     </div>
 </template>
 <style scoped>
@@ -86,5 +88,9 @@ input[type="number"] {
 .edit-input.input-error:focus{
     border-color: #e53e3e;
     box-shadow: 0 0 8px rgba(229, 62, 62, 0.5);
+}
+.edit-input:disabled{
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>

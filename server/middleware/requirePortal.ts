@@ -4,6 +4,17 @@ import type { PortalDataType } from '../utils/prisma/getPortalByUserBitrix'
 import getPortalByUserBitrix from '../utils/prisma/getPortalByUserBitrix'
 import redisCheck from '../plugins/redis-check'
 import { redisClient } from '../services/redis'
+import { getUserRolePrisma } from '../utils/prisma/UserRole'
+import type { Role } from '~~/shared/models/APIModels'
+
+// Финальная роль = 'admin', если пользователь админ Bitrix-портала (вычисляется,
+// не хранится), иначе грант из БД ('manager') или дефолт 'viewer' (ADR-0007).
+// isBitrixAdmin кешируется вместе с токеном (300с) — это внешний REST-вызов;
+// грант читается из БД на каждый запрос, чтобы отзыв «менеджера» действовал сразу.
+async function resolveRole(portalId: number, userBitrixId: number, isBitrixAdmin: boolean): Promise<Role> {
+  if (isBitrixAdmin) return 'admin'
+  return getUserRolePrisma(portalId, userBitrixId)
+}
 
 export default defineEventHandler(async (event) => {
   if (!event.path.startsWith('/api')) return
@@ -26,7 +37,8 @@ export default defineEventHandler(async (event) => {
           module_product_ids: []
         },
         user_id: Number(process.env.NUXT_DEV_USER_ID),
-        bitrix_user_id: process.env.NUXT_DEV_USER_BITRIX_ID
+        bitrix_user_id: process.env.NUXT_DEV_USER_BITRIX_ID,
+        role: (process.env.NUXT_DEV_ROLE as Role | undefined) ?? 'admin'
       } as PortalDataType
       return
     } else {
@@ -40,7 +52,9 @@ export default defineEventHandler(async (event) => {
   try {
     const cachePortal = await redisClient.get(`token:${token}`)
     if (cachePortal) {
-      event.context.portal = JSON.parse(cachePortal)
+      const cached = JSON.parse(cachePortal)
+      const role = await resolveRole(cached.portal.id, cached.user_id, cached.isBitrixAdmin)
+      event.context.portal = { ...cached, role }
       return
     }
     const portal = await getPortalByUserBitrix(token)
@@ -50,9 +64,11 @@ export default defineEventHandler(async (event) => {
       message: 'none find portal'
     })
     const { client_secret, ...data } = portal.portal
-    const newPortal = { portal: data, user_id: portal.user_id, bitrix_user_id: portal.bitrix_user_id }
+    const isBitrixAdmin = await bitrixAPI.getUserAdmin(data.domain, token).then(r => r.result).catch(() => false)
+    const newPortal = { portal: data, user_id: portal.user_id, bitrix_user_id: portal.bitrix_user_id, isBitrixAdmin }
     await redisClient.set(`token:${token}`, JSON.stringify(newPortal), 'EX', 300)
-    event.context.portal = newPortal
+    const role = await resolveRole(data.id, portal.user_id, isBitrixAdmin)
+    event.context.portal = { ...newPortal, role }
   } catch (e) {
     console.error(e)
     throw createError({

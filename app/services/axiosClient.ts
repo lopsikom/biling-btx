@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, IUser } from '~~/shared/models/APIModels'
+import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, IUser, IUserRole, IUserRolePatch, Role } from '~~/shared/models/APIModels'
 import { Bitrix24Placement, type IResponseArrayNewBitrix } from '~~/shared/models/bitrixModels'
 
 export const BitrixPlacementMap: Record<Bitrix24Placement, (frame: B24Frame) => Promise<string>> = {
@@ -279,6 +279,21 @@ export class axiosClient {
 
   async getUsers() {
     const response = await this.AxiosClient.get<IUser[]>(`bitrix/user.list`)
+    return response.data
+  }
+
+  async getMyRole() {
+    const response = await this.AxiosClient.get<{ role: Role }>('portal/me')
+    return response.data.role
+  }
+
+  async getPortalRoles() {
+    const response = await this.AxiosClient.get<IUserRole[]>('portal/roles')
+    return response.data
+  }
+
+  async patchPortalRole(data: IUserRolePatch) {
+    const response = await this.AxiosClient.patch<IUserRolePatch>('portal/roles', data)
     return response.data
   }
 }

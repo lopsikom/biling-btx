@@ -28,10 +28,12 @@ const model = defineModel<CalendarDate>()
 const error = defineModel<boolean>('error', { default: false })
 const props = withDefaults(defineProps<{
     title? : string,
-    required? : boolean
+    required? : boolean,
+    disabled? : boolean
 }>(), {
     title : undefined,
-    required : false
+    required : false,
+    disabled : false
 })
 
 const open = ref(false)
@@ -53,7 +55,7 @@ watch(model, (newVal) => {
   <div class="df-wrapper">
     <Label for="date-field" class="df-label" v-if="title">{{ title }}</Label>
 
-    <DatePickerRoot id="date-field" granularity="day" locale="ru" v-model="model" v-model:open="open">
+    <DatePickerRoot id="date-field" granularity="day" locale="ru" v-model="model" v-model:open="open" :disabled="disabled">
       <DatePickerField v-slot="{ segments }" class="df-field" :class="{ 'df-field-error': hasError }" @focusout="touched = true; error = false">
         <!-- Отображаем сегменты как интерактивные поля (literal / segment) -->
         <template v-for="seg in segments">
@@ -171,6 +173,14 @@ watch(model, (newVal) => {
   background: #fff0f0;
   border-color: #e53e3e;
   transition: border-color 0.15s ease;
+}
+
+.df-field[data-disabled] {
+  opacity: 0.6;
+}
+.df-field[data-disabled] .df-trigger {
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .df-segment,
