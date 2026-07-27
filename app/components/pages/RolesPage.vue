@@ -77,12 +77,6 @@ async function save() {
     <div class="any-white-container px-5 py-4 flex flex-col">
       <div class="flex flex-col gap-1">
         <span class="select-none font-semibold">Роли</span>
-        <span class="text-gray-500">
-          Администратор — полный доступ, включая эти настройки. Менеджер — может
-          редактировать данные биллинга. Наблюдатель — только просматривает.
-          Администраторы Bitrix-портала получают полный доступ автоматически,
-          независимо от того, что выбрано здесь.
-        </span>
       </div>
       <div
         v-if="isLoad"
@@ -101,6 +95,7 @@ async function save() {
             title="Сотрудник"
             :items="portalUsers"
             :width="300"
+            :selfexclude="true"
           />
           <Selector
             v-if="selectedUser"

@@ -4,8 +4,6 @@ import type { AuthedPortalDataType } from './prisma/getPortalByUserBitrix'
 
 const roleRank: Record<Role, number> = { viewer: 0, manager: 1, admin: 2 }
 
-// Серверная проверка роли (ADR-0007) — единственный барьер, бэк ходит в Bitrix
-// под app-токеном, а не токеном пользователя, так что сам Bitrix мутацию не остановит.
 export function requireRole(event: H3Event, minRole: Role) {
   const portal = event.context.portal as AuthedPortalDataType
   if (roleRank[portal.role] < roleRank[minRole]) {
@@ -16,3 +14,4 @@ export function requireRole(event: H3Event, minRole: Role) {
     })
   }
 }
+

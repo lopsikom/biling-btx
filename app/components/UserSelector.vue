@@ -8,10 +8,12 @@ const props = withDefaults(defineProps<{
   title?: string
   width?: number
   required?: boolean
-  disabled?: boolean
+  disabled?: boolean,
+  selfexclude? : boolean
 }>(), {
   required: false,
-  disabled: false
+  disabled: false,
+  selfexclude : false
 })
 
 const bitrixStateStore = useBitrixStateStore()
@@ -23,6 +25,8 @@ const touched = ref(false)
 
 const isEmpty = computed(() => !model.value)
 const hasError = computed(() => error.value || (props.required && touched.value && isEmpty.value))
+
+const modItems = computed(() => props.selfexclude ? props.items.filter(i => i.ID != bitrixStateStore.currentUser?.ID) : props.items)
 
 // ФИО в коротком формате (как в AssignUserModal/MainPage) — и для отображения, и для displayValue инпута
 function shortName(user?: IUser): string {
@@ -98,7 +102,7 @@ function byId(a?: IUser, b?: IUser) {
               Ничего не найдено
             </ComboboxEmpty>
             <ComboboxItem
-              v-for="user in items"
+              v-for="user in modItems"
               :key="user.ID"
               :value="user"
               :text-value="searchText(user)"

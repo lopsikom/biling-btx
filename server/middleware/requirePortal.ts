@@ -25,8 +25,6 @@ export default defineEventHandler(async (event) => {
   const token = getHeader(event, 'Authorization')
   if (!token) {
     if (process.env.NUXT_PUBLIC_DEV && process.env.NUXT_DEV_SKIP_AUTH) {
-      // Портал берём из БД по NUXT_DEV_PORTAL_ID: env-домен/токены со временем
-      // расходятся с живым порталом (домен, привязка, refresh_token). Env — фолбэк.
       const devPortal = await getPortal({ id: Number(process.env.NUXT_DEV_PORTAL_ID) }).catch(() => null)
       event.context.portal = {
         portal: devPortal ?? {

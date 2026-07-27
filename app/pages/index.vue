@@ -257,7 +257,7 @@ function switchPage(page: string) {
           />
         </div>
       </div>
-      <div
+      <!-- <div
         class="any-contaier-row"
         style="width: 100%; gap: 12px;"
       >
@@ -285,7 +285,7 @@ function switchPage(page: string) {
             Редактирование
           </p>
         </div>
-      </div>
+      </div> -->
       <div class="page-selector-grid">
         <div
           v-for="page in visiblePages"
