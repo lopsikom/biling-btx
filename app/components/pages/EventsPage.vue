@@ -49,12 +49,8 @@ const ActionRecord : Record<string, string> = {
 
 const EntityRecord : Record<string, string> = {
     [entityType.CONNECTION] : "подключенияе",
-    [entityType.AUTOINFORMATION] : "модуля автоинформирования",
-    [entityType.CHAT_BOT] : "чат бота",
     [entityType.CONTRACT] : "договора",
-    [entityType.VATS] : "ВАТС",
-    [entityType.VOICE_ROBOT] : "голосового робота",
-    [entityType.WEBFORM] : "вебформы"
+    [entityType.MODULE] : "модуля"
 }
 
 const StageRecord : Record<string, string> ={ 
@@ -206,28 +202,12 @@ const selectEntityList = ref([
         value : "Подключение"
     },
     {
-        label : entityType.AUTOINFORMATION,
-        value : "Автоинформирование"
-    },
-    {
-        label : entityType.CHAT_BOT,
-        value : "Чат-бот"
-    },
-    {
         label : entityType.CONTRACT,
         value : "Договора"
     },
     {
-        label : entityType.VATS,
-        value : "ВАТС"
-    },
-    {
-        label : entityType.VOICE_ROBOT,
-        value : "Голосовой робот"
-    },
-    {
-        label : entityType.WEBFORM,
-        value : "Веб-форма"
+        label : entityType.MODULE,
+        value : "Модули"
     }
 
 ])
