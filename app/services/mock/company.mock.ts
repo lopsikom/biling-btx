@@ -184,6 +184,28 @@ export const mockUser: IUser = {
   ACTIVE: 1
 };
 
+export const mockPortalUsers: IUser[] = [
+  mockUser,
+  {
+    ID: "11",
+    NAME: "Мария",
+    LAST_NAME: "Кузнецова",
+    SECOND_NAME: "Игоревна",
+    EMAIL: "m.kuznecova@company.ru",
+    WORK_POSITION: "Менеджер по продажам",
+    ACTIVE: 1
+  },
+  {
+    ID: "12",
+    NAME: "Дмитрий",
+    LAST_NAME: "Новиков",
+    SECOND_NAME: "Андреевич",
+    EMAIL: "d.novikov@company.ru",
+    WORK_POSITION: "Руководитель отдела продаж",
+    ACTIVE: 1
+  }
+];
+
 export const mockAddress : IAddress[] = [
   {
   TYPE_ID: 6,

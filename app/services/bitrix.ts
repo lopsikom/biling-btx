@@ -71,6 +71,21 @@ export class Bitrix {
         })
         return response.getData().result as IUser[]
     }
+    async getCurrentUser() : Promise<IUser>{
+        return (await this.bitrixFrame.callMethod("user.current", {})).getData().result as IUser
+    }
+    // user.get отдаёт максимум 50 записей за раз — докручиваем страницы, пока страница полная
+    async getAllActiveUsers() : Promise<IUser[]>{
+        const users : IUser[] = []
+        let start = 0
+        for(;;){
+            const page = await this.getUsers({ filter : { ACTIVE : true }, pagination : start })
+            users.push(...page)
+            if(page.length < 50) break
+            start += 50
+        }
+        return users
+    }
     async companyAdress(id? : string | number) : Promise<IAddress[]>{
         return (await this.bitrixFrame.callMethod("crm.address.list", {
             filter : {

@@ -1,9 +1,7 @@
-import type { ProductEnum } from '~~/shared/models/bitrixModels'
-
 /** Режим зеркалирования товаров договора. */
 export type ReconcileMode = 'create' | 'reconcile'
 
-/** Запись снимка модулей договора (см. CONTEXT.md → snapshot). */
+/** Запись снимка модулей договора (см. CONTEXT.md → snapshot). type = parent_product_id (вид). */
 export interface SnapshotRow {
   bitrix_id: number
   portal_id: number
@@ -33,11 +31,4 @@ export interface ReconcileSummary {
   updated: number
   deleted: number
   skipped: number
-}
-
-/** Внутреннее представление одного товара договора после резолва типа. */
-export interface ResolvedProduct {
-  productRows: import('~~/shared/models/bitrixModels').IProductRow
-  product: import('~~/shared/models/bitrixModels').AnyProduct
-  productType: ProductEnum | undefined
 }

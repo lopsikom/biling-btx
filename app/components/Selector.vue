@@ -22,13 +22,22 @@ const isEmpty = computed(() => {
 })
 
 const hasError = computed(() => error.value || (props.required && touched.value && isEmpty.value))
+
+// Текст выбранного значения — из модели напрямую. reka-ui SelectValue сам показывает
+// текст только после того, как дропдаун открывали (SelectItemText зарегистрировался),
+// поэтому пред-выбранное значение (режим редактирования) иначе выглядит пустым.
+const displayText = computed(() => {
+  const v = model.value
+  if (v === null || v === undefined || v === '') return ''
+  return isObject(v) && (v as SelectorObject).value ? String((v as SelectorObject).value) : String(v)
+})
 </script>
 <template>
 <div class="flex flex-col gap-[5px]">
     <span class="select-none font-semibold text-sm" v-if="title">{{ title }}</span>
     <SelectRoot v-model="model">
     <SelectTrigger class="select-menu text-sm gap-[10px]" :class="{ 'select-menu-error': hasError }" :style="width ? `width:${width}px`:''" @focusout="touched = true; error = false">
-        <SelectValue  style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 80%; text-align: start;" />
+        <SelectValue style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 80%; text-align: start;">{{ displayText }}</SelectValue>
         <Icon icon="radix-icons:chevron-down" style="margin-left: auto;"/>
     </SelectTrigger>
     <SelectPortal >

@@ -6,10 +6,11 @@
       "mcp__b24-dev-mcp__bitrix-method-details",
       "mcp__b24-dev-mcp__bitrix-search",
       "Bash(git -C /home/lopsik/biling-btx ls-files)",
-      "Bash(cd /home/lopsik/biling-btx *)"
+      "Bash(timeout 240 npx vue-tsc --noEmit -p tsconfig.json)",
+      "Bash(timeout 300 npm run typecheck)",
+      "Bash(npx eslint *)",
+      "Bash(npm run *)"
     ],
-    "additionalDirectories": [
-      "/home/lopsik/biling-btx/shared/models"
-    ]
+    "defaultMode": "bypassPermissions"
   }
 }

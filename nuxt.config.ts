@@ -40,8 +40,6 @@ export default defineNuxtConfig({
     AuthUri : "https://oauth.bitrix.info/",
     RedisUrl : "redis",
     RedisPort : 6379,
-    ContractIdBitrix : 1058,
-    ContractStringIdBitrix : "T422",
     DatabaseUrl : "",
     public : {
       dev : false,

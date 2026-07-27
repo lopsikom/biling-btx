@@ -27,60 +27,6 @@ model address {
   @@unique([company_id, portal_id, type_id, entity_type_id])
 }
 
-model autoinformation_module {
-  id                   Int                  @id @default(autoincrement())
-  contract_id          Int?
-  type_id              Int
-  quantity             Int
-  price                Float                @db.Real
-  active               Boolean
-  tarrif_id            Int?
-  title                String
-  bitrix_id            Int
-  portal_id            Int
-  product_id           Int?
-  contract             contract?            @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tariff               tariff?              @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  autoinformation_type autoinformation_type @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  portal               portal               @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
-
-  @@unique([portal_id, bitrix_id], map: "autoinformation_module_bitrix_id_portal_id")
-}
-
-model autoinformation_type {
-  id                     Int                      @id @default(autoincrement())
-  name                   String?
-  autoinformation_module autoinformation_module[]
-}
-
-model chat_bot {
-  id                  Int                   @id @default(autoincrement())
-  contract_id         Int?
-  tariff_id           Int?
-  lines_count         Int
-  active              Boolean
-  price               Float                 @db.Real
-  title               String
-  bitrix_id           Int
-  portal_id           Int
-  product_id          Int?
-  contract            contract?             @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tariff              tariff?               @relation(fields: [tariff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  portal              portal                @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
-  chat_bot_messengers chat_bot_messengers[]
-
-  @@unique([portal_id, bitrix_id], map: "chat_bot_bitrix_id_portal_id")
-}
-
-model chat_bot_messengers {
-  chat_bot_id  Int
-  messenger_id Int
-  chat_bot     chat_bot   @relation(fields: [chat_bot_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  messengers   messengers @relation(fields: [messenger_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([chat_bot_id, messenger_id])
-}
-
 model company {
   id             Int          @id @default(autoincrement())
   bitrix_id      String
@@ -168,31 +114,15 @@ model contact_phones {
 }
 
 model contract {
-  id                     Int                      @id @default(autoincrement())
-  name                   String
-  company_id             Int
-  status                 Int?
-  index                  String?
-  date_begin             DateTime?                @db.Date
-  date_close             DateTime?                @db.Date
-  org_name               String
-  bitrix_id              Int
-  date_sign              DateTime?                @db.Date
-  doc_type_id            Int?
-  original_type_id       Int?
-  portal_id              Int
-  prolongation_id        Int?
-  autoinformation_module autoinformation_module[]
-  chat_bot               chat_bot[]
-  company                company                  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  contract_doc_type      contract_doc_type?       @relation(fields: [doc_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  contract_original_type contract_original_type?  @relation(fields: [original_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  portal                 portal                   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contract_portal_id_fk")
-  contract_prolongation  contract_prolongation?   @relation(fields: [prolongation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  contract_status        contract_status?         @relation(fields: [status], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  vats                   vats[]
-  voice_robot            voice_robot[]
-  webform                webform[]
+  id           Int      @id @default(autoincrement())
+  name         String
+  company_id   Int
+  bitrix_id    Int
+  portal_id    Int
+  field_values Json     @default("{}")
+  company      company  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  portal       portal   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "contract_portal_id_fk")
+  module       module[]
 
   @@unique([portal_id, bitrix_id], map: "bitrix_id_portal_id")
 }
@@ -228,33 +158,29 @@ model invoice {
   @@unique([portal_id, bitrix_id])
 }
 
-model messengers {
-  id                  Int                   @id
-  name                String
-  chat_bot_messengers chat_bot_messengers[]
-}
-
 model portal {
-  id                     Int                      @id @default(autoincrement())
-  client_id              String
-  client_secret          String
-  domain                 String
-  refresh_token          String?
-  access_token           String?
-  address                address[]
-  autoinformation_module autoinformation_module[]
-  chat_bot               chat_bot[]
-  company                company[]
-  contact                contact[]
-  contact_email          contact_email[]
-  contact_phones         contact_phones[]
-  contract               contract[]
-  invoice                invoice[]
-  requisite              requisite[]
-  user_bitrix            user_bitrix[]
-  vats                   vats[]
-  voice_robot            voice_robot[]
-  webform                webform[]
+  id                      Int                @id @default(autoincrement())
+  client_id               String
+  client_secret           String
+  domain                  String
+  refresh_token           String?
+  access_token            String?
+  contract_entity_type_id Int?
+  module_product_ids      Int[]              @default([])
+  module_root_section_id  Int?
+  address                 address[]
+  company                 company[]
+  contact                 contact[]
+  contact_email           contact_email[]
+  contact_phones          contact_phones[]
+  contract                contract[]
+  field_group             field_group[]
+  field_metadata          field_metadata[]
+  field_visibility        field_visibility[]
+  invoice                 invoice[]
+  module                  module[]
+  requisite               requisite[]
+  user_bitrix             user_bitrix[]
 }
 
 model requisite {
@@ -277,16 +203,6 @@ model requisite {
   portal            portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([bitrix_id, portal_id])
-}
-
-model tariff {
-  id                     Int                      @id @default(autoincrement())
-  name                   String?
-  autoinformation_module autoinformation_module[]
-  chat_bot               chat_bot[]
-  vats                   vats[]
-  voice_robot            voice_robot[]
-  webform                webform[]
 }
 
 model user_bitrix {
@@ -316,104 +232,6 @@ model user_bitrix {
   portal                                       portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([bitrix_id, portal_id])
-}
-
-model vats {
-  id               Int       @id @default(autoincrement())
-  contract_id      Int?
-  additional_users Int
-  active           Boolean?
-  tarrif_id        Int?
-  price            Float     @db.Real
-  duration         Int
-  title            String
-  bitrix_id        Int
-  portal_id        Int
-  product_id       Int?
-  contract         contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  portal           portal    @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
-  tariff           tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([portal_id, bitrix_id], map: "vats_bitrix_id_portal_id")
-}
-
-model webform {
-  id                   Int                    @id @default(autoincrement())
-  contract_id          Int?
-  tarrif_id            Int
-  active               Boolean?
-  price                Float                  @db.Real
-  title                String
-  bitrix_id            Int
-  portal_id            Int
-  product_id           Int?
-  portal               portal                 @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
-  contract             contract?              @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "webform_contract_id_fkey")
-  tariff               tariff                 @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  webform_webform_type webform_webform_type[]
-
-  @@unique([portal_id, bitrix_id], map: "webform_bitrix_id_portal_id")
-}
-
-model contract_status {
-  id        Int        @id @default(autoincrement())
-  name      String
-  bitrix_id String?    @unique
-  contract  contract[]
-}
-
-model contract_doc_type {
-  id        Int        @id @default(autoincrement())
-  name      String
-  bitrix_id String?    @unique
-  contract  contract[]
-}
-
-model contract_prolongation {
-  id        Int        @id @default(autoincrement())
-  name      String
-  bitrix_id String?    @unique
-  contract  contract[]
-}
-
-model contract_original_type {
-  id        Int        @id @default(autoincrement())
-  name      String
-  bitrix_id String?    @unique
-  contract  contract[]
-}
-
-model webform_type {
-  id                   Int                    @id @default(autoincrement())
-  name                 String
-  webform_webform_type webform_webform_type[]
-}
-
-model voice_robot {
-  id          Int       @id @default(autoincrement())
-  contract_id Int?
-  tarrif_id   Int?
-  lines       Int
-  active      Boolean?
-  price       Float     @db.Real
-  title       String
-  bitrix_id   Int
-  portal_id   Int
-  product_id  Int?
-  portal      portal    @relation(fields: [portal_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vats_portal_fk")
-  contract    contract? @relation(fields: [contract_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tariff      tariff?   @relation(fields: [tarrif_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([portal_id, bitrix_id], map: "voice_robot_bitrix_id_portal_id")
-}
-
-model webform_webform_type {
-  webform_id   Int
-  type_id      Int
-  webform_type webform_type @relation(fields: [type_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  webform      webform      @relation(fields: [webform_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([webform_id, type_id])
 }
 
 model connection {
@@ -451,4 +269,56 @@ model events {
   companyId   Int
   company     company     @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_bitrix user_bitrix @relation(fields: [userid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model field_metadata {
+  id         Int      @id @default(autoincrement())
+  portal_id  Int
+  entity     String
+  fields     Json     @default("{}")
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  portal     portal   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "field_metadata_portal_fk")
+
+  @@unique([portal_id, entity], map: "field_metadata_portal_entity_uq")
+}
+
+model module {
+  id                Int       @id @default(autoincrement())
+  portal_id         Int
+  contract_id       Int?
+  bitrix_id         Int
+  product_id        Int?
+  parent_product_id Int
+  title             String
+  price             Float     @default(0) @db.Real
+  quantity          Int       @default(1)
+  active            Boolean   @default(true)
+  field_values      Json      @default("{}")
+  contract          contract? @relation(fields: [contract_id], references: [id], onUpdate: NoAction, map: "module_contract_fk")
+  portal            portal    @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "module_portal_fk")
+
+  @@unique([portal_id, bitrix_id], map: "module_portal_bitrix_uq")
+  @@index([contract_id], map: "module_contract_idx")
+  @@index([parent_product_id], map: "module_parent_idx")
+}
+
+model field_group {
+  id                Int      @id @default(autoincrement())
+  portal_id         Int
+  parent_product_id Int
+  name              String
+  fields            String[] @default([])
+  portal            portal   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "field_group_portal_fk")
+
+  @@index([portal_id, parent_product_id], map: "field_group_portal_kind_idx")
+}
+
+model field_visibility {
+  id                Int      @id @default(autoincrement())
+  portal_id         Int
+  parent_product_id Int
+  hidden_fields     String[] @default([])
+  portal            portal   @relation(fields: [portal_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "field_visibility_portal_fk")
+
+  @@unique([portal_id, parent_product_id], map: "field_visibility_portal_kind_uq")
 }
