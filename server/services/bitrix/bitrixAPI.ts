@@ -133,6 +133,15 @@ export class bitrixAPI {
     return response.data as bitrixResponse<IUser>
   }
 
+  async getUserAdmin(domain: string, token: string) {
+    const response = await this.AxiosClient.get(`https://${domain}/rest/user.admin`, {
+      params: {
+        auth: token
+      }
+    })
+    return response.data as bitrixResponse<boolean>
+  }
+
   async getItem<T>(domain: string, token: string, entityTypeId: number, id: string | number) {
     const response = await this.AxiosClient.get(`https://${domain}/rest/crm.item.get`, {
       params: {

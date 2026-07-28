@@ -5,7 +5,7 @@ import type { IFieldMeta } from '~~/shared/models/APIModels'
 // Мультиселект-группа (field group): несколько flag/boolean-полей как один селектор.
 // Дизайн — выпадашка с чекбоксами + теги выбранных (как старая модалка мессенджеров).
 // v-model — общий объект values формы (ключи = коды полей); правим только поля группы.
-const props = defineProps<{ title: string, fields: IFieldMeta[] }>()
+const props = withDefaults(defineProps<{ title: string, fields: IFieldMeta[], disabled?: boolean }>(), { disabled: false })
 const values = defineModel<Record<string, unknown>>({ required: true })
 
 const open = ref(false)
@@ -17,7 +17,12 @@ function isOn(field: IFieldMeta): boolean {
   return !!field.trueEnumId && String(v) === field.trueEnumId
 }
 function toggle(field: IFieldMeta) {
+  if (props.disabled) return
   values.value = { ...values.value, [field.code]: isOn(field) ? 'N' : 'Y' }
+}
+function toggleOpen() {
+  if (props.disabled) return
+  open.value = !open.value
 }
 
 const selected = computed(() => props.fields.filter(isOn))
@@ -40,7 +45,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     <span class="select-none font-semibold text-sm">{{ title }}</span>
     <div
       class="msg-trigger blue-hover flex items-center px-[10px]"
-      @click="open = !open"
+      :class="{ 'msg-trigger-disabled': disabled }"
+      @click="toggleOpen()"
     >
       <span
         class="select-none text-sm"
@@ -68,6 +74,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         >
           <CheckboxRoot
             :model-value="isOn(field)"
+            :disabled="disabled"
             :class="isOn(field) ? 'checkbox-active' : 'checkbox-disable'"
             @click.stop="toggle(field)"
           >
@@ -97,6 +104,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
           class="cursor-default font-semibold"
         >{{ field.title }}</span>
         <Icon
+          v-if="!disabled"
           icon="maki:cross"
           class="w-2.5 h-2.5 hover-red cursor-pointer"
           @click="toggle(field)"
@@ -113,6 +121,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
     border-radius: 5px;
     cursor: pointer;
     background: white;
+}
+.msg-trigger-disabled{
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 .blue-hover:hover{ background-color: #ebf8ff; transition: background-color 0.15s ease; }
 .msg-dropdown{

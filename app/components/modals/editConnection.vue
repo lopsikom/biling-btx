@@ -81,7 +81,7 @@ async function saveData(){
         </div>
     </div>
     <div class="flex mt-[35px] gap-[20px]" style="margin-left: auto; width: 50%; flex-direction: row-reverse;">
-            <div class="save-btn justify-center items-center px-[10px] py-[8px]" @click="saveData()">
+            <div v-if="bitrixStateStore.canEditData" class="save-btn justify-center items-center px-[10px] py-[8px]" @click="saveData()">
                 <p class="select-none text-sm" style="color: white;">Сохранить</p>
             </div>
             <div class="close-btn blue-hover justify-center items-center px-[10px] py-[8px]" @click="modalStore.hideModal()">

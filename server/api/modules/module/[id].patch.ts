@@ -2,10 +2,12 @@ import * as z from 'zod'
 import { updateModuleProvisioning } from '~~/server/services/moduleProvisioning'
 import { moduleToApi, requireModule } from '~~/server/utils/prisma/modules/Module'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 import { ModuleUpdate } from '~~/shared/models/APIModels'
 
 // Правка модуля: Bitrix-first, field_values из тела (replace-зеркало, ADR-0005).
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const id = getRouterParams(event).id
   const portal = event.context.portal as PortalDataType
   if (!id) throw createError({ statusCode: 404, statusMessage: 'none id' })

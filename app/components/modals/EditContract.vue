@@ -119,6 +119,7 @@ async function deleteData() {
             placeholder="Введите название..."
             :resize="false"
             :required="true"
+            :disabled="!bitrixStateStore.canEditData"
             title="Название договора"
             style="width: 100%;"
           />
@@ -129,6 +130,7 @@ async function deleteData() {
             style="width: 100%;"
             title="Организация"
             :required="true"
+            :disabled="!bitrixStateStore.canEditData"
             :items="selectMyCompanyItems"
           />
         </div>
@@ -138,6 +140,7 @@ async function deleteData() {
             style="width: 100%;"
             title="Ответственный"
             :required="true"
+            :disabled="!bitrixStateStore.canEditData"
             :items="portalUsers"
           />
         </div>
@@ -150,6 +153,7 @@ async function deleteData() {
             :key="field.code"
             v-model="values[field.code]"
             :field="field"
+            :disabled="!bitrixStateStore.canEditData"
           />
         </div>
         <div
@@ -166,6 +170,7 @@ async function deleteData() {
     style="margin-left: auto; width: 100%; flex-direction: row-reverse;"
   >
     <div
+      v-if="bitrixStateStore.canEditData"
       class="save-btn justify-center items-center px-[10px] py-[8px]"
       @click="saveData()"
     >
@@ -185,6 +190,7 @@ async function deleteData() {
       </p>
     </div>
     <div
+      v-if="bitrixStateStore.canEditData"
       class="delete-btn justify-center items-center px-[10px] py-[8px]"
       style="margin-right: auto;"
       @click="deleteData()"

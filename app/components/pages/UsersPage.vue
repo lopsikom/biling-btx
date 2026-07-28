@@ -190,6 +190,7 @@ async function inputSearch(e: InputEvent) {
             <span class="select-none text-sm text-slate-50 font-semibold">Очистить фильтр</span>
           </div>
           <div
+            v-if="bitrixStateStore.canEditData"
             class="add-user-btn items-center flex px-2 py-2 gap-1"
             @click="modalStore.showModal(ModalEnum.ADD_CONTRACT)"
           >

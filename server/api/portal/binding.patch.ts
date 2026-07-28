@@ -3,6 +3,7 @@ import { prisma } from '~~/server/services/prisma/prismaClient'
 import { invalidateFieldsMirror } from '~~/server/services/fieldMetadata'
 import { invalidateCatalogMirror } from '~~/server/services/catalogMetadata'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 import type { IPortalBinding } from '~~/shared/models/APIModels'
 
 const BindingPatch = z.object({
@@ -13,6 +14,7 @@ const BindingPatch = z.object({
 // Смена привязки портала: какой смарт-процесс — договор, какие товары — виды модулей.
 // После смены зеркала метаданных инвалидируются — поля перечитаются из нового источника.
 export default defineEventHandler(async (event): Promise<IPortalBinding> => {
+  requireRole(event, 'admin')
   const portalCtx = event.context.portal as PortalDataType
   try {
     const body = BindingPatch.parse(await readBody(event))

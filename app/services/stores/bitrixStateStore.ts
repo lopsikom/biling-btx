@@ -1,6 +1,7 @@
 import { Bitrix } from "../bitrix"
 import type { B24Frame } from '@bitrix24/b24jssdk'
 import { type IContact, type IRequisite, type IUser, type ICompnany, type IAddresType, type IAddress, type AddressType, type Invoice, type InvoiceGrid, type IDeal, type ICompanyNew } from "../models"
+import type { Role } from "~~/shared/models/APIModels"
 
 const useBitrixStateStore = defineStore('bitrixState', () => {
 
@@ -10,6 +11,11 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
     const bitrixisMyCompanys = ref<ICompanyNew[]>([]);
     const bitrixPortalUsers = ref<IUser[]>([]);
     const currentUser = ref<IUser>();
+    // Роль виджета текущего пользователя (ADR-0007). Дефолт 'viewer' — безопасный
+    // до ответа сервера; реальная проверка мутаций всё равно серверная.
+    const myRole = ref<Role>('viewer');
+    const isAdmin = computed(() => myRole.value === 'admin');
+    const canEditData = computed(() => myRole.value !== 'viewer');
     const companyContacts = ref<IContact[]>();
     const companyRequisite = ref<IRequisite[]>();
     const companyAssignUser = ref<IUser>();
@@ -112,6 +118,9 @@ const useBitrixStateStore = defineStore('bitrixState', () => {
         bitrixisMyCompanys,
         bitrixPortalUsers,
         currentUser,
+        myRole,
+        isAdmin,
+        canEditData,
         companyContacts,
         companyAssignUser,
         companyRequisite,

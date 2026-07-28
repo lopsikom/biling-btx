@@ -4,5 +4,6 @@ export enum bilingPagesEnum  {
     Users = 'Договора',
     Billing = 'Биллинг',
     Events = 'События',
-    Fields = 'Поля'
+    Fields = 'Поля',
+    Roles = 'Роли'
 };

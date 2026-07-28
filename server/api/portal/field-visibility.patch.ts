@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { replaceHiddenFieldsForKind } from '~~/server/utils/prisma/FieldVisibility'
 import { invalidateCatalogMirror } from '~~/server/services/catalogMetadata'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 
 const FieldVisibilityPatch = z.object({
   parent_product_id: z.number().int().positive(),
@@ -11,6 +12,7 @@ const FieldVisibilityPatch = z.object({
 // Replace-запись скрытых полей одного вида модуля. Пустой hidden_fields → все поля видимы.
 // Зеркало каталога инвалидируется: метадата отдаст новую видимость при следующем запросе.
 export default defineEventHandler(async (event): Promise<string[]> => {
+  requireRole(event, 'admin')
   const portalCtx = event.context.portal as PortalDataType
   try {
     const body = FieldVisibilityPatch.parse(await readBody(event))

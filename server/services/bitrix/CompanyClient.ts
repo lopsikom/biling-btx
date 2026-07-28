@@ -234,14 +234,7 @@ export async function initCompanyClient(bitrix_id: number, portal: number) {
   return new companyClient(portalPrisma.domain, companyPrsima[0].id, bitrix_id.toString())
 }
 
-/**
- * Подтягивает в БД все договоры указанной компании вместе с их
- * товарами-модулями. Вызывается при первом открытии виджета в карточке компании,
- * когда компания только добавлена в БД и нужно синхронизировать связанные сущности.
- * Логика повторяет обработчик CRM_DYNAMIC_ITEM_ADD, но идёт от компании, а не от
- * одного договора: перебирает все её договоры.
- */
-async function syncCompanyContractsAndProducts(domain: string, token: string, portal_id: number, companyBitrixId: number) {
+export async function syncCompanyContractsAndProducts(domain: string, token: string, portal_id: number, companyBitrixId: number) {
   const portal = await getPortal({ id: portal_id })
   const entityTypeId = portal?.contract_entity_type_id
   if (!entityTypeId) {
@@ -258,10 +251,8 @@ async function syncCompanyContractsAndProducts(domain: string, token: string, po
     try {
       if (!contract.id || !contract.companyId) return
 
-      // Replace-зеркало (ADR-0005): field_values = элемент Bitrix целиком
       await upsertContractFromBitrix(portal_id, contract)
 
-      // Backfill товаров договора: без userId → аудит молчит (см. CONTEXT.md → events).
       await reconcileContractProducts({
         domain,
         token,

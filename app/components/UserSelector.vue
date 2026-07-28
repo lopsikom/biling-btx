@@ -8,8 +8,12 @@ const props = withDefaults(defineProps<{
   title?: string
   width?: number
   required?: boolean
+  disabled?: boolean,
+  selfexclude? : boolean
 }>(), {
-  required: false
+  required: false,
+  disabled: false,
+  selfexclude : false
 })
 
 const bitrixStateStore = useBitrixStateStore()
@@ -21,6 +25,8 @@ const touched = ref(false)
 
 const isEmpty = computed(() => !model.value)
 const hasError = computed(() => error.value || (props.required && touched.value && isEmpty.value))
+
+const modItems = computed(() => props.selfexclude ? props.items.filter(i => i.ID != bitrixStateStore.currentUser?.ID) : props.items)
 
 // ФИО в коротком формате (как в AssignUserModal/MainPage) — и для отображения, и для displayValue инпута
 function shortName(user?: IUser): string {
@@ -46,6 +52,7 @@ function byId(a?: IUser, b?: IUser) {
     <ComboboxRoot
       v-model="model"
       :by="byId"
+      :disabled="disabled"
       :style="width ? `width:${width}px` : ''"
     >
       <ComboboxAnchor
@@ -83,16 +90,19 @@ function byId(a?: IUser, b?: IUser) {
       <ComboboxPortal>
         <ComboboxContent
           :side-offset="2"
+          align="end"
           class="p-[5px]"
-          style="background: white; z-index: 999; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;"
+          style="background: white; z-index: 999; border-color: #e7eaee; border-width: 1.5px; border-radius: 10px;;"
           position="popper"
+          hide-when-detached
+          update-position-strategy="always"
         >
           <ComboboxViewport style="max-height: 260px; overflow-y: auto; scrollbar-width: thin;">
             <ComboboxEmpty class="user-select-item text-gray-500">
               Ничего не найдено
             </ComboboxEmpty>
             <ComboboxItem
-              v-for="user in items"
+              v-for="user in modItems"
               :key="user.ID"
               :value="user"
               :text-value="searchText(user)"
@@ -156,6 +166,10 @@ function byId(a?: IUser, b?: IUser) {
     border-color: #e53e3e;
     transition: border-color 0.15s ease;
 }
+.select-menu[data-disabled]{
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .combobox-input{
     background-color: transparent;
     border: none;
@@ -174,7 +188,7 @@ function byId(a?: IUser, b?: IUser) {
     display: flex;
     align-items: center;
     min-height: 44px;
-    min-width: 220px;
+    min-width: 300px;
     padding: 6px 10px;
     position: relative;
     user-select: none;

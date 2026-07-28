@@ -2,10 +2,12 @@ import * as z from "zod"
 import { EventEntity, eventsAudit } from "~~/server/services/EventsAudit";
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { requireConnection } from "~~/server/utils/prisma/Connection";
+import { requireRole } from "~~/server/utils/requireRole";
 import { ConnectionPatch, entityType } from "~~/shared/models/APIModels";
 
 
 export default defineEventHandler(async (event) => {
+    requireRole(event, 'manager')
     const id = getRouterParams(event).id;
     const portal = event.context.portal as PortalDataType
     const body = await readBody(event);

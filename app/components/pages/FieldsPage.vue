@@ -196,6 +196,17 @@ const typeNames: Record<string, string> = {
           class="flex gap-3"
           style="margin-left: auto;"
         >
+          <div
+            v-if="mode === 'contract'"
+            class="refresh-btn flex px-2 py-2 gap-1"
+            @click="refreshFields()"
+          >
+            <Icon
+              icon="mdi:refresh"
+              class="w-5 h-5 text-slate-50"
+            />
+            <span class="select-none text-sm text-slate-50 font-semibold">Обновить из Bitrix</span>
+          </div>
           <div class="mode-toggle flex">
             <div
               class="mode-btn"
@@ -211,17 +222,6 @@ const typeNames: Record<string, string> = {
             >
               Модули
             </div>
-          </div>
-          <div
-            v-if="mode === 'contract'"
-            class="refresh-btn items-center flex px-2 py-2 gap-1"
-            @click="refreshFields()"
-          >
-            <Icon
-              icon="mdi:refresh"
-              class="w-5 h-5 text-slate-50"
-            />
-            <span class="select-none text-sm text-slate-50 font-semibold">Обновить из Bitrix</span>
           </div>
         </div>
       </div>
@@ -450,10 +450,12 @@ const typeNames: Record<string, string> = {
     transition: background 0.15s ease;
 }
 .refresh-btn{
+    display: flex;
     background: #3182ce;
     border-radius: 10px;
     height: fit-content;
     cursor: pointer;
+    align-self: center;
 }
 .refresh-btn:hover{
     background: #5899d7;

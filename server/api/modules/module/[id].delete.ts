@@ -5,10 +5,12 @@ import { eventsAudit, type EventEntity } from '~~/server/services/EventsAudit'
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
 import { getModuleById, requireModule, deleteModuleByBitrixId } from '~~/server/utils/prisma/modules/Module'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
+import { requireRole } from '~~/server/utils/requireRole'
 import { entityType } from '~~/shared/models/APIModels'
 
 // Удаление модуля: Bitrix-first (offer + product row), затем строка в БД.
 export default defineEventHandler(async (event) => {
+  requireRole(event, 'manager')
   const id = getRouterParams(event).id
   const portal = event.context.portal as PortalDataType
   if (!id) throw createError({ statusCode: 404, statusMessage: 'none id' })

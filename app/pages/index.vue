@@ -14,7 +14,7 @@ import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMe
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
-import { pagesEnum } from '~/components/pages'
+import { pagesEnum, adminOnlyPages } from '~/components/pages'
 import { modalsEnum } from '~/components/modals'
 import ErrorModal from '~/components/modals/ErrorModal.vue'
 import ConfirmModal from '~/components/modals/ConfirmModal.vue'
@@ -51,6 +51,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       myCompanys,
       portalUsers,
       currentUser,
+      myRole,
       contractMetadata,
       moduleMetadata,
       modules,
@@ -62,6 +63,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       bitrix.getItems<ICompanyNew>(4, { isMyCompany: 'Y' }),
       bitrix.getAllActiveUsers(),
       bitrix.getCurrentUser(),
+      $axios.getMyRole(),
       $axios.getContractMetadata(),
       $axios.getModuleMetadata(),
       $axios.getModules({ company_bitrix_id: companyId }),
@@ -74,6 +76,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     bitrixStateStore.bitrixisMyCompanys = myCompanys.result.items
     bitrixStateStore.bitrixPortalUsers = portalUsers
     bitrixStateStore.currentUser = currentUser
+    bitrixStateStore.myRole = myRole
     billingStateStore.contractFields = contractMetadata.fields
     billingStateStore.metadataConfigured = contractMetadata.configured
     billingStateStore.moduleKinds = moduleMetadata.kinds
@@ -103,14 +106,20 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       bitrixStateStore.companyAddress = mockAddress
       bitrixStateStore.companyInvoice = mockInvoice
       const [
+        myRole,
         connectionStatuses,
         connectionTypes,
         connections
       ] = await Promise.all([
+        // Вне реального Bitrix-фрейма BitrixFrame не инициализирован — axios не
+        // подставит Authorization, поэтому бэк идёт в dev-обход (NUXT_DEV_SKIP_AUTH)
+        // и честно отдаёт роль по NUXT_DEV_ROLE, а не захардкоженного admin.
+        $axios.getMyRole(),
         $axios.getConnectionStatus(),
         $axios.getConnectionType(),
         $axios.getConnectionList({ company_id: '2' })
       ])
+      bitrixStateStore.myRole = myRole
 
       billingStateStore.contractFields = mockContractMetadata.fields
       billingStateStore.metadataConfigured = mockContractMetadata.configured
@@ -136,6 +145,12 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
 )
 
 const Company = computed(() => bitrixStateStore.bitrixCompany)
+
+// Вкладки системных настроек (Поля, Роли) видны только админу — сам функционал
+// всё равно защищён на сервере, но не показывать недоступное честнее (ADR-0007).
+const visiblePages = computed(() => Object.keys(pagesEnum).filter(
+  page => bitrixStateStore.isAdmin || !adminOnlyPages.includes(page)
+))
 
 function switchPage(page: string) {
   selectPage.value = page
@@ -242,7 +257,7 @@ function switchPage(page: string) {
           />
         </div>
       </div>
-      <div
+      <!-- <div
         class="any-contaier-row"
         style="width: 100%; gap: 12px;"
       >
@@ -270,10 +285,10 @@ function switchPage(page: string) {
             Редактирование
           </p>
         </div>
-      </div>
+      </div> -->
       <div class="page-selector-grid">
         <div
-          v-for="page in Object.keys(pagesEnum)"
+          v-for="page in visiblePages"
           class="page-item"
           :class="selectPage === page ? 'page-item-selected' : ''"
           @click="switchPage(page)"
