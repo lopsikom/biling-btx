@@ -33,4 +33,5 @@ CMD ["npm", "run", "dev"]
 
 FROM base as prod
 ENV NUXT_PUBLIC_DEV=false
-CMD ["npm", "run", "dev"]
+RUN npm run build
+CMD ["node", ".output/server/index.mjs"]
