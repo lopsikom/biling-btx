@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { B24Frame } from '@bitrix24/b24jssdk'
-import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, IUser, IUserRole, IUserRolePatch, Role } from '~~/shared/models/APIModels'
+import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, ITag, ITagCompany, ITagCreatae, ITagUnBind, IUser, IUserRole, IUserRolePatch, Role } from '~~/shared/models/APIModels'
 import { Bitrix24Placement, type IResponseArrayNewBitrix } from '~~/shared/models/bitrixModels'
 
 export const BitrixPlacementMap: Record<Bitrix24Placement, (frame: B24Frame) => Promise<string>> = {
@@ -81,9 +81,6 @@ export class axiosClient {
   }
 
   async getContractMetadata(refresh = false) {
-    // Падение метаданных не должно ронять всю загрузку виджета (ADR-0003:
-    // недоступное/пустое зеркало — не авария). Возвращаем пустой набор — формы
-    // договора деградируют, остальной виджет работает.
     try {
       const response = await this.AxiosClient.get('metadata/contract', {
         params: refresh ? { refresh: '1' } : undefined
@@ -183,7 +180,6 @@ export class axiosClient {
     return response.data as IContract
   }
 
-  // --- Модули (generic, ADR-0004/0006) ---
   async getModuleMetadata(refresh = false) {
     try {
       const response = await this.AxiosClient.get('metadata/module', { params: refresh ? { refresh: '1' } : undefined })
@@ -294,6 +290,36 @@ export class axiosClient {
 
   async patchPortalRole(data: IUserRolePatch) {
     const response = await this.AxiosClient.patch<IUserRolePatch>('portal/roles', data)
+    return response.data
+  }
+  async getTagList() {
+    const response = await this.AxiosClient.get<ITag[]>('tag.list')
+    return response.data
+  }
+  async getTagsCompany(company_id : string) {
+    const response = await this.AxiosClient.get<ITagCompany[]>(`tag.company/${company_id}`)
+    return response.data
+  }
+  async postTag(body : ITagCreatae) {
+    const response = await this.AxiosClient.post<ITag>('tag.add', body)
+    return response.data
+  }
+  async postBindTagCompany(company_id : string, tag_id : number) {
+    const response = await this.AxiosClient.post<ITagUnBind>('tag.bind', {
+      company_id,
+      tag_id
+    })
+    return response.data
+  }
+  async postUnBindTagCompany(company_id : number | string, tag_id : number) {
+    const response = await this.AxiosClient.post<boolean>('tag.ubind', {
+      company_id,
+      tag_id
+    })
+    return response.data
+  }
+  async deleteTag(id : number) {
+    const response = await this.AxiosClient.delete<boolean>(`tag/${id}`)
     return response.data
   }
 }

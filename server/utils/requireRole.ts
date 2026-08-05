@@ -6,7 +6,7 @@ const roleRank: Record<Role, number> = { viewer: 0, manager: 1, admin: 2 }
 
 export function requireRole(event: H3Event, minRole: Role) {
   const portal = event.context.portal as AuthedPortalDataType
-  if (roleRank[portal.role] < roleRank[minRole]) {
+  if (portal.role && roleRank[portal.role] < roleRank[minRole]) {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden',

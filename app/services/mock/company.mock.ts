@@ -1,4 +1,5 @@
 
+import type { ITag } from "~~/shared/models/APIModels";
 import type { IAddress, IAddresType, ICompanyNew, ICompnany, IContact, Invoice, IRequisite, IUser } from "../models"
 
 export const mockCompany : ICompnany = {
@@ -540,4 +541,35 @@ export const myCompanysMock : ICompanyNew[] = [
               industry: "",
               employees: ""
             }
+  ]
+
+  export const mockTagsList : ITag[] = [
+    {
+      id : 1,
+      title : "VIP",
+      icon : "material-symbols:crown"
+    },
+    {
+      id : 2,
+      title : "Экспресс",
+      icon : "ant-design:thunderbolt-filled"
+    },
+    {
+      id : 3,
+      title : "Эконом",
+      icon : null
+    }
+  ]
+
+ export const mockTagsCompany : ITag[] = [
+    {
+      id : 1,
+      title : "VIP",
+      icon : "material-symbols:crown"
+    },
+    {
+      id : 2,
+      title : "Экспресс",
+      icon : "ant-design:thunderbolt-filled"
+    },
   ]

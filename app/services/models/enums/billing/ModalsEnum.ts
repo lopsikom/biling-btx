@@ -5,5 +5,6 @@ export enum ModalEnum {
   EDIT_CONTRACT = 'Изменить дговор',
   ADD_CONNECTION = 'Добавить подключение',
   EDIT_CONNECTION = 'Изменить подключение',
-  INVOCIE_MODAL = 'Счёт'
+  INVOCIE_MODAL = 'Счёт',
+  ADD_TAG = "Добавить тэг"
 }

@@ -249,3 +249,32 @@ export type ICacheCompany = {
   id: number
   title: string
 }
+
+export const Tag = z.object({
+  id : z.number(),
+  title : z.string(),
+  icon : z.string().nullable()
+})
+
+export const TagCreate = z.object({
+  title : z.string(),
+  icon : z.string().nullable()
+})
+
+export type ITag = z.infer<typeof Tag>;
+export type ITagCreatae = z.infer<typeof TagCreate>
+
+export const TagBind = z.object({
+  company_id : z.union([z.string(), z.number()]),
+  tag_id : z.number()
+})
+export const TagUnBind = z.object({
+  company_id : z.union([z.number(), z.string()]),
+  tag_id : z.number()
+})
+
+export type ITagBind = z.infer<typeof TagBind>
+
+export type ITagCompany = ITag
+
+export type ITagUnBind = z.infer<typeof TagUnBind>

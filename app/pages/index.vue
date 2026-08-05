@@ -10,7 +10,7 @@ import EditPencilIcon from '@bitrix24/b24icons-vue/main/EditPencilIcon'
 import { bilingPagesEnum, type ICompanyNew, type ICompnany } from '~/services/models'
 import useMenuStore from '~/services/stores/menuStores'
 import useBitrixStateStore from '~/services/stores/bitrixStateStore'
-import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMetadata, mockContracts, mockInvoice, mockModuleMetadata, mockModules, mockPortalUsers, mockRequisite, mockUser, myCompanysMock } from '~/services/mock'
+import { mockAddress, mockAddressTypes, mockCompany, mockContact, mockContractMetadata, mockContracts, mockInvoice, mockModuleMetadata, mockModules, mockPortalUsers, mockRequisite, mockTagsCompany, mockTagsList, mockUser, myCompanysMock } from '~/services/mock'
 import { Icon } from '@iconify/vue'
 import useModalStore from '~/services/stores/modalStore'
 import { VisuallyHidden } from 'reka-ui'
@@ -23,12 +23,16 @@ import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
 import { defaultWindow } from '@vueuse/core'
 import { reloadFrame } from '~/services/utils/utils'
+import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
+import useConfirmStore from '~/services/stores/confirmStore'
+import type { ITag } from '~~/shared/models/APIModels'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
 const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
 const errorModal = useErrorStateStore()
+const confirmStore = useConfirmStore();
 
 const { $axios } = useNuxtApp()
 
@@ -57,7 +61,9 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       modules,
       connectionStatuses,
       connectionTypes,
-      connections
+      connections,
+      tagList,
+      tagsCompany
     ] = await Promise.all([
       bitrix.companyInfo(),
       bitrix.getItems<ICompanyNew>(4, { isMyCompany: 'Y' }),
@@ -69,7 +75,9 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       $axios.getModules({ company_bitrix_id: companyId }),
       $axios.getConnectionStatus(),
       $axios.getConnectionType(),
-      $axios.getConnectionList({ company_id: companyId })
+      $axios.getConnectionList({ company_id: companyId }),
+      $axios.getTagList(),
+      $axios.getTagsCompany(companyId)
     ])
 
     bitrixStateStore.bitrixCompany = company
@@ -88,6 +96,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
     billingStateStore.connection_statuses = connectionStatuses
     billingStateStore.connection_types = connectionTypes
     billingStateStore.connections = connections
+    billingStateStore.tagList = tagList
+    billingStateStore.tagsCompany = tagsCompany
 
     bitrixStateStore.companyAssignUser = (await bitrix.getUser(company.ASSIGNED_BY_ID))[0]
 
@@ -111,9 +121,6 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
         connectionTypes,
         connections
       ] = await Promise.all([
-        // Вне реального Bitrix-фрейма BitrixFrame не инициализирован — axios не
-        // подставит Authorization, поэтому бэк идёт в dev-обход (NUXT_DEV_SKIP_AUTH)
-        // и честно отдаёт роль по NUXT_DEV_ROLE, а не захардкоженного admin.
         $axios.getMyRole(),
         $axios.getConnectionStatus(),
         $axios.getConnectionType(),
@@ -134,6 +141,8 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       billingStateStore.connection_statuses = connectionStatuses
       billingStateStore.connection_types = connectionTypes
       billingStateStore.connections = connections
+      billingStateStore.tagList = mockTagsList
+      billingStateStore.tagsCompany = mockTagsCompany
     } else {
       errorModal.showError({ message: 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e }, 'Ошибка Bitrix')
     }
@@ -155,6 +164,19 @@ const visiblePages = computed(() => Object.keys(pagesEnum).filter(
 function switchPage(page: string) {
   selectPage.value = page
 };
+
+async function removeTag(tag : ITag) {
+  confirmStore.ask({
+    title : "Удалить тэг?",
+    message : `Тэг "${tag.title}" будет удалён у компании`,
+    onConfirm: async () => {await $axios.postUnBindTagCompany(bitrixStateStore.bitrixCompany!.ID, tag.id); 
+      const id = billingStateStore.tagsCompany.findIndex(i => i.id === tag.id)
+      if(id) billingStateStore.tagsCompany.splice(id, 1);
+    }
+  })
+
+}
+
 </script>
 
 <template>
@@ -234,17 +256,17 @@ function switchPage(page: string) {
               </p>
             </div>
           </div>
-          <!-- <div class="any-contaier-row" style="gap: 15px">
-                        <div class="tag-box">
-                            <span style="font-size: 0.7em;" class="cursor-default font-semibold">VIP</span>
-                        </div>
-                        <div class="tag-box">
-                            <span style="font-size: 0.7em; "class="cursor-default font-semibold">Приоритет</span>
-                        </div>
-                        <div class="add-tag-box">
-                            <Plus30Icon class="w-4 h-4 changeable-icon" />
-                        </div>
-                    </div> -->
+          <div class="any-contaier-row" style="gap: 15px">
+             <div v-for="item in billingStateStore.tagsCompany">
+              <div class="tag-box" @click="removeTag(item)">
+                <Icon :icon="item.icon" class="changeable-icon" v-if="item.icon"></Icon>
+                  <span style="font-size: 0.7em;" class="cursor-default changeable-icon font-semibold">{{ item.title }}</span>
+              </div>
+             </div>           
+              <div class="add-tag-box" >
+                  <Plus30Icon class="w-4 h-4 changeable-icon" @click="modalStore.showModal(ModalEnum.ADD_TAG)"/>
+              </div>
+          </div>
         </div>
         <div
           class="flex any-white-container items-center blue-hover justify-center w-10 h-10"
@@ -422,6 +444,7 @@ function switchPage(page: string) {
 .tag-box{
     padding: 3px 8px;
     display: flex;
+    flex-direction: row;
     height: fit-content;
     align-items: center;
     justify-content: center;
@@ -489,11 +512,11 @@ function switchPage(page: string) {
 .page-item-selected{
     background-color: white;
 }
-.back-arrow-box:hover, .add-tag-box:hover, .transparent-box:hover{
+.back-arrow-box:hover, .add-tag-box:hover, .tag-box:hover, .transparent-box:hover{
     background-color: #ebf8ff;
     transition: background-color 0.15s ease;
 }
-.back-arrow-box:hover .back-arrow-svg, .add-tag-box:hover .changeable-icon, .transparent-box:hover .changeable-icon, .transparent-box:hover .transparent-box-title{
+.back-arrow-box:hover .back-arrow-svg, .add-tag-box:hover .changeable-icon, .tag-box:hover .changeable-icon, .transparent-box:hover .changeable-icon, .transparent-box:hover .transparent-box-title{
     color: #437db4;
     transition: color 0.15s ease;
 }

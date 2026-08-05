@@ -13,7 +13,7 @@ export type DiffWithID<T> ={
 }
 
 export type SelectorObject = {
-    value : string | number | boolean | object,
-    label : string | number
+    value : string | number 
+    label : string | number | boolean | object,
 }
 export type ElementType<T> = T extends (infer U)[] ? U : never;
