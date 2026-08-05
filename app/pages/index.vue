@@ -26,6 +26,7 @@ import { reloadFrame } from '~/services/utils/utils'
 import { ModalEnum } from '~/services/models/enums/billing/ModalsEnum'
 import useConfirmStore from '~/services/stores/confirmStore'
 import type { ITag } from '~~/shared/models/APIModels'
+import useToastStore from '~/services/stores/toastStore'
 
 const menuStore = useMenuStore()
 const bitrixStateStore = useBitrixStateStore()
@@ -33,6 +34,7 @@ const billingStateStore = usebillingStateStore()
 const modalStore = useModalStore()
 const errorModal = useErrorStateStore()
 const confirmStore = useConfirmStore();
+const toastStore = useToastStore();
 
 const { $axios } = useNuxtApp()
 
@@ -172,6 +174,7 @@ async function removeTag(tag : ITag) {
     onConfirm: async () => {await $axios.postUnBindTagCompany(bitrixStateStore.bitrixCompany!.ID, tag.id); 
       const id = billingStateStore.tagsCompany.findIndex(i => i.id === tag.id)
       if(id) billingStateStore.tagsCompany.splice(id, 1);
+      toastStore.openToast("Тэг удалён у компании")
     }
   })
 

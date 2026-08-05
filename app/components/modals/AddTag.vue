@@ -45,7 +45,7 @@ const tagName = ref<string>()
 const deleteTag = ref<boolean>(false)
 
 async function selectTag(tag : ITag){
-    if(deleteTag) {
+    if(deleteTag.value) {
         try {
             confirmStore.ask({
                 title : "Удалить тэг?",
@@ -56,20 +56,23 @@ async function selectTag(tag : ITag){
                     deleteTag.value = false;
                 }
             })
+            
         }catch(e){
             console.error(e)
             toastStore.openToast("Ошибка удаления тэга")
+        
         }
     }
-    try{
-        await $axios.postBindTagCompany(bitrixStateStore.bitrixCompany!.ID, tag.id);
-        billingStateStore.tagsCompany.push(tag);
-        toastStore.openToast("Тэг добавлен");
-        modalStore.hideModal();
-    }catch(e){
-        console.error(e)
-        toastStore.openToast("Ошибка добавления тэга");
-    }
+    else {    
+        try{
+            await $axios.postBindTagCompany(bitrixStateStore.bitrixCompany!.ID, tag.id);
+            billingStateStore.tagsCompany.push(tag);
+            toastStore.openToast("Тэг добавлен");
+            modalStore.hideModal();
+        }catch(e){
+            console.error(e)
+            toastStore.openToast("Ошибка добавления тэга");
+        }}
 }
 async function createNewTag() {
     try{
