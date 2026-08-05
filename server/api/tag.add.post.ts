@@ -1,4 +1,4 @@
-import { Tag } from "~~/shared/models/APIModels"
+import { TagCreate } from "~~/shared/models/APIModels"
 import { PortalDataType } from "../utils/prisma/getPortalByUserBitrix"
 import { createTag } from "../utils/prisma/Tag";
 import { ZodError } from "zod";
@@ -6,9 +6,8 @@ import { ZodError } from "zod";
 export default defineEventHandler(async (event) => {
     try {
         const portal = event.context.portal
-        const body = await Tag.parseAsync(await readBody(event));
-        const data = {...body, portal_id : portal.portal.id}
-        const response = await createTag(data)
+        const body = await TagCreate.parseAsync(await readBody(event));
+        const response = await createTag(body, portal.portal.id)
         return response
     }catch(e){
         console.error(e)

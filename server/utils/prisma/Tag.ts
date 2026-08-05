@@ -1,5 +1,7 @@
 import { prisma } from "~~/server/services/prisma/prismaClient";
 import { tag, company_tag } from "~~/server/services/models/generated/prisma/client";
+import { ITagCreatae } from "~~/shared/models/APIModels";
+import { tagCreateInput } from "~~/server/services/models/generated/prisma/models";
 
 export async function getTagslist(portal_id : number){
     const response = await prisma.tag.findMany({
@@ -39,18 +41,21 @@ export async function getCompanyTags(company_id : number | string, portal_id? : 
         return response.map(t => t.tag)
     }
 }
-export async function createTag(data : tag[]) : Promise<tag[]>
-export async function createTag(data : tag)  : Promise<tag> 
-export async function createTag(data : tag[] | tag) : Promise<tag | tag[]> {
+export async function createTag(data : ITagCreatae[], portal_id : number) : Promise<tag[]>
+export async function createTag(data : ITagCreatae, portal_id : number)  : Promise<tag> 
+export async function createTag(data : ITagCreatae[] | ITagCreatae, portal_id : number) : Promise<tag | tag[]> {
     if(Array.isArray(data)){
         const response = await prisma.tag.createManyAndReturn({
-        data
+        data : data.map(i => {return {...i, portal_id : portal_id}})
     })
     return response
     }
     else {
         const response = await prisma.tag.create({
-            data : data
+            data : {
+                ...data,
+                portal_id
+            }
         })
         return response
     }
