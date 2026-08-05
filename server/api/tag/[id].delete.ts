@@ -3,7 +3,7 @@ import z, { ZodError } from "zod"
 export default defineEventHandler(async event => {
     try {
         const portal = event.context.portal
-        const id = await z.number().parseAsync(getRouterParams(event).id)
+        const id = await z.number().parseAsync(parseInt(getRouterParams(event).id))
         await deleteTag(id)
         return true
     }catch(e){

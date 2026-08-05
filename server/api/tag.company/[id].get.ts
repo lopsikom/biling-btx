@@ -5,7 +5,7 @@ export default defineEventHandler(async event => {
     const portal = event.context.portal
     try{
         const id = getRouterParams(event).id;
-        const parseId = z.number().parse(id).toString();
+        const parseId = z.number().parse(parseInt(id)).toString();
         const data = getCompanyTags(parseId, portal.portal.id);
         return data
     }catch(e){
