@@ -173,7 +173,7 @@ async function removeTag(tag : ITag) {
     message : `Тэг "${tag.title}" будет удалён у компании`,
     onConfirm: async () => {await $axios.postUnBindTagCompany(bitrixStateStore.bitrixCompany!.ID, tag.id); 
       const id = billingStateStore.tagsCompany.findIndex(i => i.id === tag.id)
-      if(id) billingStateStore.tagsCompany.splice(id, 1);
+      if(id !== -1) billingStateStore.tagsCompany.splice(id, 1);
       toastStore.openToast("Тэг удалён у компании")
     }
   })
