@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   devtools: {
     enabled: false
   },
-  ssr : true,
+  ssr : false,
 
   nitro : {
     plugins : [

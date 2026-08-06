@@ -49,9 +49,11 @@ async function selectTag(tag : ITag){
         try {
             confirmStore.ask({
                 title : "Удалить тэг?",
-                message : `Тэг "${tag.title} будет удалён безвостратно"`,
+                message : `Тэг "${tag.title}" будет удалён безвостратно`,
                 onConfirm: async () => {
                     await $axios.deleteTag(tag.id)
+                    const id = billingStateStore.tagList.findIndex(i => i.id === tag.id)
+                    if(id !== -1) billingStateStore.tagList.splice(id, 1);
                     toastStore.openToast("Тэг удалён");
                     deleteTag.value = false;
                 }
@@ -101,8 +103,9 @@ async function createNewTag() {
     <div class="assign-modal">
         <div class="any-white-container p-5 gap-5 flex flex-col" style="width: 100%;">
             <span class="text-lg font-semibold select-none">Список тэгов</span>
-            <div class="flex  gap-2 flex-wrap">
-                <div class="tag-box basis-[200px]" :class="deleteTag ? 'red-hover' : 'blue-hover'" v-for="item in selectorItemsTag" @click="selectTag(item)">
+            <div class="flex  gap-2 flex-wrap items-center text-gray-600">
+                <span v-if="selectorItemsTag.length <= 0" class="text-sm ">Нет доступных тэгов</span>
+                <div v-else class="tag-box basis-[200px]" :class="deleteTag ? 'red-hover' : 'blue-hover'" v-for="item in selectorItemsTag" @click="selectTag(item)">
                     <Icon :icon="item.icon" class="changeable-icon text-[16px]" v-if="item.icon"></Icon>
                     <span style="font-size: 0.8em;" class="cursor-default changeable-icon font-semibold">{{ item.title }}</span>
                 </div>
@@ -131,7 +134,7 @@ async function createNewTag() {
                     </div>
                 </div>
             </div>
-            <div class="delete-tag-box red-hover" style="margin-left: auto;" @click="() => deleteTag = !deleteTag" v-if="!createTag">
+            <div class="delete-tag-box red-hover" style="margin-left: auto;" @click="() => deleteTag = !deleteTag" v-if="!createTag && (selectorItemsTag.length > 0)" >
                 <span class="select-none text-sm hover-item">{{ deleteTag ? "Отмена" : "Удалить" }}</span>
             </div>
         </div>

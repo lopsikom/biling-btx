@@ -493,7 +493,10 @@ async function inputSearch(e: InputEvent) {
     gap: 10px;
     border-top: 1px solid #d1d5db;
     padding: 10px 5px 10px 5px;
-    min-width: max-content;
+}
+.users-list-row > * {
+    min-width: 0;
+    overflow: hidden;
 }
 .cell-ellipsis{
     text-overflow: ellipsis;
