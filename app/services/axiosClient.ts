@@ -312,7 +312,7 @@ export class axiosClient {
     return response.data
   }
   async postUnBindTagCompany(company_id : number | string, tag_id : number) {
-    const response = await this.AxiosClient.post<boolean>('tag.unind', {
+    const response = await this.AxiosClient.post<boolean>('tag.unbind', {
       company_id,
       tag_id
     })
