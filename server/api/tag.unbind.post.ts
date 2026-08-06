@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
     try {
         const portal = event.context.portal;
         const body = await TagUnBind.parseAsync(await readBody(event))
+        console.log(body)
         if(typeof body.company_id === "string") {
             const company = (await getCompany(body.company_id, portal.portal.id));
             if(!company) throw createError({
