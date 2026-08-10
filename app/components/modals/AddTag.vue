@@ -106,8 +106,10 @@ async function createNewTag() {
             <div class="flex  gap-2 flex-wrap items-center text-gray-600">
                 <span v-if="selectorItemsTag.length <= 0" class="text-sm ">Нет доступных тэгов</span>
                 <div v-else class="tag-box basis-[200px]" :class="deleteTag ? 'red-hover' : 'blue-hover'" v-for="item in selectorItemsTag" @click="selectTag(item)">
+                    <div style="width: 17px;" v-if="item.icon">
                     <Icon :icon="item.icon" class="changeable-icon text-[16px]" v-if="item.icon"></Icon>
-                    <span style="font-size: 0.8em;" class="cursor-default changeable-icon font-semibold">{{ item.title }}</span>
+                    </div>
+                    <span style="font-size: 0.8em;  text-overflow: ellipsis;  overflow: hidden;white-space: nowrap;"class="cursor-default changeable-icon font-semibold">{{ item.title }}</span>
                 </div>
                 <div class="add-tag-box" @click="() => createTag = true" v-if="!deleteTag" >
                   <Plus30Icon class="w-4 h-4 changeable-icon"/>
@@ -216,6 +218,7 @@ async function createNewTag() {
     border-radius: 6px;
     border-color: #e7eaee;
     border-width: 1.5px;
+    overflow: hidden;
 
 }
 .add-tag-box{

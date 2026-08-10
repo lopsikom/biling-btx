@@ -558,6 +558,34 @@ export const myCompanysMock : ICompanyNew[] = [
       id : 3,
       title : "Эконом",
       icon : null
+    },{
+      id : 4,
+      title : "VIP",
+      icon : "material-symbols:crown"
+    },
+    {
+      id : 5,
+      title : "Экспресс",
+      icon : "ant-design:thunderbolt-filled"
+    },
+    {
+      id : 6,
+      title : "Эконом",
+      icon : null
+    },{
+      id : 4,
+      title : "VIP",
+      icon : "material-symbols:crown"
+    },
+    {
+      id : 5,
+      title : "Экспресс",
+      icon : "ant-design:thunderbolt-filled"
+    },
+    {
+      id : 6,
+      title : "qweqweqweqweqwqweqweqweqweqweqweqwe",
+      icon : "ant-design:thunderbolt-filled"
     }
   ]
 
@@ -571,5 +599,5 @@ export const myCompanysMock : ICompanyNew[] = [
       id : 2,
       title : "Экспресс",
       icon : "ant-design:thunderbolt-filled"
-    },
+    }
   ]
