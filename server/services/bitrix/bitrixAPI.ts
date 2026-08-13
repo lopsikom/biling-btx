@@ -153,16 +153,29 @@ export class bitrixAPI {
     return response.data as IResponseNewBitrix<T>
   }
 
-  async getItems<T>(domain: string, token: string, entityTypeId: string | number, filter?: object) {
+  async getItems<T>(domain: string, token: string, entityTypeId: string | number, filter?: object, start?: number): Promise<IResponseArrayNewBitrix<T>> {
     const response = await this.AxiosClient.post(`https://${domain}/rest/crm.item.list`, {
       filter: filter
     }, {
       params: {
         entityTypeId: entityTypeId,
-        auth: token
+        auth: token,
+        start: start
       }
     })
     return response.data as IResponseArrayNewBitrix<T>
+  }
+
+  /** Все элементы смарт-процесса без ограничения в 50 записей на страницу — обходит `next`, пока Bitrix его отдаёт. */
+  async getAllItems<T>(domain: string, token: string, entityTypeId: string | number, filter?: object) {
+    const items: T[] = []
+    let start: number | undefined = 0
+    while (start !== undefined) {
+      const page = await this.getItems<T>(domain, token, entityTypeId, filter, start) 
+      items.push(...page.result.items)
+      start = page.next
+    }
+    return items
   }
 
   async getItemFields(domain: string, token: string, entityTypeId: number) {

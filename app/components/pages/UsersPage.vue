@@ -261,7 +261,7 @@ async function inputSearch(e: InputEvent) {
               <div
                 class="users-list-row h-[50px]"
                 style="border-width: 0;"
-                :style="{ gridTemplateColumns: `minmax(160px, 1fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
+                :style="{ gridTemplateColumns: `minmax(400px, 2fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
               >
                 <div class="font-semibold">
                   Имя
@@ -284,7 +284,7 @@ async function inputSearch(e: InputEvent) {
                 >
                   <div
                     class="users-list-row users-item"
-                    :style="{ gridTemplateColumns: `minmax(160px, 1fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
+                    :style="{ gridTemplateColumns: `minmax(400px, 2fr) minmax(140px, 1fr) repeat(${columns.length}, minmax(140px, 1fr))` }"
                     @click="openEdit(value)"
                   >
                     <p class="cell-ellipsis">
@@ -493,9 +493,13 @@ async function inputSearch(e: InputEvent) {
     gap: 10px;
     border-top: 1px solid #d1d5db;
     padding: 10px 5px 10px 5px;
-    min-width: max-content;
+}
+.users-list-row > * {
+    min-width: 0;
+    overflow: hidden;
 }
 .cell-ellipsis{
+    min-width: 0;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;

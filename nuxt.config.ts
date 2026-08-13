@@ -21,7 +21,8 @@ export default defineNuxtConfig({
 
   plugins : [
     '~/plugins/error-handler.client.ts',
-    '~/plugins/axios.client.ts'
+
+    '~/plugins/axios.ts'
   ],
 
   css: ['~/assets/css/main.css'],

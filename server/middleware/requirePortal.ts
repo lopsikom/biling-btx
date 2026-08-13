@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
     const newPortal = { portal: data, user_id: portal.user_id, bitrix_user_id: portal.bitrix_user_id, isBitrixAdmin }
     await redisClient.set(`token:${token}`, JSON.stringify(newPortal), 'EX', 300)
     const role = await resolveRole(data.id, portal.user_id, isBitrixAdmin)
+    const a ={ ...newPortal, role }
     event.context.portal = { ...newPortal, role }
   } catch (e) {
     console.error(e)

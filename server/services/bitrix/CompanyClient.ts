@@ -247,24 +247,42 @@ export async function syncCompanyContractsAndProducts(domain: string, token: str
   })).result.items
   if (!contracts.length) return
 
-  await Promise.all(contracts.map(async (contract) => {
-    try {
-      if (!contract.id || !contract.companyId) return
-
-      await upsertContractFromBitrix(portal_id, contract)
-
-      await reconcileContractProducts({
-        domain,
-        token,
-        contractBitrixId: contract.id,
-        contractStringId: contractOwnerType(entityTypeId),
-        portalId: portal_id,
-        mode: 'create'
-      })
-    } catch (e) {
-      console.error(`[syncCompany] ошибка обработки договора ${contract.id}`, e)
-    }
-  }))
+  await Promise.all(contracts.map(contract => processContract(domain, token, portal_id, entityTypeId, contract)))
 
   console.log(`[syncCompany] синхронизировано договоров: ${contracts.length}`)
+}
+
+export async function syncAllContractsAndProducts(domain: string, token: string, portal_id: number) {
+  const portal = await getPortal({ id: portal_id })
+  const entityTypeId = portal?.contract_entity_type_id
+  if (!entityTypeId) {
+    console.warn(`[syncAllContracts] у портала ${portal_id} нет привязки смарт-процесса договора — пропускаем`)
+    return
+  }
+
+  const contracts = await bitrixAPI.getAllItems<BitrixItem>(domain, token, entityTypeId)
+  if (!contracts.length) return
+
+  await Promise.all(contracts.map(contract => processContract(domain, token, portal_id, entityTypeId, contract)))
+
+  console.log(`[syncAllContracts] синхронизировано договоров: ${contracts.length}`)
+}
+
+async function processContract(domain: string, token: string, portal_id: number, entityTypeId: number, contract: BitrixItem) {
+  try {
+    if (!contract.id || !contract.companyId) return
+
+    await upsertContractFromBitrix(portal_id, contract)
+
+    await reconcileContractProducts({
+      domain,
+      token,
+      contractBitrixId: contract.id,
+      contractStringId: contractOwnerType(entityTypeId),
+      portalId: portal_id,
+      mode: 'create'
+    })
+  } catch (e) {
+    console.error(`[syncContract] ошибка обработки договора ${contract.id}`, e)
+  }
 }

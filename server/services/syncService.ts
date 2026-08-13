@@ -3,7 +3,7 @@ import postCompanyPrisma from "../utils/prisma/postCompany";
 import upsertRequisites from "../utils/prisma/postRequisites";
 import postRequisites from "../utils/prisma/postRequisites";
 import bitrixAPI from "./bitrix/bitrixAPI";
-import companyClient, { syncCompanyContractsAndProducts } from "./bitrix/CompanyClient";
+import companyClient, { syncAllContractsAndProducts } from "./bitrix/CompanyClient";
 import { addressCreateInput, contact_emailCreateInput, contact_phonesCreateInput, invoiceCreateInput, requisiteCreateInput } from "~~/server/services/models/generated/prisma/models";
 import { Prisma } from "./models/generated/prisma/client";
 import { formToJSON } from "axios";
@@ -57,15 +57,15 @@ export class syncService{ // Фикс с добавление динмическ
                 const i = await company.getInvoice()
                 const ii = await upsertInvoice(id, ...invocieMapUpsertPrisma(id, com.id, mappedUsers, ...i.result.items))
                 ii.forEach(iii => console.log("Added invoice " + iii.title))
-                await syncCompanyContractsAndProducts(domain, token.accessToken, id, b.id)
                 }catch(e){
                     console.error(`Error added company '${b.title}\nError:\n${e}`)
                     return false
                 }
             }))
             if(companyClients.length < 0) return false;
+            await syncAllContractsAndProducts(domain, token.accessToken, id)
             console.log("install sync finished")
-            return true;  
+            return true;
 
 
         }catch(e){

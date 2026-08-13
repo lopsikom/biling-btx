@@ -6,6 +6,7 @@ import EditContract from './EditContract.vue'
 import AddConnection from './AddConnection.vue'
 import EditConnection from './editConnection.vue'
 import InvoiceModal from './InvoiceModal.vue'
+import AddTag from './AddTag.vue'
 
 export * from './AssignUserModal.vue'
 
@@ -16,5 +17,6 @@ export const modalsEnum = {
   [ModalEnum.EDIT_CONTRACT]: EditContract,
   [ModalEnum.ADD_CONNECTION]: AddConnection,
   [ModalEnum.EDIT_CONNECTION]: EditConnection,
-  [ModalEnum.INVOCIE_MODAL]: InvoiceModal
+  [ModalEnum.INVOCIE_MODAL]: InvoiceModal,
+  [ModalEnum.ADD_TAG] : AddTag
 }

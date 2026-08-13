@@ -25,4 +25,8 @@ export type PortalDataType = NonNullable<Awaited<ReturnType<typeof getPortalByUs
 // знает). Не путать с голым PortalDataType — им пользуются вебхук-хендлеры и
 // внутренние хелперы (getBitrixTokenByRedis и т.п.), собирающие контекст в обход
 // middleware, где role нет и не нужна.
-export type AuthedPortalDataType = PortalDataType & { role: import('~~/shared/models/APIModels').Role }
+export interface AuthedPortalDataType extends Omit<PortalDataType, 'portal'>  {
+    role?: import('~~/shared/models/APIModels').Role
+    portal: Omit<PortalDataType['portal'], 'client_secret'>;
+    isBitrixAdmin? : boolean
+}

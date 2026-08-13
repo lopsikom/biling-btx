@@ -363,6 +363,7 @@ export interface IResponseArrayNewBitrix<T> {
     items: T[]
   }
   total: number
+  next?: number
   time: any
 
 }

@@ -380,15 +380,17 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 title="Название"
                 :required="true"
                 :disabled="!bitrixStateStore.canEditData"
-                style="width: 50%;"
+                style="width: 100%;"
               />
-              <InputBox
+            </div>
+            <div class="flex gap-[12px]">
+                <InputBox
                 v-model="buf(m.id).price"
                 type="number"
                 :resize="false"
                 title="Цена, ₽"
                 :disabled="!bitrixStateStore.canEditData"
-                style="width: 25%;"
+                style="width: 50%;"
               />
               <InputBox
                 v-model="buf(m.id).quantity"
@@ -396,7 +398,7 @@ watch(() => modalStore.addContractTariff?.selected_contract, (sel) => {
                 :resize="false"
                 title="Количество"
                 :disabled="!bitrixStateStore.canEditData"
-                style="width: 25%;"
+                style="width: 50%;"
               />
             </div>
             <div
