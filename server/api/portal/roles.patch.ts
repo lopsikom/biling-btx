@@ -3,6 +3,8 @@ import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitri
 import { setUserRolePrisma } from '~~/server/utils/prisma/UserRole'
 import { requireRole } from '~~/server/utils/requireRole'
 import { UserRolePatch, type IUserRolePatch } from '~~/shared/models/APIModels'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 // Назначение/снятие роли пользователю портала — включая 'admin' как независимый
 // от Bitrix грант виджета (ADR-0008): итоговая роль пользователя всё равно берёт
@@ -16,12 +18,11 @@ export default defineEventHandler(async (event): Promise<IUserRolePatch> => {
     const role = await setUserRolePrisma(portal.portal.id, body.user_bitrix_id, body.role)
     return { user_bitrix_id: body.user_bitrix_id, role }
   } catch (e) {
-    console.error(e)
     if (e instanceof z.ZodError) {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: mess })
+      throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

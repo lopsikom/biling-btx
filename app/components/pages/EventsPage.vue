@@ -255,7 +255,6 @@ async function getEventPagination(){
         countEvent.value = data.count;
     }catch(e){
         console.error(e);
-        toastStore.openToast("Ошибка получения событий");
     }finally{
         isLoad.value = false;
     }
@@ -281,7 +280,6 @@ async function getEventDeals(){
         countEvent.value = data.total;
     }catch(e){
         console.error(e);
-        toastStore.openToast("Ошибка получения событий");
     }finally{ isLoad.value = false}
 }
 

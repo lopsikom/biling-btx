@@ -12,6 +12,8 @@ import getMyCompanysCache from '~~/server/utils/redis/getMyCompanys'
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
 import { requireRole } from '~~/server/utils/requireRole'
 import { ContractPost, entityType } from '~~/shared/models/APIModels'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 // Создание договора: Bitrix-first (ADR-0002), field_values — из ответа Bitrix (ADR-0005).
 export default defineEventHandler(async (event) => {
@@ -22,10 +24,10 @@ export default defineEventHandler(async (event) => {
     const ZBody = await ContractPost.parseAsync(body)
     const entityTypeId = portal.portal.contract_entity_type_id
     if (!entityTypeId) {
-      throw createError({ statusCode: 409, statusMessage: 'Portal not configured', message: 'Не настроена привязка смарт-процесса договора' })
+      throw refusal('portal.not_configured', 409, { message: 'Не настроена привязка смарт-процесса договора' })
     }
     const token = await getBitrixTokenByRedis(portal)
-    if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
+    if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
 
     const mirror = await getFieldsMirror({
       portal_id: portal.portal.id,
@@ -36,7 +38,7 @@ export default defineEventHandler(async (event) => {
     })
     const { payload, errors } = buildValuesPayload(mirror, ZBody.values)
     if (errors.length) {
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: errors.join(', ') })
+      throw refusal('validation.failed', 400, { message: errors.join(', ') })
     }
 
     const myCompanys = await getMyCompanysCache(portal, token.access_token)
@@ -50,7 +52,7 @@ export default defineEventHandler(async (event) => {
     }
     const created = await bitrixAPI.addItem<BitrixItem>(portal.portal.domain, token.access_token, entityTypeId, fields)
     const item = created.result.item
-    if (!item) throw createError({ statusCode: 502, statusMessage: 'Bitrix error', message: 'Bitrix не вернул созданный договор' })
+    if (!item) throw fault('bitrix.api_error', { statusCode: 502, message: 'Bitrix не вернул созданный договор' })
 
     await acquireLock(item.id, portal.portal.id)
     try {
@@ -68,12 +70,11 @@ export default defineEventHandler(async (event) => {
       await releaseLock(item.id, portal.portal.id)
     }
   } catch (e) {
-    console.error(e)
     if (e instanceof ZodError) {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: mess })
+      throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

@@ -1,4 +1,5 @@
 import getPortalByUserBitrix from "~~/server/utils/prisma/getPortalByUserBitrix";
+import { fault } from '~~/server/utils/errors'
 
 // Лёгкая проверка перед формой привязки на установке: портал уже заведён
 // в БД (создан при обмене OAuth-кодом) и токен рабочий. Первичный sync
@@ -22,10 +23,6 @@ export default defineEventHandler(async (event) =>{
         }
         return true
     }catch(e){
-        console.error(e)
-        throw createError({
-            statusCode: 500,
-            statusMessage: "Error"
-        })
+        throw fault('internal', { message: 'Не удалось проверить установку приложения', cause: e })
     }
 })

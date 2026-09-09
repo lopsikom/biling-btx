@@ -2,6 +2,8 @@ import z, { ZodError } from 'zod'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { contractToApi, getContractList } from '~~/server/utils/prisma/modules/Contract'
 import { ContractFilter, type IContractFilter } from '~~/shared/models/APIModels'
+import { isError } from 'h3'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -32,19 +34,11 @@ export default defineEventHandler(async (event) => {
       return contractToApi(data)
     }
   } catch (e) {
-    console.error(e)
     if (e instanceof ZodError) {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Vallidation Error',
-        message: mess
-      })
+      throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server Error'
-    })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

@@ -3,6 +3,7 @@ import { connectionDeletePrisma, requireConnection } from "~~/server/utils/prism
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { requireRole } from "~~/server/utils/requireRole";
 import { entityType } from "~~/shared/models/APIModels";
+import { fault } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
     requireRole(event, 'manager')
@@ -13,14 +14,13 @@ export default defineEventHandler(async (event) => {
         try{
             parseId = parseInt(id);
         }catch(e){
-            console.error(e);
             throw createError({
                 statusCode : 400,
                 statusMessage : "Invalid id"
             });
         }
         const verify = await requireConnection(parseId, portal.portal.id)
-        if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+        if (!verify) throw fault('tenant.violation', { statusCode: 404, message: 'Запрошен объект другого портала' })
         const data = await connectionDeletePrisma(parseId);
         if(!data){
             return false;

@@ -4,6 +4,7 @@ import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix";
 import { requireConnection } from "~~/server/utils/prisma/Connection";
 import { requireRole } from "~~/server/utils/requireRole";
 import { ConnectionPatch, entityType } from "~~/shared/models/APIModels";
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
 
 
 export default defineEventHandler(async (event) => {
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
         try{
             const parseId = z.coerce.number().parse(id)
             const verify = await requireConnection(parseId, portal.portal.id)
-            if (!verify) throw createError({ statusCode: 404, statusMessage: "not verify portal" })
+            if (!verify) throw fault('tenant.violation', { statusCode: 404, message: 'Запрошен объект другого портала' })
             const data = await ConnectionPatch.parseAsync(body)
             const connection = await connectionPatchPrisma(parseId, data);
             if(!connection){
@@ -32,21 +33,12 @@ export default defineEventHandler(async (event) => {
             } as EventEntity)
             return connection
         }catch(e){
-            console.error(e);
             if(e instanceof z.ZodError){
-                console.error(e.issues);
                 const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(", ")
-                throw createError({
-                    statusCode : 400,
-                    statusMessage : "Vallidation Error",
-                    message : mess
-                })
+                throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
             }
             else {
-                throw createError({
-                    statusCode: 500,
-                    statusMessage : "Server Error"
-                })
+                throw fault('internal', { cause: e })
             }
         }
     }

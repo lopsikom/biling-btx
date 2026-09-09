@@ -12,6 +12,7 @@ import type { IProductCatalogCreate } from '~~/shared/models/bitrixModels'
 import type { IModulePost, IModuleUpdate } from '~~/shared/models/APIModels'
 import { entityType } from '~~/shared/models/APIModels'
 import { buildOfferPayload } from './catalogMetadata'
+import { refusal } from '~~/server/utils/errors'
 
 /**
  * Провижининг модуля (module provisioning, см. CONTEXT.md) после коллапса видов.
@@ -24,7 +25,7 @@ export async function provisionModule(body: IModulePost, ctx: PortalDataType) {
   if (!contract || !contract.bitrix_id) throw createError({ statusCode: 404, statusMessage: 'No found contract' })
 
   const token = await getBitrixTokenByRedis(ctx)
-  if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
+  if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
 
   const portalRow = await getPortal({ id: ctx.portal.id })
   const mirror = await getCatalogMirror({
@@ -81,7 +82,7 @@ export async function updateModuleProvisioning(id: number, body: IModuleUpdate, 
   if (!old.contract?.bitrix_id) throw createError({ statusCode: 409, statusMessage: 'Module without contract' })
 
   const token = await getBitrixTokenByRedis(ctx)
-  if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error' })
+  if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
 
   const portalRow = await getPortal({ id: ctx.portal.id })
   const mirror = await getCatalogMirror({

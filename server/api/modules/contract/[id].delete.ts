@@ -7,6 +7,8 @@ import { deleteContractPrisma, getContractById, requireContract } from '~~/serve
 import { acquireLock, releaseLock } from '~~/server/utils/redis/webHookLocker'
 import { requireRole } from '~~/server/utils/requireRole'
 import { entityType } from '~~/shared/models/APIModels'
+import { fault, refusal } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 // Удаление договора: Bitrix-first, затем БД (вебхук DELETE скипнется по локу).
 export default defineEventHandler(async (event) => {
@@ -17,16 +19,16 @@ export default defineEventHandler(async (event) => {
   try {
     const parseId = z.coerce.number().parse(id)
     const verify = await requireContract(parseId, portal.portal.id)
-    if (!verify) throw createError({ statusCode: 404, statusMessage: 'not verify portal' })
+    if (!verify) throw fault('tenant.violation', { statusCode: 404, message: 'Запрошен объект другого портала' })
     const existing = await getContractById(parseId)
     if (!existing) throw createError({ statusCode: 404, statusMessage: 'no found contract' })
 
     const entityTypeId = portal.portal.contract_entity_type_id
     if (!entityTypeId) {
-      throw createError({ statusCode: 409, statusMessage: 'Portal not configured', message: 'Не настроена привязка смарт-процесса договора' })
+      throw refusal('portal.not_configured', 409, { message: 'Не настроена привязка смарт-процесса договора' })
     }
     const token = await getBitrixTokenByRedis(portal)
-    if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
+    if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
 
     await acquireLock(existing.bitrix_id, portal.portal.id)
     try {
@@ -43,11 +45,10 @@ export default defineEventHandler(async (event) => {
       await releaseLock(existing.bitrix_id, portal.portal.id)
     }
   } catch (e) {
-    console.error(e)
     if (e instanceof z.ZodError) {
-      throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
+      throw refusal('validation.failed', 400, { message: 'Некорректный id' })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

@@ -7,6 +7,8 @@ import { getModuleById, requireModule, deleteModuleByBitrixId } from '~~/server/
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { requireRole } from '~~/server/utils/requireRole'
 import { entityType } from '~~/shared/models/APIModels'
+import { fault, refusal } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 // Удаление модуля: Bitrix-first (offer + product row), затем строка в БД.
 export default defineEventHandler(async (event) => {
@@ -16,7 +18,7 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 404, statusMessage: 'none id' })
   try {
     const parseId = z.coerce.number().parse(id)
-    if (!(await requireModule(parseId, portal.portal.id))) throw createError({ statusCode: 404, statusMessage: 'not verify portal' })
+    if (!(await requireModule(parseId, portal.portal.id))) throw fault('tenant.violation', { statusCode: 404, message: 'Запрошен объект другого портала' })
     const module = await getModuleById(parseId, portal.portal.id)
     if (!module || !module.bitrix_id) throw createError({ statusCode: 404, statusMessage: 'no found module' })
 
@@ -34,9 +36,8 @@ export default defineEventHandler(async (event) => {
       if (contractBitrixId) await releaseLock(contractBitrixId, portal.portal.id)
     }
   } catch (e) {
-    console.error(e)
-    if (e instanceof z.ZodError) throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (e instanceof z.ZodError) throw refusal('validation.failed', 400, { message: 'Некорректный id' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

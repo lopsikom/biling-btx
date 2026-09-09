@@ -5,6 +5,7 @@ import { invalidateCatalogMirror } from '~~/server/services/catalogMetadata'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { requireRole } from '~~/server/utils/requireRole'
 import type { IPortalBinding } from '~~/shared/models/APIModels'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
 
 const BindingPatch = z.object({
   contract_entity_type_id: z.number().int().positive().optional(),
@@ -32,11 +33,10 @@ export default defineEventHandler(async (event): Promise<IPortalBinding> => {
       module_root_section_id: portal.module_root_section_id
     }
   } catch (e) {
-    console.error(e)
     if (e instanceof z.ZodError) {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: mess })
+      throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
     }
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    throw fault('internal', { cause: e })
   }
 })

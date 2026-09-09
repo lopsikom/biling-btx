@@ -111,7 +111,6 @@ async function getContractPagination() {
     billingStateStore.contracts = data.data
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Ошибка получения событий')
   } finally { isLoad.value = false }
 }
 

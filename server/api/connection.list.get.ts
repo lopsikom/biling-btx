@@ -2,6 +2,7 @@ import { ConnectionPatch, IConnectionPatch } from "~~/shared/models/APIModels";
 import { prisma } from "../services/prisma/prismaClient";
 import { connectionGetListPrisma } from "../utils/prisma/Connection";
 import { ZodError } from "zod";
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
     try{
@@ -28,21 +29,12 @@ export default defineEventHandler(async (event) => {
         const data = await connectionGetListPrisma({filter : filter, portal_id : portal.id})
         return data
         }catch(e){
-            console.error(e)
             if(e instanceof ZodError){
-                console.error(e.issues);
                 const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(", ")
-                throw createError({
-                    statusCode : 400,
-                    statusMessage : "Vallidation Error",
-                    message : mess
-                })
+                throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
             }
             else {
-                throw createError({
-                    statusCode: 500,
-                    statusMessage : "Server Error"
-                })
+                throw fault('internal', { cause: e })
             }
         }
 })

@@ -3,6 +3,8 @@ import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitri
 import { getModuleList, moduleToApi } from '~~/server/utils/prisma/modules/Module'
 import { healZeroKindModules } from '~~/server/services/contractProductSync/healContractModules'
 import { ModuleFilter, type IModuleFilter } from '~~/shared/models/APIModels'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -12,7 +14,7 @@ export default defineEventHandler(async (event) => {
     if (filter) {
       try { filterParse = ModuleFilter.parse(JSON.parse(filter as string)) } catch (e) {
         if (e instanceof ZodError) throw e
-        throw createError({ statusCode: 400, statusMessage: 'Invalid filter' })
+        throw refusal('validation.failed', 400, { message: 'Некорректный фильтр' })
       }
     }
     let data = await getModuleList(portal.portal.id, filterParse)
@@ -24,11 +26,10 @@ export default defineEventHandler(async (event) => {
     }
     return data.map(moduleToApi)
   } catch (e) {
-    console.error(e)
     if (e instanceof z.ZodError) {
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: e.issues.map(i => i.message).join(', ') })
+      throw refusal('validation.failed', 400, { message: e.issues.map(i => i.message).join(', '), details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

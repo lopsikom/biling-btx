@@ -51,7 +51,6 @@ onMounted(async () => {
     roles.value = await $axios.getPortalRoles()
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось загрузить список пользователей')
   } finally { isLoad.value = false }
 })
 
@@ -67,7 +66,6 @@ async function save() {
     toastStore.openToast('Роль обновлена')
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось изменить роль')
   } finally { isSaving.value = false }
 }
 </script>

@@ -61,7 +61,6 @@ async function selectTag(tag : ITag){
             
         }catch(e){
             console.error(e)
-            toastStore.openToast("Ошибка удаления тэга")
         
         }
     }
@@ -73,7 +72,6 @@ async function selectTag(tag : ITag){
             modalStore.hideModal();
         }catch(e){
             console.error(e)
-            toastStore.openToast("Ошибка добавления тэга");
         }}
 }
 async function createNewTag() {
@@ -88,7 +86,6 @@ async function createNewTag() {
         createTag.value = false;
     }catch(e) {
         console.error(e)
-        toastStore.openToast("Ошибка cоздания тэга");
     }
 }
 

@@ -19,6 +19,7 @@ import { modalsEnum } from '~/components/modals'
 import ErrorModal from '~/components/modals/ErrorModal.vue'
 import ConfirmModal from '~/components/modals/ConfirmModal.vue'
 import useErrorStateStore from '~/services/stores/errorStateStore'
+import { errorText, normalizeError } from '~/services/errors'
 import usebillingStateStore from '~/services/stores/billingStateStore'
 import AddContract from '~/components/modals/AddContract.vue'
 import { defaultWindow } from '@vueuse/core'
@@ -146,7 +147,7 @@ const { data, pending, error } = useAsyncData('bitrix', async () => {
       billingStateStore.tagList = mockTagsList
       billingStateStore.tagsCompany = mockTagsCompany
     } else {
-      errorModal.showError({ message: 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + e }, 'Ошибка Bitrix')
+      errorModal.showError({ message: 'Не удалось иннициализировать страницу в контексте Bitrix, возможно страница открыта не корректно или не в виджете Bitrix\n' + errorText(normalizeError(e)) }, 'Ошибка Bitrix')
     }
     return
   } finally {

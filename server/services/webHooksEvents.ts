@@ -15,6 +15,7 @@ import { compnayMapPostPrisma } from '../utils/mappers'
 import getCompanyPrisma from '../utils/prisma/getCompany'
 import z from 'zod'
 import deleteCompanyPrisma from '../utils/prisma/deleteCompany'
+import { recordFault } from '../utils/errorJournal'
 
 export type WebHooksMap = {
   [Bitrix24Event.CRM_DYNAMIC_ITEM_ADD]: [IBitrixWebhookPayload<IDynamicItemEvent>]
@@ -26,7 +27,32 @@ export type WebHooksMap = {
 
 export const webHookEmmiter = new EventEmitter<WebHooksMap>()
 
-webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
+// Обработчики вебхуков — async-листенеры: HTTP-ответ Bitrix уже отдан, и сбой
+// внутри никуда не всплывает. Без этой обёртки он либо роняет процесс
+// (необработанный reject), либо теряется в console.error без указания портала
+// и события. Здесь сбой попадает в журнал с опознавательным контекстом (ADR-0009).
+function onWebhook<E extends keyof WebHooksMap>(
+  event: E,
+  handler: (data: WebHooksMap[E][0]) => Promise<void>
+) {
+  webHookEmmiter.on(event, (async (data: WebHooksMap[E][0]) => {
+    try {
+      await handler(data)
+    } catch (e) {
+      recordFault(e, 'internal', 500, {
+        source: 'webhook',
+        extra: {
+          event,
+          domain: (data as { auth?: { domain?: string } })?.auth?.domain,
+          fields: (data as { data?: unknown })?.data
+        },
+        request: { body: data }
+      })
+    }
+  }) as never)
+}
+
+onWebhook(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
   const portal = await getPortalByUserBitrix(data.auth.access_token)
   if (!portal) return
   const entityTypeId = portal.portal.contract_entity_type_id
@@ -66,7 +92,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_ADD, async (data) => {
   })
   console.log('Contract added')
 })
-webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async (data) => {
+onWebhook(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async (data) => {
   const portal = await getPortalByUserBitrix(data.auth.access_token)
   if (!portal) return
   const entityTypeId = portal.portal.contract_entity_type_id
@@ -100,7 +126,7 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_UPDATE, async (data) => {
   console.log('Contract updated')
 })
 
-webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
+onWebhook(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
   const portal = await getPortalByUserBitrix(data.auth.access_token)
   if (!portal) return
   const entityTypeId = portal.portal.contract_entity_type_id
@@ -120,32 +146,22 @@ webHookEmmiter.on(Bitrix24Event.CRM_DYNAMIC_ITEM_DELETE, async (data) => {
   console.log('Contract deleted')
 })
 
-webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_ADD, async (data) => {
-  try {
-    const portal = await getPortalByUserBitrix(data.auth.access_token)
-    if (!portal) return
-    const token = await getBitrixTokenByRedis(portal)
-    if (!token) return
-    const id = z.number().parse(data.data.FIELDS.ID)
-    const company = await bitrixAPI.getCompany(id, token.access_token, portal.portal.domain)
-    if (!company.result) return
-    await postCompany(portal.portal.id, ...companyMapUpsertPrisma(portal.portal.id, [], company.result.item))
-  } catch (e) {
-    console.error('Error add company')
-    console.error(e)
-  }
+onWebhook(Bitrix24Event.CRM_COMPANY_ADD, async (data) => {
+  const portal = await getPortalByUserBitrix(data.auth.access_token)
+  if (!portal) return
+  const token = await getBitrixTokenByRedis(portal)
+  if (!token) return
+  const id = z.number().parse(data.data.FIELDS.ID)
+  const company = await bitrixAPI.getCompany(id, token.access_token, portal.portal.domain)
+  if (!company.result) return
+  await postCompany(portal.portal.id, ...companyMapUpsertPrisma(portal.portal.id, [], company.result.item))
 })
-webHookEmmiter.on(Bitrix24Event.CRM_COMPANY_DELETE, async (data) => {
-  try {
-    const portal = await getPortalByUserBitrix(data.auth.access_token)
-    if (!portal) return
-    const token = await getBitrixTokenByRedis(portal)
-    if (!token) return
-    await deleteCompanyPrisma(data.data.FIELDS.ID, portal.portal.id)
-  } catch (e) {
-    console.error('Error delete company')
-    console.error(e)
-  }
+onWebhook(Bitrix24Event.CRM_COMPANY_DELETE, async (data) => {
+  const portal = await getPortalByUserBitrix(data.auth.access_token)
+  if (!portal) return
+  const token = await getBitrixTokenByRedis(portal)
+  if (!token) return
+  await deleteCompanyPrisma(data.data.FIELDS.ID, portal.portal.id)
 })
 
 export function emitBitrixEvent(event: keyof WebHooksMap, payload: IBitrixWebhookPayload<any>) {

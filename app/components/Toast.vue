@@ -5,17 +5,19 @@ import useToastStore from '~/services/stores/toastStore';
 
 const toastStore = useToastStore();
 
-const {title, open} = storeToRefs(toastStore);
+const {title, open, kind} = storeToRefs(toastStore);
 </script>
 <template>
     <ToastProvider>
-        <ToastRoot v-model:open="open" class="ToastRoot">
+        <ToastRoot v-model:open="open" class="ToastRoot" :class="`ToastRoot--${kind}`">
             <VisuallyHidden>
                 <ToastDescription></ToastDescription>
             </VisuallyHidden>
             <ToastTitle class="ToastTitle">
                 <div class="flex gap-[10px] items-center">
-                    <Icon icon="icon-park-solid:check-one" class="w-5 h-5"/>
+                    <Icon :icon="kind === 'error' ? 'icon-park-solid:attention' : 'icon-park-solid:check-one'"
+                          class="w-5 h-5"
+                          :class="kind === 'error' ? 'text-red-600' : 'text-green-600'"/>
                     <span >{{ title }}</span>
                 </div>
             </ToastTitle>
@@ -59,6 +61,13 @@ const {title, open} = storeToRefs(toastStore);
   grid-template-columns: auto max-content;
   column-gap: 15px;
   align-items: center;
+}
+/* Полоса слева — чтобы род сообщения читался мгновенно, до чтения текста */
+.ToastRoot--success {
+  border-left: 4px solid #16a34a;
+}
+.ToastRoot--error {
+  border-left: 4px solid #dc2626;
 }
 .ToastRoot[data-state='open'] {
   animation: slideIn 150ms cubic-bezier(0.16, 1, 0.3, 1);

@@ -1,7 +1,17 @@
 import axios from 'axios'
 import type { B24Frame } from '@bitrix24/b24jssdk'
+import { errorText, normalizeError } from '~/services/errors'
+import useToastStore from '~/services/stores/toastStore'
 import type { FieldGroupsByKind, IConnection, IConnectionPatch, IConnectionPost, IConnectionStatus, IConnectionType, IContract, IContractFilter, IContractPost, IContractUpdate, IEvent, IEventFilter, IFieldGroup, IMetadataResponse, IModule, IModuleFilter, IModuleMetadataResponse, IModulePost, IModuleUpdate, IPagionationResponse, IPortalBinding, ITag, ITagCompany, ITagCreatae, ITagUnBind, IUser, IUserRole, IUserRolePatch, Role } from '~~/shared/models/APIModels'
 import { Bitrix24Placement, type IResponseArrayNewBitrix } from '~~/shared/models/bitrixModels'
+
+// Опт-аут автопоказа: вызов сам решает, что ошибка не должна тревожить
+// пользователя (метаданные ненастроенного портала, фоновые проверки).
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    silent?: boolean
+  }
+}
 
 export const BitrixPlacementMap: Record<Bitrix24Placement, (frame: B24Frame) => Promise<string>> = {
   [Bitrix24Placement.COMPANY]: (frame) => {
@@ -50,6 +60,16 @@ export class axiosClient {
     this.AxiosClient.interceptors.response.use(async (response) => {
       if (useNuxtApp().$config.public.dev) console.log(response.data)
       return response
+    }, (error) => {
+      // Единственное место, где ошибка превращается в сообщение пользователю.
+      // Раньше это решали ~40 catch-блоков независимо друг от друга, и тексты
+      // разъехались с сервером (ADR-0009). Здесь же ошибка приводится к общему
+      // виду, так что в catch компонента приходит NormalizedError, а не any.
+      const normalized = normalizeError(error)
+      if (!error.config?.silent) {
+        useToastStore().openErrorToast(errorText(normalized))
+      }
+      return Promise.reject(normalized)
     })
   }
 
@@ -83,7 +103,10 @@ export class axiosClient {
   async getContractMetadata(refresh = false) {
     try {
       const response = await this.AxiosClient.get('metadata/contract', {
-        params: refresh ? { refresh: '1' } : undefined
+        params: refresh ? { refresh: '1' } : undefined,
+        // Виджет обязан открыться и на ненастроенном портале: пустая метадата —
+        // штатный исход, показывать по нему ошибку нельзя.
+        silent: true
       })
       return response.data as IMetadataResponse
     } catch (e) {
@@ -182,7 +205,7 @@ export class axiosClient {
 
   async getModuleMetadata(refresh = false) {
     try {
-      const response = await this.AxiosClient.get('metadata/module', { params: refresh ? { refresh: '1' } : undefined })
+      const response = await this.AxiosClient.get('metadata/module', { params: refresh ? { refresh: '1' } : undefined, silent: true })
       return response.data as IModuleMetadataResponse
     } catch (e) {
       console.error('[getModuleMetadata] не удалось получить метаданные каталога', e)

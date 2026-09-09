@@ -1,3 +1,22 @@
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
+
+// Обработчики ошибок применяются цепочкой: первый, который отправит ответ,
+// её обрывает. Наш обслуживает только /api/** (ADR-0009), остальное должен
+// доделать штатный обработчик Nuxt — но Nuxt подставляет его лишь тогда,
+// когда errorHandler не задан вовсе, поэтому дописываем его вторым сами.
+function errorHandlerChain() {
+  const ours = '~~/server/error'
+  try {
+    const require = createRequire(import.meta.url)
+    const nuxtHandler = resolve(dirname(require.resolve('@nuxt/nitro-server')), 'runtime/handlers/error')
+    return [ours, nuxtHandler]
+  } catch {
+    // Пакет переехал — остаёмся со своим и встроенным обработчиком Nitro.
+    return [ours]
+  }
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', 'reka-ui/nuxt', '@bitrix24/b24ui-nuxt', '@nuxtjs/google-fonts', '@bitrix24/b24jssdk-nuxt', '@pinia/nuxt', '@vueuse/nuxt'],
@@ -7,7 +26,9 @@ export default defineNuxtConfig({
   ssr : false,
 
   nitro : {
+    errorHandler: errorHandlerChain(),
     plugins : [
+      './plugins/fault-guard.ts',
       './plugins/prisma-check.ts',
       './plugins/syncService-init.ts',
       './plugins/redis-check.ts'

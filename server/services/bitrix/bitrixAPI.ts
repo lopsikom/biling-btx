@@ -8,6 +8,7 @@ import type { IBitrixCatalogProperty, OfferFieldsMap } from '../catalogMetadata'
 import { config } from 'process'
 import { useNuxtApp } from 'nuxt/app'
 import { b24RateLimiter, extractHost } from '~~/server/utils/rateLimiter'
+import { fault, refusal } from '~~/server/utils/errors'
 
 export interface bitrixResponse<T> {
   result: T
@@ -19,6 +20,53 @@ export interface bitrixResponse<T> {
     date_start: string
     date_finish: string
   }
+}
+
+// Коды Bitrix, означающие «приложение потеряло доступ»: это отказ, а не сбой —
+// действовать должен админ портала (переустановить приложение), а не мы.
+const AUTH_ERROR_CODES = new Set([
+  'expired_token', 'invalid_token', 'NO_AUTH_FOUND', 'AUTHORIZATION_ERROR',
+  'INVALID_CREDENTIALS', 'invalid_grant', 'ACCESS_DENIED'
+])
+
+interface BitrixErrorPayload {
+  error: string
+  error_description?: string
+}
+
+function readBitrixError(data: unknown): BitrixErrorPayload | undefined {
+  if (typeof data !== 'object' || data === null) return undefined
+  const d = data as Record<string, unknown>
+  if (typeof d.error !== 'string' || d.error === '') return undefined
+  return {
+    error: d.error,
+    error_description: typeof d.error_description === 'string' ? d.error_description : undefined
+  }
+}
+
+function toBitrixError(payload: BitrixErrorPayload, url?: string, cause?: unknown) {
+  const details = { bitrix_error: payload.error, bitrix_description: payload.error_description, url }
+  if (AUTH_ERROR_CODES.has(payload.error)) {
+    return refusal('bitrix.token_expired', 502, {
+      message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка',
+      details,
+      cause
+    })
+  }
+  if (payload.error === 'QUERY_LIMIT_EXCEEDED') {
+    return fault('bitrix.rate_limited', {
+      statusCode: 503,
+      message: 'Превышен лимит запросов к Bitrix24',
+      details,
+      cause
+    })
+  }
+  return fault('bitrix.api_error', {
+    statusCode: 502,
+    message: `Bitrix24 вернул ошибку: ${payload.error}`,
+    details,
+    cause
+  })
 }
 
 export class bitrixAPI {
@@ -33,7 +81,16 @@ export class bitrixAPI {
       await b24RateLimiter.acquire(extractHost(cfg))
       return cfg
     })
-    this.AxiosClient.interceptors.response.use(response => response, (error) => {
+    // Bitrix отдаёт ошибки REST со статусом HTTP 200 и полем error в теле.
+    // Без этой проверки такой ответ считается успешным, вызывающий код читает
+    // undefined вместо result и падает где-то ниже с бессмысленной ошибкой,
+    // а настоящая причина (протух токен, упёрлись в лимит) теряется — то самое
+    // «тихая потеря запроса» из комментария к rateLimiter (ADR-0009).
+    this.AxiosClient.interceptors.response.use((response) => {
+      const bitrixError = readBitrixError(response.data)
+      if (bitrixError) throw toBitrixError(bitrixError, response.config?.url)
+      return response
+    }, (error) => {
       const { response, request, config } = error
 
       console.group(`❌ ERROR [${config?.method?.toUpperCase()}] ${config?.url}`)
@@ -45,6 +102,16 @@ export class bitrixAPI {
         console.error('📡 Нет ответа от сервера')
       }
       console.groupEnd()
+
+      // Ошибка в теле бывает и при не-200 (напр. 401 на протухший токен).
+      const bitrixError = readBitrixError(response?.data)
+      if (bitrixError) return Promise.reject(toBitrixError(bitrixError, config?.url, error))
+      if (response?.status === 401) {
+        return Promise.reject(refusal('bitrix.token_expired', 502, {
+          message: 'Bitrix24 отклонил авторизацию приложения',
+          cause: error
+        }))
+      }
       // Ошибка должна дойти до вызывающего кода, иначе он читает undefined.data
       return Promise.reject(error)
     })

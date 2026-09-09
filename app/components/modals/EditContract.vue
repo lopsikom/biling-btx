@@ -76,8 +76,9 @@ async function saveData() {
     modalStore.hideModal()
   } catch (e) {
     console.error(e)
-    if ((e as Error).message === 'Validation Error') toastStore.openToast('Не все поля правильно заполнены или заполнены некорректно')
-    else toastStore.openToast('Не удалось сохранить договор')
+    if (e instanceof Error && e.message === 'Validation Error') {
+      toastStore.openErrorToast('Не все поля заполнены или заполнены некорректно')
+    }
   } finally { menuStore.fetchDataLoad = false }
 }
 

@@ -1,5 +1,6 @@
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { contractToApi, getContractById, requireContract } from '~~/server/utils/prisma/modules/Contract'
+import { fault } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParams(event).id
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
     })
   }
   const verify = await requireContract(parseId, portal.portal.id)
-  if (!verify) throw createError({ statusCode: 404, statusMessage: 'not verify portal' })
+  if (!verify) throw fault('tenant.violation', { statusCode: 404, message: 'Запрошен объект другого портала' })
   const contract = await getContractById(parseId)
   if (!contract) {
     throw createError({

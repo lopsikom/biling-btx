@@ -4,6 +4,8 @@ import { moduleToApi } from '~~/server/utils/prisma/modules/Module'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { requireRole } from '~~/server/utils/requireRole'
 import { ModulePost } from '~~/shared/models/APIModels'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 // Создание модуля: Bitrix-first провижининг (ADR-0002), values → свойства offer'а.
 export default defineEventHandler(async (event) => {
@@ -15,11 +17,10 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 201)
     return moduleToApi({ ...module, contract_id: module.contract_id })
   } catch (e) {
-    console.error(e)
     if (e instanceof ZodError) {
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ') })
+      throw refusal('validation.failed', 400, { message: e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', '), details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

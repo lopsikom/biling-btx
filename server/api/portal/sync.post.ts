@@ -1,6 +1,7 @@
 import syncService from '~~/server/services/syncService'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { requireRole } from '~~/server/utils/requireRole'
+import { fault } from '~~/server/utils/errors'
 
 // Первичный сбор CRM-сущностей портала (компании, контакты, счета, юзеры).
 // Вызывается один раз с экрана установки, после того как сохранена привязка
@@ -12,7 +13,6 @@ export default defineEventHandler(async (event) => {
     const ok = await syncService.installSync(portalCtx.portal.id)
     return ok
   } catch (e) {
-    console.error(e)
-    throw createError({ statusCode: 500, statusMessage: 'Server Error', message: 'Не удалось выполнить первичную синхронизацию' })
+    throw fault('internal', { message: 'Не удалось выполнить первичную синхронизацию', cause: e })
   }
 })

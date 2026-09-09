@@ -50,4 +50,5 @@ jobs:
                         docker run -d --name redis-dev --network billing_network-dev redis;
                         docker stop ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
                         docker rm ${{secrets.DOCKER_CONTAINER_NAME}}-dev;
-                        docker run -p 5050:3000 --network billing_network-dev -d --name ${{secrets.DOCKER_CONTAINER_NAME}}-dev ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};
+                        mkdir -p /var/log/billing-dev;
+                        docker run -p 5050:3000 --network billing_network-dev -v /var/log/billing-dev:/app/logs -d --name ${{secrets.DOCKER_CONTAINER_NAME}}-dev ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}-dev:${{ github.sha }};

@@ -1,3 +1,5 @@
+import { fault, refusal } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event);
@@ -8,27 +10,19 @@ export default defineEventHandler(async (event) => {
         try{
             const data = await getBitrixTokenByCode(code.toString(), server_domain.toString(), Number(state));
             if(!data) {
-                throw createError({
-                    status : 400,
-                    statusMessage : "Bad Request"
-                })
+                throw refusal('validation.failed', 400, { message: 'Bitrix не выдал токен по этому коду' })
             }
             setResponseStatus(event, 202)
             return data 
             
         }
         catch(e){
-            console.error(e)
-            throw createError({
-                status : 500,
-                statusText : 'Server error'
-            })
+            // Свой же отказ выше не должен превращаться в безликий 500 (ADR-0009)
+            if(isError(e)) throw e
+            throw fault('internal', { message: 'Не удалось завершить установку приложения', cause: e })
         }
     }
     else{
-        throw createError({
-            status : 400,
-            statusText: 'invalid code'
-        }) 
+        throw refusal('validation.failed', 400, { message: 'В запросе нет code, state или server_domain' })
     }
 })

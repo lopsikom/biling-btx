@@ -1,4 +1,5 @@
 import getPortal from './prisma/getPortal'
+import { refusal } from '~~/server/utils/errors'
 
 /** ownerType смарт-процесса для productrow-методов: 'T' + hex(entityTypeId), напр. 1058 → 'T422'. */
 export function contractOwnerType(entityTypeId: number) {
@@ -9,7 +10,7 @@ export function contractOwnerType(entityTypeId: number) {
 export async function getContractOwnerTypeByPortal(portal_id: number) {
   const portal = await getPortal({ id: portal_id })
   if (!portal?.contract_entity_type_id) {
-    throw createError({ statusCode: 409, statusMessage: 'Portal not configured', message: 'Не настроена привязка смарт-процесса договора' })
+    throw refusal('portal.not_configured', 409, { message: 'Не настроена привязка смарт-процесса договора' })
   }
   return contractOwnerType(portal.contract_entity_type_id)
 }

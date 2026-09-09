@@ -2,6 +2,7 @@ import { getFieldsMirror, toClientFields } from '~~/server/services/fieldMetadat
 import { getBitrixTokenByRedis } from '~~/server/utils/getBitrixToken'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import type { IMetadataResponse } from '~~/shared/models/APIModels'
+import { fault, refusal } from '~~/server/utils/errors'
 
 // Зеркало метаданных полей договора для рендера форм (ADR-0003).
 // ?refresh=1 — принудительное обновление из Bitrix (кнопка «обновить» в UI).
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event): Promise<IMetadataResponse> => {
   if (!portal?.contract_entity_type_id) return { configured: false, fields: [] }
   const force = getQuery(event).refresh === '1'
   const token = await getBitrixTokenByRedis(portalCtx)
-  if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
+  if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
   try {
     const mirror = await getFieldsMirror({
       portal_id: portal.id,
@@ -24,7 +25,6 @@ export default defineEventHandler(async (event): Promise<IMetadataResponse> => {
     })
     return { configured: true, fields: toClientFields(mirror) }
   } catch (e) {
-    console.error('[metadata/contract] не удалось получить метаданные', e)
-    throw createError({ statusCode: 502, statusMessage: 'Bitrix error', message: 'Не удалось получить описания полей из Bitrix' })
+    throw fault('bitrix.api_error', { statusCode: 502, message: 'Не удалось получить описания полей из Bitrix' })
   }
 })

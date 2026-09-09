@@ -4,6 +4,7 @@ import { getFieldGroupsByKind } from '~~/server/utils/prisma/FieldGroup'
 import { getHiddenFieldsByKind } from '~~/server/utils/prisma/FieldVisibility'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import type { IModuleMetadataResponse } from '~~/shared/models/APIModels'
+import { fault, refusal } from '~~/server/utils/errors'
 
 // Зеркало метаданных каталога: виды модулей + поля каждого вида (ADR-0006).
 // ?refresh=1 — принудительное обновление из Bitrix.
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event): Promise<IModuleMetadataResponse
   if (!rootSectionId) return { configured: false, kinds: [], fieldsByKind: {}, groupsByKind: {}, hiddenByKind: {} }
 
   const token = await getBitrixTokenByRedis(portalCtx)
-  if (!token) throw createError({ statusCode: 502, statusMessage: 'Bitrix auth error', message: 'Не удалось получить токен Bitrix' })
+  if (!token) throw refusal('bitrix.token_expired', 502, { message: 'Приложение потеряло доступ к Bitrix24 — требуется переустановка' })
 
   try {
     const mirror = await getCatalogMirror({
@@ -41,7 +42,6 @@ export default defineEventHandler(async (event): Promise<IModuleMetadataResponse
     const hiddenByKind = await getHiddenFieldsByKind(portal!.id)
     return { configured: true, kinds, fieldsByKind, groupsByKind, hiddenByKind }
   } catch (e) {
-    console.error('[metadata/module] не удалось получить метаданные каталога', e)
-    throw createError({ statusCode: 502, statusMessage: 'Bitrix error', message: 'Не удалось получить описания полей каталога' })
+    throw fault('bitrix.api_error', { statusCode: 502, message: 'Не удалось получить описания полей каталога' })
   }
 })

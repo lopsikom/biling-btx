@@ -1,5 +1,6 @@
 import { PortalDataType } from "~~/server/utils/prisma/getPortalByUserBitrix"
 import { getUsersPrisma } from "~~/server/utils/prisma/UserBitrix";
+import { fault } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
     const portal = event.context.portal as PortalDataType;
@@ -12,10 +13,6 @@ export default defineEventHandler(async (event) => {
         });
         return users
     }catch(e){
-        console.error(e);
-        throw createError({
-            statusCode : 404,
-            statusMessage : "invalid response"
-        })
+        throw fault('internal', { message: 'Не удалось получить список пользователей', cause: e })
     }
 })

@@ -32,6 +32,11 @@ RUN npm install --include=dev
 CMD ["npm", "run", "dev"]
 
 FROM base as prod
+# NODE_ENV задаётся явно: без него process.env.NODE_ENV === undefined
+# (nitro node-server его не выставляет), и любая проверка вида
+# NODE_ENV !== 'production' срабатывала бы в проде. От этого флага зависит,
+# редактируются ли секреты в журнале ошибок (см. server/utils/errorJournal.ts).
+ENV NODE_ENV=production
 ENV NUXT_PUBLIC_DEV=false
 RUN npm run build
 CMD ["node", ".output/server/index.mjs"]

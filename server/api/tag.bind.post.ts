@@ -1,6 +1,7 @@
 import { TagBind } from "~~/shared/models/APIModels";
 import { bindTagCompany } from "../utils/prisma/Tag";
 import { ZodError } from "zod";
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -11,21 +12,12 @@ export default defineEventHandler(async (event) => {
         else response = await bindTagCompany(body.company_id, body.tag_id)
         return response;
     }catch(e){
-            console.error(e)
             if(e instanceof ZodError){
-                console.error(e.issues);
                 const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(", ")
-                throw createError({
-                    statusCode : 400,
-                    statusMessage : "Vallidation Error",
-                    message : mess
-                })
+                throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
             }
             else {
-                throw createError({
-                    statusCode: 500,
-                    statusMessage : "Server Error"
-                })
+                throw fault('internal', { cause: e })
             }
         }
 })

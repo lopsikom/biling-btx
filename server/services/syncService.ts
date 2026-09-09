@@ -13,6 +13,7 @@ import upsertInvoice from "../utils/prisma/postInvoice";
 import { getBitrixTokenByRefresh } from "../utils/getBitrixToken";
 import { addressMapUpsertPrisma, companyMapUpsertPrisma, contactMapUpsertPrisma, invocieMapUpsertPrisma, requisiteMapUpsertPrisma, userMapUpsertPrisma } from "../utils/mappers";
 import { upsertUserPrisma } from "../utils/prisma/UserBitrix";
+import { recordFault } from '../utils/errorJournal';
 
 
 export class syncService{ // Фикс с добавление динмического добавление нового портала
@@ -58,7 +59,14 @@ export class syncService{ // Фикс с добавление динмическ
                 const ii = await upsertInvoice(id, ...invocieMapUpsertPrisma(id, com.id, mappedUsers, ...i.result.items))
                 ii.forEach(iii => console.log("Added invoice " + iii.title))
                 }catch(e){
-                    console.error(`Error added company '${b.title}\nError:\n${e}`)
+                    // Сбой по одной компании не срывает остальные, но теряться он
+                    // не должен: раньше ошибка интерполировалась в строку вместе
+                    // со стектрейсом и была нечитаема (ADR-0009).
+                    recordFault(e, 'internal', 500, {
+                        source: 'sync',
+                        portal_id: id,
+                        extra: { stage: 'company', company_title: b.title, company_bitrix_id: b.id }
+                    })
                     return false
                 }
             }))
@@ -69,7 +77,10 @@ export class syncService{ // Фикс с добавление динмическ
 
 
         }catch(e){
-            console.error(e)
+            recordFault(e, 'internal', 500, {
+                source: 'sync',
+                extra: { stage: 'installSync', portal }
+            })
             return false
         }
     }

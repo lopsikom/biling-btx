@@ -3,6 +3,8 @@ import { replaceHiddenFieldsForKind } from '~~/server/utils/prisma/FieldVisibili
 import { invalidateCatalogMirror } from '~~/server/services/catalogMetadata'
 import type { PortalDataType } from '~~/server/utils/prisma/getPortalByUserBitrix'
 import { requireRole } from '~~/server/utils/requireRole'
+import { fault, refusal, zodFields } from '~~/server/utils/errors'
+import { isError } from 'h3'
 
 const FieldVisibilityPatch = z.object({
   parent_product_id: z.number().int().positive(),
@@ -20,12 +22,11 @@ export default defineEventHandler(async (event): Promise<string[]> => {
     await invalidateCatalogMirror(portalCtx.portal.id)
     return hidden
   } catch (e) {
-    console.error(e)
     if (e instanceof z.ZodError) {
       const mess = e.issues.map(i => `${i.message} for ${i.path.join(',')}`).join(', ')
-      throw createError({ statusCode: 400, statusMessage: 'Vallidation Error', message: mess })
+      throw refusal('validation.failed', 400, { message: mess, details: zodFields(e) })
     }
-    if (typeof e === 'object' && e && 'statusCode' in e) throw e
-    throw createError({ statusCode: 500, statusMessage: 'Server Error' })
+    if (isError(e)) throw e
+    throw fault('internal', { cause: e })
   }
 })

@@ -122,7 +122,7 @@ async function toggleActive(m: IModule) {
     const updated = await $axios.patchModule(m.id, { active: !m.active })
     storeReplace(updated)
   } catch (e) {
-    console.error(e); toastStore.openToast('Не удалось изменить статус')
+    console.error(e);
   } finally { menuStore.fetchDataLoad = false }
 }
 
@@ -144,7 +144,7 @@ async function saveModule(m: IModule) {
     delete buffers.value[m.id]; buffers.value = { ...buffers.value }
     toastStore.openToast('Модуль обновлён')
   } catch (e) {
-    console.error(e); toastStore.openToast('Не удалось обновить модуль')
+    console.error(e);
   } finally { menuStore.fetchDataLoad = false }
 }
 
@@ -165,7 +165,7 @@ async function doRemoveModule(m: IModule) {
       toastStore.openToast('Модуль удалён')
     } else toastStore.openToast('Не удалось удалить модуль')
   } catch (e) {
-    console.error(e); toastStore.openToast('Не удалось удалить модуль')
+    console.error(e);
   } finally { menuStore.fetchDataLoad = false }
 }
 
@@ -225,7 +225,7 @@ async function saveDraft(cat: string, i: number) {
     removeDraft(cat, i)
     toastStore.openToast('Модуль добавлен')
   } catch (e) {
-    console.error(e); toastStore.openToast('Не удалось добавить модуль')
+    console.error(e);
   } finally { menuStore.fetchDataLoad = false }
 }
 

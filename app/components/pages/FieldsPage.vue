@@ -71,7 +71,6 @@ async function toggleFieldVisibility(field: IFieldMeta) {
   } catch (e) {
     console.error(e)
     billingStateStore.moduleHiddenByKind = { ...billingStateStore.moduleHiddenByKind, [id]: current }
-    toastStore.openToast('Не удалось изменить видимость поля')
   }
 }
 
@@ -97,7 +96,6 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось загрузить настройки привязки')
   } finally { isLoad.value = false }
 })
 
@@ -116,7 +114,6 @@ async function saveGroup() {
     toastStore.openToast('Группа сохранена')
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось сохранить группу')
   } finally { isLoad.value = false }
 }
 
@@ -139,7 +136,6 @@ async function doRemoveGroup(name: string) {
     toastStore.openToast('Группа удалена')
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось удалить группу')
   } finally { isLoad.value = false }
 }
 
@@ -154,7 +150,6 @@ async function saveBinding() {
     toastStore.openToast('Привязка сохранена, поля обновлены')
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось сохранить привязку')
   } finally { isLoad.value = false }
 }
 
@@ -167,7 +162,6 @@ async function refreshFields() {
     toastStore.openToast('Поля обновлены из Bitrix')
   } catch (e) {
     console.error(e)
-    toastStore.openToast('Не удалось обновить поля')
   } finally { isLoad.value = false }
 }
 

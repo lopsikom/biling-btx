@@ -90,7 +90,6 @@ async function saveEditCompany(){
         try{
             bitrixClient?.companyUpdate(diffComp!)
         }catch(e){
-            openToast("Ошибка сохранения данных");
             console.error(e)
             return
         }
@@ -101,7 +100,6 @@ async function saveEditCompany(){
             try{
                 bitrixClient?.updateRequisite(r.data, r.id)
             }catch(e){
-                openToast("Ошибка сохранения данных");
                 console.error(e)
                 return
             }
@@ -124,7 +122,6 @@ async function saveEditCompany(){
                 }
                 else await bitrixClient?.updateAdress(a);
             }catch(e){
-                openToast("Ошибка сохранения данных");
                 console.error(e)
                 return
             }
