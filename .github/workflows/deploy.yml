@@ -46,8 +46,8 @@ jobs:
                         docker pull ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
                         docker stop redis-prod;
                         docker rm redis-prod;
-                        docker run -d --name redis-prod --network billing_network-prod redis;
+                        docker run -d --name redis-prod --network billing_network-prod --restart unless-stopped --memory 256m redis redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru;
                         docker stop ${{secrets.DOCKER_CONTAINER_NAME}};
                         docker rm ${{secrets.DOCKER_CONTAINER_NAME}};
                         mkdir -p /var/log/billing-prod;
-                        docker run -p 5000:3000 --network billing_network-prod -v /var/log/billing-prod:/app/logs -d --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
+                        docker run -p 5000:3000 --network billing_network-prod -v /var/log/billing-prod:/app/logs -d --restart unless-stopped --memory 1g -e NODE_OPTIONS=--max-old-space-size=768 --name ${{secrets.DOCKER_CONTAINER_NAME}} ghcr.io/${{ github.repository_owner }}/${{ secrets.DOCKER_IMAGE_NAME }}:${{ github.sha }};
